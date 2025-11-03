@@ -101,6 +101,8 @@ router.put('/', avatarUpload, async (req, res) => {
     }
 
     const nextData = {};
+    const previousAvatarPath = existing.avatarUrl;
+    let nextAvatarPath = previousAvatarPath;
 
     if (typeof req.body.name === 'string') {
       const trimmedName = req.body.name.trim();
@@ -108,7 +110,45 @@ router.put('/', avatarUpload, async (req, res) => {
     }
 
     if (req.file) {
-      nextData.avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      nextAvatarPath = `/uploads/avatars/${req.file.filename}`;
+    } else {
+      const rawAvatarPath =
+        typeof req.body.avatarPath === 'string' ? req.body.avatarPath.trim() : undefined;
+      const avatarFieldProvided = Object.prototype.hasOwnProperty.call(req.body, 'avatarPath');
+      const normalizeAvatarReference = (value) => {
+        if (!value) return null;
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        if (trimmed.startsWith('/uploads/')) {
+          return trimmed;
+        }
+        if (trimmed.startsWith('uploads/')) {
+          return `/${trimmed}`;
+        }
+        try {
+          const parsed = new URL(trimmed);
+          return parsed.pathname && parsed.pathname.startsWith('/uploads/')
+            ? parsed.pathname
+            : trimmed;
+        } catch (_error) {
+          return trimmed;
+        }
+      };
+
+      if (avatarFieldProvided) {
+        if (rawAvatarPath) {
+          const normalized = normalizeAvatarReference(rawAvatarPath);
+          if (normalized) {
+            nextAvatarPath = normalized;
+          }
+        } else if (req.body.avatarPath === null) {
+          nextAvatarPath = null;
+        }
+      }
+    }
+
+    if (nextAvatarPath !== previousAvatarPath) {
+      nextData.avatarUrl = nextAvatarPath;
     }
 
     if (Object.keys(nextData).length === 0) {
@@ -126,7 +166,7 @@ router.put('/', avatarUpload, async (req, res) => {
       },
     });
 
-    if (req.file && existing.avatarUrl && existing.avatarUrl !== updated.avatarUrl) {
+    if (previousAvatarPath && previousAvatarPath !== updated.avatarUrl) {
       removeAvatarFile(existing.avatarUrl).catch((error) =>
         console.warn('[Account] Failed to remove previous avatar:', error?.message || error)
       );

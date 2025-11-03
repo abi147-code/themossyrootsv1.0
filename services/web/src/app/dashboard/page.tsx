@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
 
 const quickLinks = [
   {
@@ -78,7 +79,7 @@ export default function DashboardPage() {
       setSummaryError(null);
 
       try {
-        const response = await fetch('/api/admin/users/summary', {
+        const response = await apiFetch('/api/admin/users/summary', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -153,7 +154,7 @@ export default function DashboardPage() {
       const endpoint =
         format === 'excel' ? '/api/admin/users/export' : '/api/admin/users/export.csv';
 
-      const response = await fetch(endpoint, {
+      const response = await apiFetch(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

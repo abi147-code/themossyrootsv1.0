@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useSta
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
 
 if (typeof window !== 'undefined') {
   (window as any).NEXT_PUBLIC_INVOICE_API_URL = process.env.NEXT_PUBLIC_INVOICE_API_URL;
@@ -1294,7 +1295,7 @@ export default function InvoicesPage() {
         ? { data: summaryPayload, marketing: marketingPayload }
         : { data: summaryPayload };
 
-      const summaryResponse = await fetch('/api/invoice/summary', {
+      const summaryResponse = await apiFetch('/api/invoice/summary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1331,7 +1332,7 @@ export default function InvoicesPage() {
       if (marketingPayload) {
         sendRequestPayload.marketing = marketingPayload;
       }
-      const sendResponse = await fetch('/api/invoice/send', {
+      const sendResponse = await apiFetch('/api/invoice/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

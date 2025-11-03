@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
 
 type BrandSettings = {
   logoUrl: string | null;
@@ -27,7 +28,7 @@ const DEFAULT_COLORS = {
 };
 
 async function fetchBrandSettings(token: string, abortSignal?: AbortSignal): Promise<BrandSettings> {
-  const response = await fetch('/api/brand', {
+  const response = await apiFetch('/api/brand', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -196,7 +197,7 @@ export default function BrandSettingsPage() {
     const formData = new FormData();
     formData.append('logo', logoFile);
 
-    const response = await fetch('/api/brand/upload-logo', {
+    const response = await apiFetch('/api/brand/upload-logo', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -237,7 +238,7 @@ export default function BrandSettingsPage() {
         }
       }
 
-      const response = await fetch('/api/brand', {
+      const response = await apiFetch('/api/brand', {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

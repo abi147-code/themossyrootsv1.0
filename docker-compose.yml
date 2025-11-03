@@ -27,10 +27,12 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_INVOICE_API_URL: http://localhost:5000
+        NEXT_PUBLIC_API_URL: http://localhost:4000
     environment:
       - NEXT_PUBLIC_APP_NAME=TMR CRM
       - NEXT_PUBLIC_TRIAL_DAYS=${TRIAL_DAYS}
       - NEXT_PUBLIC_INVOICE_API_URL=http://localhost:5000
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
     ports:
       - "3000:3000"
     depends_on:
@@ -51,6 +53,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
       - JWT_SECRET=${JWT_SECRET}
       - TRIAL_DAYS=${TRIAL_DAYS}
+      - API_PORT=4000
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - MAILPIT_HOST=mailpit
@@ -66,7 +69,7 @@ services:
       - mailpit
       - invoice-api
     ports:
-      - "5555:5555"
+      - "4000:4000"
     volumes:
       - ./services/api/uploads:/app/uploads
     restart: unless-stopped

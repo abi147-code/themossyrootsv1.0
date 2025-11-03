@@ -14,7 +14,8 @@ function sanitizeBaseUrl(value) {
   if (!value) return null;
   try {
     const url = new URL(value);
-    return `${url.protocol}//${url.host}`;
+    const normalized = `${url.protocol}//${url.host}`;
+    return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized;
   } catch (_error) {
     return null;
   }
@@ -22,6 +23,7 @@ function sanitizeBaseUrl(value) {
 
 function resolveBaseUrl(req) {
   const envBase =
+    sanitizeBaseUrl(process.env.NEXT_PUBLIC_API_URL) ||
     sanitizeBaseUrl(process.env.API_PUBLIC_URL) ||
     sanitizeBaseUrl(process.env.PUBLIC_BASE_URL);
 
@@ -49,7 +51,10 @@ function toPublicAsset(req, assetPath) {
   const baseUrl = resolveBaseUrl(req);
 
   try {
-    return new URL(assetPath, `${baseUrl}/`).toString();
+    const normalizedPath = assetPath.startsWith('/')
+      ? assetPath
+      : `/${assetPath}`;
+    return new URL(normalizedPath, `${baseUrl}/`).toString();
   } catch (_error) {
     return assetPath;
   }

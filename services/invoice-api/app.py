@@ -525,6 +525,7 @@ def build_invoice_pdf(buffer: BytesIO, data: Dict[str, Any], *, font_color_str: 
                 self.line_gap = 10.0
                 self.button_gap = 18.0
                 self.button_height = 26.0
+                self._background_drawn = False
 
                 content_height = 0.0
                 if self.headline:
@@ -587,7 +588,8 @@ def build_invoice_pdf(buffer: BytesIO, data: Dict[str, Any], *, font_color_str: 
                         stroke=0,
                         fill=1,
                     )
-                    if self.background_image:
+                    should_draw_background = self.background_image is not None and not self._background_drawn
+                    if should_draw_background:
                         canv.saveState()
                         try:
                             path = canv.beginPath()
@@ -626,6 +628,7 @@ def build_invoice_pdf(buffer: BytesIO, data: Dict[str, Any], *, font_color_str: 
                                 preserveAspectRatio=False,
                                 mask='auto',
                             )
+                            self._background_drawn = True
                         except Exception as exc:
                             logger.warning("Failed to render marketing background image: %s", exc)
                         finally:

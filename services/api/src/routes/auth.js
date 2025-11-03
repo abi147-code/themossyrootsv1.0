@@ -2,6 +2,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const dayjs = require('dayjs');
+const { toPublicAvatar } = require('../utils/avatar');
 
 const router = express.Router();
 
@@ -59,6 +60,7 @@ router.post('/signup', async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        avatarUrl: toPublicAvatar(req, user.avatarUrl),
       },
       subscription,
     });
@@ -112,6 +114,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        avatarUrl: toPublicAvatar(req, user.avatarUrl),
       },
       subscription: user.subscriptions[0] || null,
     });

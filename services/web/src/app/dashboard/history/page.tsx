@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
 
 type InvoiceHistoryEntry = {
   id: number;
@@ -50,7 +51,7 @@ export default function HistoryPage() {
       try {
         setFetching(true);
         setError(null);
-        const response = await fetch('/api/history', {
+        const response = await apiFetch('/api/history', {
           headers: {
             Authorization: `Bearer ${token}`,
           },

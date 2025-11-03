@@ -511,11 +511,7 @@ const resolveMarketingPayload = (invoice, marketing) => {
       invoice?.marketingBannerUrl,
       source.image,
       source.imageUrl,
-      source.image_url,
-      source.backgroundImage,
-      source.background_image,
-      invoice?.marketing_background_image,
-      invoice?.marketingBackgroundImage
+      source.image_url
     ),
     backgroundImage: pickFirstString(
       source.backgroundImage,
@@ -632,9 +628,15 @@ const buildMarketingSection = ({
   const buttonBorder = adjustColor(surfaceColor, -35);
   const buttonShadow = '0 16px 32px rgba(15,23,42,0.18)';
 
-  const bannerBlock = bannerSrc
+  const normalizedBannerSrc = (bannerSrc || '').trim();
+  const normalizedBackgroundSrc = (backgroundImage || '').trim();
+  const shouldRenderBannerImg =
+    normalizedBannerSrc &&
+    (!normalizedBackgroundSrc || normalizedBannerSrc !== normalizedBackgroundSrc);
+
+  const bannerBlock = shouldRenderBannerImg
     ? `<div style="margin:0 auto 28px; max-width:560px;"><img src="${escapeHtml(
-        bannerSrc
+        normalizedBannerSrc
       )}" alt="${escapeHtml(headline || 'Marketing banner')}" style="width:100%; display:block; border-radius:24px;" /></div>`
     : '';
 
@@ -654,8 +656,8 @@ const buildMarketingSection = ({
       <a href="${buttonLink}" style="display:inline-block; padding:14px 36px; border-radius:999px; background:${buttonBackground}; color:${buttonTextColor}; font-size:15px; font-weight:600; letter-spacing:0.3px; text-decoration:none; border:1px solid ${buttonBorder}; box-shadow:${buttonShadow};">${buttonLabel}</a>
     </div>`;
 
-  const backgroundStyle = backgroundImage
-    ? ` background-image:url('${escapeHtml(backgroundImage)}'); background-size:cover; background-position:center; background-repeat:no-repeat;`
+  const backgroundStyle = normalizedBackgroundSrc
+    ? ` background-image:url('${escapeHtml(normalizedBackgroundSrc)}'); background-size:cover; background-position:center; background-repeat:no-repeat;`
     : '';
   const tdStyle = `padding:36px 32px; background:${surfaceColor};${backgroundStyle}`;
 

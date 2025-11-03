@@ -9,6 +9,7 @@ import {
   ReactNode,
   useCallback,
 } from 'react';
+import { apiFetch, resolveAssetUrl } from '@/lib/api';
 
 type Subscription = {
   status: string;
@@ -57,7 +58,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const TOKEN_STORAGE_KEY = 'tmr-token';
 
 async function fetchProfile(token: string): Promise<UserProfile | null> {
-  const response = await fetch('/api/users/me', {
+  const response = await apiFetch('/api/users/me', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -67,7 +68,11 @@ async function fetchProfile(token: string): Promise<UserProfile | null> {
     return null;
   }
 
-  return response.json();
+  const profile = (await response.json()) as UserProfile;
+  return {
+    ...profile,
+    avatarUrl: resolveAssetUrl(profile.avatarUrl) ?? null,
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -102,8 +107,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async ({ token: newToken, user: userPayload, subscription: subscriptionPayload }: AuthResponsePayload) => {
     localStorage.setItem(TOKEN_STORAGE_KEY, newToken);
     setToken(newToken);
-    setUser({
+    const normalizedUser: UserProfile = {
       ...userPayload,
+      avatarUrl: resolveAssetUrl(userPayload.avatarUrl) ?? null,
+    };
+    setUser({
+      ...normalizedUser,
       subscription: subscriptionPayload ?? userPayload.subscription ?? null,
     });
     setSubscription(subscriptionPayload ?? null);

@@ -13,6 +13,7 @@ import {
   useState,
 } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch, resolveAssetUrl } from '@/lib/api';
 
 type AccountResponse = {
   name: string | null;
@@ -28,7 +29,7 @@ type ToastState =
   | null;
 
 async function fetchAccountProfile(token: string, signal?: AbortSignal): Promise<AccountResponse> {
-  const response = await fetch('/api/account', {
+  const response = await apiFetch('/api/account', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -41,7 +42,10 @@ async function fetchAccountProfile(token: string, signal?: AbortSignal): Promise
     throw new Error(payload?.message || 'Failed to load account details.');
   }
 
-  return payload;
+  return {
+    ...payload,
+    avatarUrl: resolveAssetUrl(payload.avatarUrl) ?? null,
+  };
 }
 
 export default function AccountSettingsPage() {
@@ -84,7 +88,7 @@ export default function AccountSettingsPage() {
   const applyAccountState = useCallback((payload: AccountResponse) => {
     setFormName(payload.name ?? '');
     setEmail(payload.email);
-    setAvatarUrl(payload.avatarUrl ?? null);
+    setAvatarUrl(resolveAssetUrl(payload.avatarUrl) ?? null);
   }, []);
 
   useEffect(() => {
@@ -169,9 +173,11 @@ export default function AccountSettingsPage() {
       formData.append('name', trimmedName);
       if (avatarFile) {
         formData.append('avatar', avatarFile);
+      } else if (avatarUrl) {
+        formData.append('avatarPath', avatarUrl);
       }
 
-      const response = await fetch('/api/account', {
+      const response = await apiFetch('/api/account', {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -196,7 +202,7 @@ export default function AccountSettingsPage() {
         applyAccountState({
           name: result.user.name ?? null,
           email: result.user.email,
-          avatarUrl: result.user.avatarUrl ?? null,
+          avatarUrl: resolveAssetUrl(result.user.avatarUrl) ?? null,
         });
       }
 
@@ -233,7 +239,7 @@ export default function AccountSettingsPage() {
 
     try {
       setPasswordSaving(true);
-      const response = await fetch('/api/account/password', {
+      const response = await apiFetch('/api/account/password', {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -280,7 +286,7 @@ export default function AccountSettingsPage() {
     try {
       setDeleteLoading(true);
 
-      const response = await fetch('/api/account', {
+      const response = await apiFetch('/api/account', {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
