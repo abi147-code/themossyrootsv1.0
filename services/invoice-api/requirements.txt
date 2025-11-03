@@ -1,0 +1,6 @@
+Flask==3.0.3
+Flask-Cors==4.0.1
+gunicorn==22.0.0
+xhtml2pdf==0.2.10
+reportlab==3.6.12
+

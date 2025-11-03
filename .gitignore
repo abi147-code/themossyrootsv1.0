@@ -1,0 +1,36 @@
+# dotenv
+.env
+.env.*
+!.env.example
+
+# node / next
+node_modules/
+.next/
+dist/
+out/
+.turbo/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Docker/runtime artifacts
+**/output/
+**/tmp/
+**/volumes/
+**/data/
+pdfs/
+*.pdf
+services/api/uploads/
+services/web/src/app/portfolio/components/pictures/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+*.log
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

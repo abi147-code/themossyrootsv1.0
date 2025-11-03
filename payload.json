@@ -1,0 +1,30 @@
+{
+  "data": {
+    "invoice_id": "INV-2025-007",
+    "from_name": "KAGIC STUDYO",
+    "from_address": "15 Avenue Des Sapins",
+    "to_name": "Abishek Elangeswran",
+    "to_address": "15 Avenue Des Sapins",
+    "title": "Grocery",
+    "issue_date": "2025-10-19",
+    "notes": "sample notes",
+    "terms": "sample terms",
+    "customer": {
+      "name": "Abishek Elangeswran",
+      "email": "check@gmail.com"
+    },
+    "items": [
+      { "description": "egrw", "quantity": 1, "price": 30 }
+    ],
+    "taxRate": 0.3,
+    "vatRate": 55,
+    "shippingRate": 40,
+    "paymentTerm": "7",
+    "poNumber": "PO 002",
+    "currency": "EUR",
+    "dueDate": "2026-07-08",
+    "organization": { "name": "KAGIC STUDYO" }
+  },
+  "fontColor": "#111111",
+  "pageColor": "#FFFFFF"
+}

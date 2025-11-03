@@ -1,0 +1,3 @@
+-- Add activatedAt column to Subscription
+-- ALTER TABLE "Subscription"
+-- ADD COLUMN "activatedAt" TIMESTAMP;
