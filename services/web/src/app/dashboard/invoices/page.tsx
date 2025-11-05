@@ -6,10 +6,6 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 
-if (typeof window !== 'undefined') {
-  (window as any).NEXT_PUBLIC_INVOICE_API_URL = process.env.NEXT_PUBLIC_INVOICE_API_URL;
-}
-
 type CurrencyCode = 'USD' | 'EUR' | 'INR';
 
 type SendResult = { message?: string } | null;
@@ -185,13 +181,6 @@ const formatMoney = (value: number, currency: CurrencyCode): string => {
   const formatter = currencyFormatters[currency];
   return formatter.format(Number.isFinite(value) ? value : 0);
 };
-
-const invoiceApiUrl =
-  process.env.NEXT_PUBLIC_INVOICE_API_URL ||
-  (typeof window !== 'undefined' ? (window as any).NEXT_PUBLIC_INVOICE_API_URL : '') ||
-  'http://localhost:5000';
-
-const INVOICE_API_BASE_URL = invoiceApiUrl.replace(/\/$/, '');
 
 const extractFilename = (header: string | null, fallback: string): string => {
   if (!header) return fallback;
@@ -575,8 +564,6 @@ export default function InvoicesPage() {
     marketingBackgroundImageOpacity,
     marketingBackgroundImage,
   ]);
-
-  const invoiceApiBaseUrl = INVOICE_API_BASE_URL;
 
   const invoiceTotals = useMemo(() => {
     const subtotal = sanitizedInvoiceItems.reduce((sum, item) => sum + item.quantity * item.price, 0);
@@ -1396,8 +1383,8 @@ export default function InvoicesPage() {
   };
 
   const handleGeneratePdf = async () => {
-    if (!invoiceApiBaseUrl) {
-      setInvoiceError('Invoice API URL is not configured.');
+    if (!token) {
+      setInvoiceError('You must be signed in to generate a PDF.');
       return;
     }
 
@@ -1415,10 +1402,11 @@ export default function InvoicesPage() {
     const summaryPayload = buildSummaryPayload(sanitizedItems);
 
     try {
-      const response = await fetch(`${invoiceApiBaseUrl}/generate-pdf`, {
+      const response = await apiFetch('/api/invoice/generate-pdf', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           data: summaryPayload,
