@@ -22,7 +22,17 @@ ensureAdminUser(prisma)
   });
 
 app.set('trust proxy', 1);
-app.use(cors({ origin: process.env.CORS_ORIGIN || true, credentials: true }));
+
+const resolvedCorsOrigin =
+  (typeof process.env.CORS_ORIGIN === 'string' && process.env.CORS_ORIGIN.trim()) || '*';
+
+app.use(
+  cors({
+    origin: resolvedCorsOrigin,
+    credentials: true,
+  })
+);
+console.log(`[cors] Using CORS origin: ${resolvedCorsOrigin}`);
 
 app.use('/uploads', express.static(uploadsRoot));
 
