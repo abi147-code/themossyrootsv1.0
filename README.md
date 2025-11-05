@@ -35,6 +35,8 @@ The Mossy Roots (TMR) is a Dockerised SaaS CRM starter that bundles authenticati
 
 The proxy forwards `/api` to the Node API, `/invoice` to the Flask service, and `/n8n` to the workflow UI.
 
+> **Render deployment:** Local `.env` values can keep `http://localhost` origins, but Render must use the HTTPS service URLs shown in `.env.example` (e.g. `https://tmr-api.onrender.com`, `https://tmr-invoice.onrender.com`, `https://tmr-web.onrender.com`). Configure `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_INVOICE_API_URL`, `API_PUBLIC_URL`, `INVOICE_API_URL`, and `CORS_ORIGIN` with those Render domains so the frontend, API, and Flask service communicate correctly. The Next.js build should read these from runtime env vars rather than baked-in Docker build args.
+
 ## Email setup
 
 - Copy `.env.example` to `.env` in the repository root. Docker Compose mounts that file into the API service (`env_file: .env`), so restart the container after any changes (`docker compose up --build` or `docker compose restart api`).
