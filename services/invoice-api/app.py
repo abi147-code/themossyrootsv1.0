@@ -1520,3 +1520,10 @@ def list_invoices():
         "items": [{"filename": p.name, "size": p.stat().st_size,
                    "modified_at": datetime.fromtimestamp(p.stat().st_mtime).isoformat()} for p in pdfs]
     })
+
+
+if __name__ == "__main__":
+    import os
+
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)

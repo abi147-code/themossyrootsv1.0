@@ -10,7 +10,8 @@ const { buildInvoiceEmail } = require('../email/sendInvoiceEmail');
 
 const router = express.Router();
 
-const INVOICE_API_URL = process.env.INVOICE_API_URL || 'http://invoice-api:5000';
+const DEFAULT_INVOICE_API_URL = 'https://themossyrootsv1-0-3.onrender.com';
+const INVOICE_API_URL = process.env.INVOICE_API_URL || DEFAULT_INVOICE_API_URL;
 const AXIOS_JSON_CONFIG = {
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' },
