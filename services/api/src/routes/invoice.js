@@ -137,6 +137,43 @@ router.post('/summary', async (req, res) => {
   }
 });
 
+// ---- Standalone PDF generation ----
+router.post('/generate-pdf', async (req, res) => {
+  try {
+    const pdfResponse = await axios.post(
+      `${INVOICE_API_URL}/generate-pdf`,
+      req.body || {},
+      {
+        ...AXIOS_JSON_CONFIG,
+        responseType: 'arraybuffer',
+      }
+    );
+
+    const dispositionHeader = pdfResponse.headers?.['content-disposition'];
+    const resolvedName =
+      parseDispositionFilename(dispositionHeader) ||
+      `${resolveInvoiceId(req.body?.data || req.body)}.pdf`;
+    const filename = sanitizeFilename(resolvedName);
+
+    res.set({
+      'Content-Type': pdfResponse.headers?.['content-type'] || 'application/pdf',
+      'Content-Disposition':
+        dispositionHeader || `attachment; filename="${filename}"`,
+      ...(pdfResponse.headers?.['content-length']
+        ? { 'Content-Length': pdfResponse.headers['content-length'] }
+        : {}),
+    });
+
+    return res.status(pdfResponse.status).send(Buffer.from(pdfResponse.data));
+  } catch (err) {
+    logFlaskError('[Invoice] /generate-pdf failed', err);
+    if (err.response) {
+      return res.status(err.response.status).json(err.response.data);
+    }
+    return res.status(502).json({ message: 'Failed to generate invoice PDF.' });
+  }
+});
+
 // ---- Send invoice email: generate summary HTML via Flask ----
 router.post('/send', async (req, res) => {
   const prisma = req.prisma;
