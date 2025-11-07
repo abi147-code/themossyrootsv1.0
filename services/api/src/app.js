@@ -23,8 +23,18 @@ ensureAdminUser(prisma)
 
 app.set('trust proxy', 1);
 
-const resolvedCorsOrigin =
-  (typeof process.env.CORS_ORIGIN === 'string' && process.env.CORS_ORIGIN.trim()) || '*';
+const resolvedCorsOriginsEnv =
+  (typeof process.env.CORS_ORIGIN === 'string' && process.env.CORS_ORIGIN.trim()) || '';
+const FALLBACK_ORIGINS = [
+  'https://tmr-web.onrender.com',
+  'https://www.themossyroots.com',
+];
+const resolvedCorsOrigin = resolvedCorsOriginsEnv
+  ? resolvedCorsOriginsEnv
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  : FALLBACK_ORIGINS;
 
 app.use(
   cors({
