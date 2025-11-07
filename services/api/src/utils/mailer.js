@@ -72,12 +72,44 @@ const resolveAuth = () => {
 };
 
 const resolveEmailService = () => {
-  const service = process.env.EMAIL_SERVICE || process.env.SMTP_SERVICE || 'mailpit';
+  const service =
+    process.env.EMAIL_TRANSPORT ||
+    process.env.EMAIL_SERVICE ||
+    process.env.SMTP_SERVICE ||
+    'mailpit';
   return typeof service === 'string' ? service.trim().toLowerCase() : 'mailpit';
 };
 
 const resolveCustomSmtpHost = () =>
   firstStringEnv('SMTP_HOST', 'SMTP_SERVER', 'SMTP_URL', 'EMAIL_SMTP_HOST');
+
+const resolveSendgridApiKey = () =>
+  firstStringEnv('SENDGRID_API_KEY', 'EMAIL_SENDGRID_API_KEY', 'SENDGRID_KEY');
+
+const buildSendgridConfig = () => {
+  const apiKey = resolveSendgridApiKey();
+  if (!apiKey) {
+    return null;
+  }
+
+  const host =
+    (typeof process.env.SENDGRID_SMTP_HOST === 'string' &&
+      process.env.SENDGRID_SMTP_HOST.trim()) ||
+    'smtp.sendgrid.net';
+  const port = parseNumber(process.env.SENDGRID_SMTP_PORT, 587);
+  const secure = parseBoolean(process.env.SENDGRID_SMTP_SECURE, port === 465);
+  const user = process.env.SENDGRID_SMTP_USER || 'apikey';
+
+  return {
+    host,
+    port,
+    secure,
+    auth: {
+      user,
+      pass: apiKey,
+    },
+  };
+};
 
 const buildMailpitConfig = () => ({
   host: resolveHost(),
@@ -184,19 +216,33 @@ const getActiveTransportMeta = () => ({ ...activeTransportMeta });
 
 const createTransporter = () => {
   const service = resolveEmailService();
-  const customConfig = buildCustomConfig();
 
-  let transportConfig;
+  let transportConfig = null;
   let modeLabel = 'MAILPIT';
 
-  if (customConfig) {
-    transportConfig = customConfig;
-    modeLabel = `CUSTOM (${transportConfig.host})`;
-  } else if (service === 'gmail') {
-    transportConfig = buildGmailConfig();
-    modeLabel = 'GMAIL';
-  } else {
-    transportConfig = buildMailpitConfig();
+  if (service === 'sendgrid') {
+    const sendgridConfig = buildSendgridConfig();
+    if (sendgridConfig) {
+      transportConfig = sendgridConfig;
+      modeLabel = 'SENDGRID';
+    } else {
+      console.warn(
+        '[Mailer] EMAIL_TRANSPORT=sendgrid configured but SENDGRID_API_KEY is missing. Falling back to default SMTP transport.'
+      );
+    }
+  }
+
+  if (!transportConfig) {
+    const customConfig = buildCustomConfig();
+    if (customConfig) {
+      transportConfig = customConfig;
+      modeLabel = `CUSTOM (${transportConfig.host})`;
+    } else if (service === 'gmail') {
+      transportConfig = buildGmailConfig();
+      modeLabel = 'GMAIL';
+    } else {
+      transportConfig = buildMailpitConfig();
+    }
   }
 
   const transport = nodemailer.createTransport(transportConfig);
@@ -207,11 +253,19 @@ const createTransporter = () => {
     mode: modeLabel,
   };
 
-  console.info(
-    `[Mailer] Using SMTP host ${transportConfig.host}:${transportConfig.port} (secure=${
-      transportConfig.secure ? 'yes' : 'no'
-    })`
-  );
+  if (modeLabel === 'SENDGRID') {
+    console.info(
+      `[Mailer] Using SendGrid API transport (${transportConfig.host}:${transportConfig.port}, secure=${
+        transportConfig.secure ? 'yes' : 'no'
+      })`
+    );
+  } else {
+    console.info(
+      `[Mailer] Using SMTP host ${transportConfig.host}:${transportConfig.port} (secure=${
+        transportConfig.secure ? 'yes' : 'no'
+      })`
+    );
+  }
 
   transport
     .verify()
