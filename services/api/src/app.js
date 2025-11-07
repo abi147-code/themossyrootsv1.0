@@ -26,6 +26,8 @@ app.set('trust proxy', 1);
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://tmr-web.onrender.com',
   'https://www.themossyroots.com',
+  'http://localhost',
+  'http://localhost:3000',
 ];
 
 const parseCorsOrigins = (value) => {
