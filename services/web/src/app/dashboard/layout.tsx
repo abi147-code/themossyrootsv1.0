@@ -13,6 +13,7 @@ type DashboardLayoutProps = {
 const navItems = [
   { href: '/dashboard', label: 'Overview' },
   { href: '/dashboard/invoices', label: 'Invoices' },
+  { href: '/dashboard/invoice-generator', label: 'Invoice Generator' },
   { href: '/dashboard/history', label: 'History' },
   { href: '/dashboard/settings', label: 'Settings' },
 ];
@@ -23,6 +24,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { token, user, loading, refresh, logout } = useAuth();
   const [navCollapsed, setNavCollapsed] = useState(false);
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const isInvoiceTool = pathname.startsWith('/dashboard/invoice-generator');
 
   useEffect(() => {
     const updateHeaderOffset = () => {
@@ -51,6 +53,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (loading || !token) {
     return null;
+  }
+
+  if (isInvoiceTool) {
+    return (
+      <div className="flex h-screen w-full flex-col overflow-hidden bg-slate-950 text-slate-100">
+        {children}
+      </div>
+    );
   }
 
   const sidebarWidth = navCollapsed ? 'w-16' : 'w-56';

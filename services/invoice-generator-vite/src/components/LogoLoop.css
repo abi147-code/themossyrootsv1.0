@@ -1,0 +1,109 @@
+
+.logoloop {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  /* Use the fade color variable or transparent if not set */
+  --logoloop-fadeColor: transparent;
+}
+
+.logoloop--vertical {
+  flex-direction: column;
+}
+
+.logoloop__track {
+  display: flex;
+  will-change: transform;
+}
+
+.logoloop--vertical .logoloop__track {
+  flex-direction: column;
+}
+
+.logoloop__list {
+  flex: 0 0 auto;
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: var(--logoloop-gap, 32px);
+  /* Ensure vertical lists stack correctly */
+  flex-direction: inherit; 
+  /* Add padding to the right/bottom to account for the last gap if needed, 
+     though usually the gap property handles it well between items. 
+     We add a margin to the list itself to separate copies. */
+  padding-right: var(--logoloop-gap, 32px);
+}
+
+.logoloop--vertical .logoloop__list {
+  padding-right: 0;
+  padding-bottom: var(--logoloop-gap, 32px);
+}
+
+.logoloop__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoloop__item img,
+.logoloop__item svg {
+  display: block;
+  height: var(--logoloop-logoHeight, 28px);
+  width: auto;
+  object-fit: contain;
+}
+
+.logoloop__link {
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
+.logoloop__link:hover {
+  opacity: 0.8;
+}
+
+/* Fade Out Effect */
+.logoloop--fade {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+}
+
+.logoloop--vertical.logoloop--fade {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+}
+
+/* Hover Scaling */
+.logoloop--scale-hover .logoloop__item {
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.logoloop--scale-hover .logoloop__item:hover {
+  transform: scale(1.1);
+}
