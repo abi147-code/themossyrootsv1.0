@@ -62,7 +62,7 @@ export const metadata: Metadata = {
 
 export default function SoftwarePage() {
   return (
-    <div className="relative min-h-screen">
+    <div id="page-transition-wrapper" className="relative min-h-screen">
       <section className="relative flex min-h-[60vh] items-center justify-center overflow-hidden px-6 pt-24 pb-16 md:pt-32">
         <div className="absolute inset-0">
           <DotGrid
@@ -92,89 +92,7 @@ export default function SoftwarePage() {
           <MarketingOverview
             title="Marketing Invoice Generator"
             description="The bridge between billing and brand. Turn every invoice into a living conversation that keeps customers engaged long after the payment clears."
-          >
-            <section className="mx-auto w-full max-w-5xl">
-              <article className="glass-panel px-8 py-12">
-                <div className="space-y-12 text-white">
-                  <div className="grid gap-12 md:grid-cols-2">
-                    <div className="space-y-4">
-                      <h2 className="text-3xl font-semibold">The Problem</h2>
-                      <div className="space-y-3 text-base text-white/75">
-                        <p>For most businesses, invoices are purely transactional. They are sent, paid, and forgotten.</p>
-                        <p>
-                          Every month, thousands of invoices leave your system carrying only numbers &mdash; no personality, no engagement, no value beyond payment collection.
-                        </p>
-                        <p>Yet those invoices reach one of your most valuable audiences: your existing customers. That is a missed opportunity.</p>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <h2 className="text-3xl font-semibold">The Insight</h2>
-                      <div className="space-y-3 text-base text-white/75">
-                        <p>Your current customers already trust you. They open your emails, read your invoices, and interact with your brand regularly.</p>
-                        <p>
-                          What if every invoice could continue the conversation &mdash; remind them of your story, announce an event, or offer something special for their next purchase?
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <h2 className="text-3xl font-semibold">The Solution: TMR Marketing Invoice Generator</h2>
-                    <p className="text-base text-white/75">
-                      The Marketing Invoice Generator turns everyday billing into a subtle yet powerful communication channel. It is a beautiful invoice with a twist: marketing meets billing.
-                    </p>
-                    <ul className="grid gap-4 text-sm text-white/80 md:grid-cols-2">
-                      {features.map((item) => (
-                        <li
-                          key={item}
-                          className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-lg shadow-black/20"
-                          dangerouslySetInnerHTML={{ __html: item }}
-                        />
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="space-y-6">
-                    <h2 className="text-3xl font-semibold">How It Works</h2>
-                    <ol className="space-y-6">
-                      {steps.map((step, index) => (
-                        <li key={step.title} className="flex flex-col gap-3 text-base text-white/75 md:flex-row md:items-start">
-                          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-[#E2B714]/50 bg-[#E2B714]/10 text-sm font-semibold uppercase tracking-[0.18em] text-[#E2B714]">
-                            {index + 1}
-                          </span>
-                          <div className="space-y-2 md:pl-4">
-                            <h3 className="text-lg font-semibold text-white">{step.title}</h3>
-                            <p>{step.description}</p>
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-
-                  <div className="space-y-6">
-                    <h2 className="text-3xl font-semibold">The Impact</h2>
-                    <ul className="grid gap-4 text-base text-white/75 md:grid-cols-2">
-                      {impactPoints.map((point) => (
-                        <li
-                          key={point}
-                          className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-lg shadow-black/15"
-                        >
-                          {point}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="space-y-3 text-base text-white/75">
-                      <h3 className="text-lg font-semibold text-white">Why It Matters</h3>
-                      <p>
-                        Most companies spend heavily on acquiring new customers while neglecting the ones who already believe in them. TMR helps bridge that gap, turning every invoice into
-                        a smart, low-cost upsell tool that deepens relationships with every billing cycle.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            </section>
-          </MarketingOverview>
+          />
         </div>
       </main>
 

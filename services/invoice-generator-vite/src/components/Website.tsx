@@ -1,6 +1,5 @@
 import React from 'react';
 import { ArrowRight, Sparkles, Zap, Palette, MousePointer, Layout, Image as ImageIcon, ShieldCheck } from 'lucide-react';
-import FloatingLines from './FloatingLines';
 import { InvoicePreview } from './InvoicePreview';
 import { InvoiceData, MarketingBannerData } from '../types';
 import BlurText from './BlurText';
@@ -54,16 +53,35 @@ interface WebsiteProps {
 }
 
 export const Website: React.FC<WebsiteProps> = ({ onLaunchTool }) => {
+  const handleOpenEditor = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('tmr-token') : null;
+    const webBase = import.meta.env.VITE_TMR_WEB_URL || 'http://localhost:3000';
+    const target = token
+      ? `${webBase}/dashboard/invoice-generator`
+      : `${webBase}/login?redirect=/dashboard/invoice-generator`;
+    if (typeof document !== 'undefined') {
+      const wrapper = document.getElementById('page-transition-wrapper');
+      if (wrapper) {
+        wrapper.classList.add('page-fade-out');
+        setTimeout(() => {
+          window.location.href = target;
+        }, 300);
+        return;
+      }
+    }
+    window.location.href = target;
+  };
+
   return (
-    <div className="min-h-screen bg-ink font-sans text-porcelain selection:bg-moss-700 selection:text-white overflow-x-hidden">
+    <div id="page-transition-wrapper" className="min-h-screen bg-ink font-sans text-porcelain selection:bg-moss-700 selection:text-white overflow-x-hidden">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-ink/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xl font-serif font-bold tracking-tight text-porcelain">Invoice Generator</span>
           </div>
-          <button 
-             onClick={onLaunchTool}
+           <button 
+             onClick={handleOpenEditor}
              className="px-5 py-2 bg-white/10 hover:bg-white/20 text-porcelain rounded-full font-medium text-sm transition-all border border-white/10"
           >
              Open Editor
@@ -74,9 +92,6 @@ export const Website: React.FC<WebsiteProps> = ({ onLaunchTool }) => {
       <main className="pt-20">
         {/* Hero: The Hook */}
         <section className="relative min-h-[60vh] flex items-center justify-center px-6 overflow-hidden">
-           <div className="absolute inset-0 pointer-events-none opacity-40">
-              <FloatingLines />
-           </div>
            <div className="text-center relative z-10 max-w-3xl mx-auto flex flex-col items-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-porcelain/60 text-sm font-medium mb-8">
                   <Zap size={14} className="text-gold-400" />
@@ -228,7 +243,7 @@ export const Website: React.FC<WebsiteProps> = ({ onLaunchTool }) => {
            
            <div className="text-center mt-16">
               <button 
-                onClick={onLaunchTool}
+                onClick={handleOpenEditor}
                 className="px-10 py-4 bg-moss-600 hover:bg-moss-500 text-white rounded-full font-bold text-lg transition-all flex items-center gap-3 shadow-xl shadow-moss-900/50 mx-auto hover:scale-105"
               >
                 Start Creating Now
