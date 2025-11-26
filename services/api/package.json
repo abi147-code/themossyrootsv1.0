@@ -31,6 +31,7 @@
         "jsonwebtoken": "^9.0.2",
         "multer": "^2.0.2",
         "nodemailer": "^6.9.15",
+        "playwright-chromium": "^1.57.0",
         "prisma": "^5.17.0",
         "stripe": "^14.21.0"
     },

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { InvoiceData, MarketingBannerData } from '../types';
 import { Printer, Download } from 'lucide-react';
 import QRCode from 'react-qr-code';
@@ -15,6 +15,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
   const taxAmount = subtotal * (data.taxRate / 100);
   const total = subtotal + taxAmount;
   const template = data.template || 'luxury';
+  const apiBase = (import.meta.env.VITE_TMR_API_URL || '').replace(/\/+$/, '');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   
   // Dynamic invoice styles based on user selection
   const invoiceStyle = {
@@ -23,79 +25,133 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
   };
 
   const handleDownloadPdf = async () => {
+    if (isGeneratingPdf) return;
+
     const element = document.getElementById('invoice-content');
     if (!element) return;
 
-    // Create a container for the clone to ensure fixed A4 dimensions
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.width = '210mm'; // Standard A4 width
-    container.style.zIndex = '-9999'; // Hide behind everything
-    // Ensure visibility is technically 'visible' so html2canvas renders it
-    container.style.visibility = 'visible'; 
-    container.style.backgroundColor = invoiceStyle.backgroundColor; // Ensure background is captured
+    setIsGeneratingPdf(true);
 
-    // Deep clone the invoice content
-    const clone = element.cloneNode(true) as HTMLElement;
-    
-    // Reset specific styles on the clone to ensure flow layout works in the new container
-    clone.style.transform = 'none';
-    clone.style.margin = '0';
-    clone.style.boxShadow = 'none';
-    clone.style.width = '100%'; // Fill the 210mm container
-    clone.style.height = 'auto'; 
-    clone.style.minHeight = '297mm'; // Minimum A4 height
-    clone.style.position = 'relative';
-
-    // Add to DOM
-    container.appendChild(clone);
-    document.body.appendChild(container);
-
-    // Wait for layout and styles to settle (fonts, images)
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Calculate dimensions based on the container (A4 width)
-    const width = container.offsetWidth;
-    // Use the clone's actual height to support variable length invoices (avoid cutting off)
-    const height = clone.scrollHeight; 
-
-    const opt = {
-      margin: 0,
-      filename: `invoice-${data.invoiceNumber}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        backgroundColor: invoiceStyle.backgroundColor,
-        width: width,
-        height: height,
-        windowWidth: width,
-        windowHeight: height,
-        x: 0,
-        y: 0,
-        scrollX: 0,
-        scrollY: 0
-      },
-      jsPDF: { 
-        unit: 'px', 
-        format: [width, height], // Custom format to fit content exactly
-        orientation: 'portrait',
-        compress: true
-      }
-    };
+    if (!apiBase) {
+      console.error('Missing VITE_TMR_API_URL');
+      setIsGeneratingPdf(false);
+      return;
+    }
 
     try {
-      // @ts-ignore
-      await window.html2pdf().set(opt).from(clone).save();
-    } catch (err) {
-      console.error('PDF export failed', err);
-    } finally {
-      // Cleanup
-      if (document.body.contains(container)) {
-        document.body.removeChild(container);
+      const clone = element.cloneNode(true) as HTMLElement;
+
+      const isSelectorUsed = (selector: string) => {
+        if (!selector) return false;
+        if (selector.includes('body') || selector.includes('html') || selector.includes(':root')) return true;
+        try {
+          if (clone.matches && clone.matches(selector)) return true;
+          return !!clone.querySelector(selector);
+        } catch (err) {
+          return false;
+        }
+      };
+
+      const collectRules = (rules: CSSRuleList | undefined): string[] => {
+        const collected: string[] = [];
+        if (!rules) return collected;
+
+        Array.from(rules).forEach((rule) => {
+          switch (rule.type) {
+            case CSSRule.STYLE_RULE: {
+              const styleRule = rule as CSSStyleRule;
+              if (isSelectorUsed(styleRule.selectorText)) {
+                collected.push(styleRule.cssText);
+              }
+              break;
+            }
+            case CSSRule.MEDIA_RULE: {
+              const mediaRule = rule as CSSMediaRule;
+              const inner = collectRules(mediaRule.cssRules);
+              if (inner.length) {
+                collected.push(`@media ${mediaRule.conditionText} { ${inner.join(' ')} }`);
+              }
+              break;
+            }
+            case CSSRule.SUPPORTS_RULE: {
+              const supportsRule = rule as CSSSupportsRule;
+              const inner = collectRules(supportsRule.cssRules);
+              if (inner.length) {
+                collected.push(`@supports ${supportsRule.conditionText} { ${inner.join(' ')} }`);
+              }
+              break;
+            }
+            case CSSRule.FONT_FACE_RULE:
+            case CSSRule.KEYFRAMES_RULE: {
+              collected.push(rule.cssText);
+              break;
+            }
+            default:
+              collected.push(rule.cssText);
+              break;
+          }
+        });
+
+        return collected;
+      };
+
+      const collectedCss: string[] = [];
+
+      Array.from(document.styleSheets).forEach((sheet) => {
+        try {
+          const rules = sheet.cssRules;
+          collectedCss.push(...collectRules(rules));
+        } catch (err) {
+          // Ignore cross-origin or unreadable stylesheets
+        }
+      });
+
+      const finalCss = collectedCss.join('\n');
+      const htmlContent = clone.outerHTML;
+
+      const finalHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+${finalCss}
+</style>
+</head>
+<body>
+${htmlContent}
+</body>
+</html>`;
+
+      const response = await fetch(`${apiBase}/api/vite-invoice/generate-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: finalHtml,
+          invoiceNumber: data.invoiceNumber,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
       }
+
+      const buffer = await response.arrayBuffer();
+      const blob = new Blob([buffer], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice-${data.invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF generation failed', err);
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -162,10 +218,18 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
     <div className="absolute top-6 -right-16 no-print z-50 flex flex-col gap-2 group-hover:opacity-100 transition-opacity" data-html2canvas-ignore>
         <button 
           onClick={handleDownloadPdf}
-          className="flex items-center justify-center w-10 h-10 bg-moss-700 text-gold-300 rounded-full hover:bg-moss-600 hover:scale-110 transition-all shadow-lg border border-white/10"
+          disabled={isGeneratingPdf}
+          className={`flex items-center justify-center h-10 bg-moss-700 text-gold-300 rounded-full transition-all shadow-lg border border-white/10 ${isGeneratingPdf ? 'opacity-50 pointer-events-none px-4' : 'w-10 hover:bg-moss-600 hover:scale-110'}`}
           title="Download PDF"
         >
-          <Download size={18} />
+          {isGeneratingPdf ? (
+            <div className="flex items-center gap-2">
+              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+              <span className="text-xs font-semibold">Generating PDF...</span>
+            </div>
+          ) : (
+            <Download size={18} />
+          )}
         </button>
         <button 
           onClick={() => window.print()}

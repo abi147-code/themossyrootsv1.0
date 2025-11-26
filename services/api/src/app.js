@@ -28,6 +28,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://www.themossyroots.com',
   'http://localhost',
   'http://localhost:3000',
+  'http://localhost:5173',
 ];
 
 const parseCorsOrigins = (value) => {
@@ -51,6 +52,7 @@ app.use(
     credentials: true,
   })
 );
+app.options('*', cors());
 console.log(`[cors] Using CORS origin: ${resolvedCorsOrigin}`);
 
 app.use('/uploads', express.static(uploadsRoot));
@@ -93,6 +95,7 @@ const historyRoutes = require('./routes/history');
 const accountRoutes = require('./routes/account');
 const brandRoutes = require('./routes/brand');
 const adminRoutes = require('./routes/admin');
+const viteInvoiceRoutes = require('./routes/viteInvoice');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', authMiddleware, userRoutes);
@@ -104,6 +107,7 @@ app.use('/api/admin', authMiddleware, adminRoutes);
 app.use('/api/account', accountRoutes);
 app.use('/api/brand', brandRoutes);
 app.use('/api/billing', billingRoutes);
+app.use('/api/vite-invoice', viteInvoiceRoutes);
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not Found' }));
 
