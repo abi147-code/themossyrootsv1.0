@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { InvoiceData, MarketingBannerData } from '../types';
 import { Printer, Download } from 'lucide-react';
 import QRCode from 'react-qr-code';
@@ -17,6 +17,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
   const template = data.template || 'luxury';
   const apiBase = (import.meta.env.VITE_TMR_API_URL || '').replace(/\/+$/, '');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const luxuryTitleRef = useRef<HTMLHeadingElement | null>(null);
   
   // Dynamic invoice styles based on user selection
   const invoiceStyle = {
@@ -107,7 +108,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
       });
 
       const finalCss = collectedCss.join('\n');
-      const htmlContent = clone.outerHTML;
+      const contentHeight = clone.scrollHeight;
+      const maxAllowedHeight = 1122; // Approx A4 height in px at 96dpi (297mm)
+      let htmlContent = clone.outerHTML;
+
+      if (template === 'luxury' && contentHeight > maxAllowedHeight) {
+        const scale = maxAllowedHeight / contentHeight;
+        htmlContent = `<div style="transform: scale(${scale}); transform-origin: top center; width: 100%; height: auto;">${htmlContent}</div>`;
+      }
 
       const finalHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -561,6 +569,7 @@ ${htmlContent}
   if (template === 'luxury') {
     const formattedTotal = formatCurrency(total);
     const totalLen = formattedTotal.length;
+    const title = (data as any).title ?? 'INVOICE';
     // Dynamically scale font size to keep on one line
     const totalSizeClass = totalLen > 16 
         ? 'text-2xl md:text-3xl' 
@@ -572,33 +581,66 @@ ${htmlContent}
       <div className={wrapperClasses}>
         {showControls && <ActionButtons />}
         <div id="invoice-content" className={`${innerClasses} ${fonts.body}`} style={invoiceStyle}>
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-current opacity-[0.02] rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+          {/* Safe Blur Background */}
+          <div
+            className="
+              absolute
+              top-[-200px]
+              right-[-200px]
+              w-[600px]
+              h-[600px]
+              rounded-full
+              bg-current
+              opacity-[0.15]
+              blur-[200px]
+              pointer-events-none
+              z-0
+            "
+          />
 
           <div className="p-12 md:p-16 flex-grow flex flex-col relative z-10">
-            <header className="flex flex-col md:flex-row justify-between items-end border-b border-current/20 pb-6 mb-12 gap-6">
-              <div className="flex flex-col">
-                <h1 className={`text-[5rem] md:text-[7rem] leading-[0.8] font-black tracking-tighter opacity-90 ${fonts.title}`}>
-                  INVOICE
-                </h1>
-                <div className="flex items-center gap-4 pl-2 mt-2">
-                  <span className={`text-xs uppercase tracking-[0.2em] opacity-60 ${fonts.accent}`}>
-                    Issue No. {data.invoiceNumber}
-                  </span>
-                  <span className="h-px w-12 bg-current opacity-30"></span>
-                </div>
-              </div>
-              <div className="text-right mb-2 flex flex-col items-end">
+            <div className="flex flex-col min-h-0 flex-shrink overflow-hidden">
+            <header className="flex flex-col md:flex-row justify-between items-start mb-12 gap-6 flex-shrink-0">
+              <div className="flex flex-col gap-2 flex-shrink-0">
                 {data.logoUrl && (
-                  <div className="mb-4">
-                    <img src={data.logoUrl} alt="Brand Logo" className="h-16 w-auto object-contain" />
-                  </div>
+                  <img
+                    src={data.logoUrl}
+                    alt="Logo"
+                    className="h-20 w-auto object-contain self-start"
+                  />
                 )}
-                <h2 className={`text-2xl md:text-3xl italic ${fonts.header}`}>{data.senderName || 'Sender Name'}</h2>
+              </div>
+
+              <div className="flex flex-col items-end flex-shrink-0">
+                <h1
+                  ref={luxuryTitleRef}
+                  className={`text-[4rem] md:text-[6rem] leading-none font-serif font-bold tracking-tight text-right opacity-90 ${fonts.title}`}
+                  style={{
+                    flexShrink: 0,
+                    maxHeight: "140px",
+                    overflow: "hidden"
+                  }}
+                >
+                  {title || "---"}
+                </h1>
+                <div
+                  className="
+                    text-sm
+                    md:text-base
+                    opacity-70
+                    flex-shrink-0
+                    overflow-hidden
+                    leading-tight
+                    mt-1
+                  "
+                >
+                  Invoice #{data.invoiceNumber}
+                </div>
               </div>
             </header>
 
             <div className="grid grid-cols-12 gap-8 mb-16">
-              <div className="col-span-12 md:col-span-4 lg:col-span-3 space-y-8 md:pr-8">
+              <div className="col-span-12 md:col-span-5 lg:col-span-5 space-y-8 md:pr-8">
                 <div className="group">
                    <h6 className={`text-[10px] uppercase tracking-widest opacity-40 mb-2 ${fonts.accent}`}>Issued Date</h6>
                    <p className={`text-xl ${fonts.header}`}>{data.date}</p>
@@ -609,20 +651,55 @@ ${htmlContent}
                 </div>
                 <div className="pt-8 border-t border-current/10 group">
                   <h6 className={`text-[10px] uppercase tracking-widest opacity-40 mb-3 ${fonts.accent}`}>From</h6>
+                  {/* Business Name — 4px smaller than Bill To business name */}
+                  <div
+                    className="
+                      font-semibold
+                      text-base
+                      opacity-85
+                      mb-1
+                      leading-tight
+                      whitespace-normal
+                      break-words
+                      overflow-visible
+                    "
+                  >
+                    {((data as any)?.from?.businessName) || data.senderName}
+                  </div>
                   <div className="text-sm opacity-80 leading-relaxed whitespace-pre-wrap font-light">{data.senderAddress}</div>
-                  <div className={`text-sm opacity-60 mt-2 text-xs ${fonts.accent}`}>{data.senderEmail}</div>
+                  <p
+                    className="text-sm text-current/60 mt-2"
+                    style={{
+                      whiteSpace: 'nowrap',
+                      overflow: 'visible',
+                      fontSize: 'clamp(10px, 1.2vw, 14px)',
+                    }}
+                  >
+                    {data.senderEmail}
+                  </p>
                 </div>
               </div>
 
-              <div className="col-span-12 md:col-span-8 lg:col-span-9 md:pl-4">
+              <div className="col-span-12 md:col-span-7 lg:col-span-7 md:pl-4">
                 <div className="mb-2 flex items-center gap-2 opacity-40">
                    <h6 className={`text-[10px] uppercase tracking-widest ${fonts.accent}`}>Billed To</h6>
                    <div className="h-px flex-grow bg-current"></div>
                 </div>
                 <h2 className={`text-4xl md:text-5xl mb-6 leading-tight ${fonts.header}`}>{data.clientName || 'Client Name'}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <div className="text-base opacity-70 leading-relaxed whitespace-pre-wrap max-w-xs">{data.clientAddress}</div>
-                   <div className="text-base opacity-70">{data.clientEmail}</div>
+                   <div className="text-base opacity-70 leading-relaxed whitespace-pre-wrap max-w-xs">
+                     {data.clientAddress}
+                     <p
+                       className="text-sm text-current/60 mt-2"
+                       style={{
+                         whiteSpace: 'nowrap',
+                         overflow: 'visible',
+                         fontSize: 'clamp(10px, 1.2vw, 14px)',
+                       }}
+                     >
+                       {data.clientEmail}
+                     </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -651,7 +728,6 @@ ${htmlContent}
                 </tbody>
               </table>
             </div>
-
             <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-12 print:break-inside-avoid">
               <div className="w-full md:max-w-md flex flex-col gap-8">
                 {data.notes && (
@@ -681,10 +757,10 @@ ${htmlContent}
                 </div>
               </div>
             </div>
-            
+            </div>
+
           </div>
 
-          <div className="flex-grow"></div>
           {/* Full width banner placed outside padded container */}
           <MarketingBanner className="mt-auto w-full rounded-none" />
         </div>
@@ -798,8 +874,8 @@ ${htmlContent}
                 </div>
               </div>
             </div>
-            
             <div className="flex-grow"></div>
+
             <MarketingBanner />
           </div>
         </div>
@@ -835,6 +911,7 @@ ${htmlContent}
                     <h6 className="text-xs uppercase tracking-widest opacity-50 mb-1">Bill To</h6>
                     <h3 className={`text-xl font-bold mb-2 ${fonts.header}`}>{data.clientName || 'Client Name'}</h3>
                     <p className="text-sm opacity-70 whitespace-pre-wrap">{data.clientAddress}</p>
+                    <p className="text-sm opacity-70 mt-2">{data.clientEmail}</p>
                  </div>
                  
                  <div className="flex flex-col items-center md:items-end">
