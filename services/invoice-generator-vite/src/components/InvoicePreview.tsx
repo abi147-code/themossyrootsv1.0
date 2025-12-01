@@ -109,14 +109,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
     });
 
     const finalCss = collectedCss.join('\n');
-    const contentHeight = clone.scrollHeight;
-    const maxAllowedHeight = 1122; // Approx A4 height in px at 96dpi (297mm)
     let htmlContent = clone.outerHTML;
-
-    if (template === 'luxury' && contentHeight > maxAllowedHeight) {
-      const scale = contentHeight ? maxAllowedHeight / contentHeight : 1;
-      htmlContent = `<div style="transform: scale(${scale}); transform-origin: top center; width: 100%; height: auto;">${htmlContent}</div>`;
-    }
 
     const finalHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -405,6 +398,7 @@ ${htmlContent}
 
   const PaymentWidget = () => {
     if (!data.paymentLink) return null;
+    if (template === 'luxury' && data.paymentMethod !== 'button') return null;
     
     if (data.paymentMethod === 'button') {
       return (
@@ -426,14 +420,29 @@ ${htmlContent}
       );
     }
     
+    const qrWrapperStyle: React.CSSProperties = {
+      pageBreakInside: 'avoid',
+      breakInside: 'avoid',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+    };
+
+    const qrCodeStyle: React.CSSProperties = {
+      height: 'auto',
+      maxWidth: '160px',
+      width: '100%',
+      marginTop: '16px',
+    };
+
     // QR Code Style
     return (
-       <div className="flex flex-col items-center w-fit">
+       <div id="qr-wrapper" className="flex flex-col items-center w-fit print:break-inside-avoid" style={qrWrapperStyle}>
            <div className="bg-white p-3 inline-block rounded-lg shadow-sm border border-black/5">
                <QRCode 
                  value={data.paymentLink} 
-                 size={100} 
-                 style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                 size={160}
+                 style={qrCodeStyle}
                  viewBox={`0 0 256 256`}
                  fgColor="#000000" 
                  bgColor="#ffffff"

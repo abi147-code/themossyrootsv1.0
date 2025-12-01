@@ -388,13 +388,15 @@ export const Editor: React.FC<EditorProps> = ({
                   {invoiceData.paymentLink && (
                     <>
                       <div className="grid grid-cols-2 gap-2">
-                         <button 
-                           onClick={() => handleChange('paymentMethod', 'qr')}
-                           className={`flex items-center justify-center gap-2 py-2 px-2 rounded border text-xs transition-all ${invoiceData.paymentMethod !== 'button' ? 'bg-moss-600 border-moss-500 text-white' : 'bg-transparent border-white/10 text-porcelain/60 hover:bg-white/5'}`}
-                         >
-                           <QrCode size={14} />
-                           QR Code
-                         </button>
+                        {invoiceData.template !== 'luxury' && (
+                           <button 
+                             onClick={() => handleChange('paymentMethod', 'qr')}
+                             className={`flex items-center justify-center gap-2 py-2 px-2 rounded border text-xs transition-all ${invoiceData.paymentMethod !== 'button' ? 'bg-moss-600 border-moss-500 text-white' : 'bg-transparent border-white/10 text-porcelain/60 hover:bg-white/5'}`}
+                           >
+                             <QrCode size={14} />
+                             QR Code
+                           </button>
+                        )}
                          <button 
                            onClick={() => handleChange('paymentMethod', 'button')}
                            className={`flex items-center justify-center gap-2 py-2 px-2 rounded border text-xs transition-all ${invoiceData.paymentMethod === 'button' ? 'bg-moss-600 border-moss-500 text-white' : 'bg-transparent border-white/10 text-porcelain/60 hover:bg-white/5'}`}
