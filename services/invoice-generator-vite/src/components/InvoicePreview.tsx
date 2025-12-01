@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { InvoiceData, MarketingBannerData } from '../types';
-import { Printer, Download } from 'lucide-react';
+import { Printer, Download, Send } from 'lucide-react';
 import QRCode from 'react-qr-code';
 
 interface InvoicePreviewProps {
@@ -17,12 +17,122 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
   const template = data.template || 'luxury';
   const apiBase = (import.meta.env.VITE_TMR_API_URL || '').replace(/\/+$/, '');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [emailTo, setEmailTo] = useState<string>('');
+  const [emailSubject, setEmailSubject] = useState<string>(
+    data.invoiceNumber ? `Invoice ${data.invoiceNumber}` : 'Your invoice'
+  );
+  const [emailMessage, setEmailMessage] = useState<string>('');
   const luxuryTitleRef = useRef<HTMLHeadingElement | null>(null);
+  const emailInputRef = useRef<HTMLInputElement | null>(null);
   
   // Dynamic invoice styles based on user selection
   const invoiceStyle = {
     backgroundColor: data.invoiceBackgroundColor || '#ffffff',
     color: data.invoiceTextColor || '#1e293b',
+  };
+
+  useEffect(() => {
+    if (showEmailForm && emailInputRef.current) {
+      const node = emailInputRef.current;
+      node.focus({ preventScroll: true });
+    }
+  }, [showEmailForm]);
+
+  const buildInvoiceHtml = (element: HTMLElement) => {
+    const clone = element.cloneNode(true) as HTMLElement;
+
+    const isSelectorUsed = (selector: string) => {
+      if (!selector) return false;
+      if (selector.includes('body') || selector.includes('html') || selector.includes(':root')) return true;
+      try {
+        if (clone.matches && clone.matches(selector)) return true;
+        return !!clone.querySelector(selector);
+      } catch (_err) {
+        return false;
+      }
+    };
+
+    const collectRules = (rules: CSSRuleList | undefined): string[] => {
+      const collected: string[] = [];
+      if (!rules) return collected;
+
+      Array.from(rules).forEach((rule) => {
+        switch (rule.type) {
+          case CSSRule.STYLE_RULE: {
+            const styleRule = rule as CSSStyleRule;
+            if (isSelectorUsed(styleRule.selectorText)) {
+              collected.push(styleRule.cssText);
+            }
+            break;
+          }
+          case CSSRule.MEDIA_RULE: {
+            const mediaRule = rule as CSSMediaRule;
+            const inner = collectRules(mediaRule.cssRules);
+            if (inner.length) {
+              collected.push(`@media ${mediaRule.conditionText} { ${inner.join(' ')} }`);
+            }
+            break;
+          }
+          case CSSRule.SUPPORTS_RULE: {
+            const supportsRule = rule as CSSSupportsRule;
+            const inner = collectRules(supportsRule.cssRules);
+            if (inner.length) {
+              collected.push(`@supports ${supportsRule.conditionText} { ${inner.join(' ')} }`);
+            }
+            break;
+          }
+          case CSSRule.FONT_FACE_RULE:
+          case CSSRule.KEYFRAMES_RULE: {
+            collected.push(rule.cssText);
+            break;
+          }
+          default:
+            collected.push(rule.cssText);
+            break;
+        }
+      });
+
+      return collected;
+    };
+
+    const collectedCss: string[] = [];
+
+    Array.from(document.styleSheets).forEach((sheet) => {
+      try {
+        const rules = sheet.cssRules;
+        collectedCss.push(...collectRules(rules));
+      } catch (_err) {
+        // Ignore cross-origin or unreadable stylesheets
+      }
+    });
+
+    const finalCss = collectedCss.join('\n');
+    const contentHeight = clone.scrollHeight;
+    const maxAllowedHeight = 1122; // Approx A4 height in px at 96dpi (297mm)
+    let htmlContent = clone.outerHTML;
+
+    if (template === 'luxury' && contentHeight > maxAllowedHeight) {
+      const scale = contentHeight ? maxAllowedHeight / contentHeight : 1;
+      htmlContent = `<div style="transform: scale(${scale}); transform-origin: top center; width: 100%; height: auto;">${htmlContent}</div>`;
+    }
+
+    const finalHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+${finalCss}
+</style>
+</head>
+<body>
+${htmlContent}
+</body>
+</html>`;
+
+    return finalHtml;
   };
 
   const handleDownloadPdf = async () => {
@@ -40,96 +150,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
     }
 
     try {
-      const clone = element.cloneNode(true) as HTMLElement;
-
-      const isSelectorUsed = (selector: string) => {
-        if (!selector) return false;
-        if (selector.includes('body') || selector.includes('html') || selector.includes(':root')) return true;
-        try {
-          if (clone.matches && clone.matches(selector)) return true;
-          return !!clone.querySelector(selector);
-        } catch (err) {
-          return false;
-        }
-      };
-
-      const collectRules = (rules: CSSRuleList | undefined): string[] => {
-        const collected: string[] = [];
-        if (!rules) return collected;
-
-        Array.from(rules).forEach((rule) => {
-          switch (rule.type) {
-            case CSSRule.STYLE_RULE: {
-              const styleRule = rule as CSSStyleRule;
-              if (isSelectorUsed(styleRule.selectorText)) {
-                collected.push(styleRule.cssText);
-              }
-              break;
-            }
-            case CSSRule.MEDIA_RULE: {
-              const mediaRule = rule as CSSMediaRule;
-              const inner = collectRules(mediaRule.cssRules);
-              if (inner.length) {
-                collected.push(`@media ${mediaRule.conditionText} { ${inner.join(' ')} }`);
-              }
-              break;
-            }
-            case CSSRule.SUPPORTS_RULE: {
-              const supportsRule = rule as CSSSupportsRule;
-              const inner = collectRules(supportsRule.cssRules);
-              if (inner.length) {
-                collected.push(`@supports ${supportsRule.conditionText} { ${inner.join(' ')} }`);
-              }
-              break;
-            }
-            case CSSRule.FONT_FACE_RULE:
-            case CSSRule.KEYFRAMES_RULE: {
-              collected.push(rule.cssText);
-              break;
-            }
-            default:
-              collected.push(rule.cssText);
-              break;
-          }
-        });
-
-        return collected;
-      };
-
-      const collectedCss: string[] = [];
-
-      Array.from(document.styleSheets).forEach((sheet) => {
-        try {
-          const rules = sheet.cssRules;
-          collectedCss.push(...collectRules(rules));
-        } catch (err) {
-          // Ignore cross-origin or unreadable stylesheets
-        }
-      });
-
-      const finalCss = collectedCss.join('\n');
-      const contentHeight = clone.scrollHeight;
-      const maxAllowedHeight = 1122; // Approx A4 height in px at 96dpi (297mm)
-      let htmlContent = clone.outerHTML;
-
-      if (template === 'luxury' && contentHeight > maxAllowedHeight) {
-        const scale = maxAllowedHeight / contentHeight;
-        htmlContent = `<div style="transform: scale(${scale}); transform-origin: top center; width: 100%; height: auto;">${htmlContent}</div>`;
-      }
-
-      const finalHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-${finalCss}
-</style>
-</head>
-<body>
-${htmlContent}
-</body>
-</html>`;
+      const finalHtml = buildInvoiceHtml(element);
 
       const response = await fetch(`${apiBase}/api/vite-invoice/generate-pdf`, {
         method: 'POST',
@@ -160,6 +181,70 @@ ${htmlContent}
       console.error('PDF generation failed', err);
     } finally {
       setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (isSendingEmail) return;
+
+    const element = document.getElementById('invoice-content');
+    if (!element) {
+      alert('Unable to locate invoice content.');
+      return;
+    }
+
+    if (!apiBase) {
+      alert('Missing API base URL (VITE_TMR_API_URL).');
+      return;
+    }
+
+    const trimmedTo = emailTo.trim();
+    const trimmedSubject =
+      (emailSubject || '').trim() ||
+      (data.invoiceNumber ? `Invoice ${data.invoiceNumber}` : 'Invoice');
+
+    if (!trimmedTo || !trimmedTo.includes('@')) {
+      alert('Please enter a valid recipient email.');
+      return;
+    }
+
+    if (!trimmedSubject) {
+      alert('Subject is required.');
+      return;
+    }
+
+    const invoiceNumber = data.invoiceNumber || 'invoice';
+
+    setIsSendingEmail(true);
+    try {
+      const finalHtml = buildInvoiceHtml(element);
+
+      const response = await fetch(`${apiBase}/api/vite-invoice/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: finalHtml,
+          invoiceNumber,
+          toEmail: trimmedTo,
+          subject: trimmedSubject,
+          message: emailMessage,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to send invoice email');
+      }
+
+      alert('Invoice email sent.');
+      setShowEmailForm(false);
+    } catch (err) {
+      console.error('Invoice email send failed', err);
+      alert('Failed to send invoice email.');
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -221,31 +306,100 @@ ${htmlContent}
 
   const fonts = getFonts();
 
-  // Common Components
-  const ActionButtons = () => (
+  const actionButtons = (
     <div className="absolute top-6 -right-16 no-print z-50 flex flex-col gap-2 group-hover:opacity-100 transition-opacity" data-html2canvas-ignore>
-        <button 
-          onClick={handleDownloadPdf}
-          disabled={isGeneratingPdf}
-          className={`flex items-center justify-center h-10 bg-moss-700 text-gold-300 rounded-full transition-all shadow-lg border border-white/10 ${isGeneratingPdf ? 'opacity-50 pointer-events-none px-4' : 'w-10 hover:bg-moss-600 hover:scale-110'}`}
-          title="Download PDF"
+      <button 
+        type="button"
+        onClick={handleDownloadPdf}
+        disabled={isGeneratingPdf}
+        className={`flex items-center justify-center h-10 bg-moss-700 text-gold-300 rounded-full transition-all shadow-lg border border-white/10 ${isGeneratingPdf ? 'opacity-50 pointer-events-none px-4' : 'w-10 hover:bg-moss-600 hover:scale-110'}`}
+        title="Download PDF"
+      >
+        {isGeneratingPdf ? (
+          <div className="flex items-center gap-2">
+            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+            <span className="text-xs font-semibold">Generating PDF...</span>
+          </div>
+        ) : (
+          <Download size={18} />
+        )}
+      </button>
+      <button 
+        type="button"
+        onClick={() => window.print()}
+        className="flex items-center justify-center w-10 h-10 bg-ink text-porcelain rounded-full hover:bg-black hover:scale-110 transition-all shadow-lg border border-white/10"
+        title="Print"
+      >
+        <Printer size={18} />
+      </button>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setShowEmailForm(true)}
+          disabled={isSendingEmail}
+          className={`flex items-center justify-center h-10 bg-gold-300 text-ink rounded-full transition-all shadow-lg border border-white/10 ${isSendingEmail ? 'opacity-50 pointer-events-none px-4' : 'w-10 hover:bg-gold-200 hover:scale-110'}`}
+          title="Send via email"
         >
-          {isGeneratingPdf ? (
+          {isSendingEmail ? (
             <div className="flex items-center gap-2">
-              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-              <span className="text-xs font-semibold">Generating PDF...</span>
+              <div className="animate-spin h-4 w-4 border-2 border-black border-t-transparent rounded-full" />
+              <span className="text-xs font-semibold">Sending...</span>
             </div>
           ) : (
-            <Download size={18} />
+            <Send size={18} />
           )}
         </button>
-        <button 
-          onClick={() => window.print()}
-          className="flex items-center justify-center w-10 h-10 bg-ink text-porcelain rounded-full hover:bg-black hover:scale-110 transition-all shadow-lg border border-white/10"
-          title="Print"
+        <div
+          className={`absolute right-full mr-3 top-0 w-64 bg-white text-slate-900 shadow-2xl rounded-xl border border-black/10 p-3 space-y-2 ${showEmailForm ? 'block' : 'hidden'}`}
         >
-          <Printer size={18} />
-        </button>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-slate-800">Send invoice</span>
+              <button
+                type="button"
+                className="text-xs text-slate-500 hover:text-slate-700"
+                onClick={() => setShowEmailForm(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] uppercase tracking-wide text-slate-600">To</label>
+              <input
+                type="email"
+                ref={emailInputRef}
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+                placeholder="customer@example.com"
+                className="w-full text-sm px-2 py-1 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] uppercase tracking-wide text-slate-600">Subject</label>
+              <input
+                type="text"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                className="w-full text-sm px-2 py-1 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] uppercase tracking-wide text-slate-600">Message (optional)</label>
+              <textarea
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                rows={3}
+                className="w-full text-sm px-2 py-1 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400 resize-none"
+              />
+            </div>
+            <button
+              onClick={handleSendEmail}
+              disabled={isSendingEmail}
+              className={`w-full flex items-center justify-center h-9 rounded-md font-semibold transition-colors ${isSendingEmail ? 'bg-moss-800 text-gold-200 opacity-70' : 'bg-moss-700 text-gold-300 hover:bg-moss-600'}`}
+            >
+              {isSendingEmail ? 'Sending...' : 'Send Email'}
+            </button>
+        </div>
+      </div>
     </div>
   );
 
@@ -439,7 +593,7 @@ ${htmlContent}
 
     return (
         <div className={wrapperClasses}>
-            {showControls && <ActionButtons />}
+            {showControls && actionButtons}
             <div id="invoice-content" className={`${innerClasses} ${fonts.body}`} style={invoiceStyle}>
                 {/* Geometric Background Elements */}
                 <div className="absolute top-0 right-0 w-[80%] h-[40%] bg-current opacity-[0.03] clip-path-polygon-[0_0,100%_0,100%_100%,20%_100%] pointer-events-none"></div>
@@ -579,7 +733,7 @@ ${htmlContent}
 
     return (
       <div className={wrapperClasses}>
-        {showControls && <ActionButtons />}
+        {showControls && actionButtons}
         <div id="invoice-content" className={`${innerClasses} ${fonts.body}`} style={invoiceStyle}>
           {/* Safe Blur Background */}
           <div
@@ -772,7 +926,7 @@ ${htmlContent}
   if (template === 'professional') {
     return (
       <div className={wrapperClasses}>
-        {showControls && <ActionButtons />}
+        {showControls && actionButtons}
         <div id="invoice-content" className={`${innerClasses} ${fonts.body}`} style={invoiceStyle}>
           
           {/* Professional Header Bar */}
@@ -887,7 +1041,7 @@ ${htmlContent}
   if (template === 'classic') {
     return (
       <div className={wrapperClasses}>
-        {showControls && <ActionButtons />}
+        {showControls && actionButtons}
         <div id="invoice-content" className={`${innerClasses} ${fonts.body} p-8`} style={invoiceStyle}>
           
           {/* Removed heavy border, keeping padding */}
