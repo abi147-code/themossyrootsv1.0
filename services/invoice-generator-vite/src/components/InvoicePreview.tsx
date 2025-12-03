@@ -223,6 +223,11 @@ ${htmlContent}
           toEmail: trimmedTo,
           subject: trimmedSubject,
           message: emailMessage,
+          senderName: (data as any)?.from?.businessName || data.senderName,
+          senderEmail: data.senderEmail,
+          senderAddress: data.senderAddress,
+          amount: total,
+          currency: data.currency,
         }),
       });
 
