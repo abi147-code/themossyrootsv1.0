@@ -63,9 +63,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   }
 
-  const sidebarWidth = navCollapsed ? 'w-16' : 'w-56';
-  const contentOffset = navCollapsed ? 'pl-16' : 'pl-56';
-  const navWidthValue = navCollapsed ? '4rem' : '14rem';
+  const sidebarWidth = navCollapsed ? 'w-16' : 'w-64';
+  const contentOffset = navCollapsed ? 'pl-16' : 'pl-64';
+  const navWidthValue = navCollapsed ? '4rem' : '16rem';
 
   return (
     <div
@@ -83,7 +83,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <p className="text-[10px] uppercase tracking-[0.4em] text-sky-400/70">Tools</p>
           <h2 className="mt-3 text-lg font-semibold text-white">Dashboard</h2>
         </div>
-        <nav className="flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden px-2 py-6">
+        <nav className="flex flex-1 flex-col gap-2 overflow-y-auto px-2 py-6">
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -93,24 +93,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 key={item.href}
                 href={item.href}
                 className={clsx(
-                  'group flex items-center overflow-hidden rounded-xl border py-2 text-xs font-semibold uppercase tracking-[0.35em] transition',
-                  navCollapsed ? 'justify-center gap-0 px-0' : 'justify-start gap-3 px-3',
+                  'group flex w-full items-center rounded-xl border text-xs font-semibold uppercase tracking-[0.35em] transition',
+                  navCollapsed ? 'justify-center gap-0 px-2 py-2' : 'justify-start gap-2 px-3 py-3',
                   isActive
                     ? 'border-sky-500/60 bg-sky-500/15 text-sky-200 shadow-[0_10px_25px_rgba(56,189,248,0.25)]'
                     : 'border-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-900/70 hover:text-slate-200'
                 )}
+                aria-label={item.label}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700/70 bg-slate-900/70 text-[10px] font-semibold uppercase tracking-[0.4em] text-slate-300">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700/70 bg-slate-900/70 text-[10px] font-semibold uppercase tracking-[0.4em] text-slate-300">
                   {item.label.slice(0, 1)}
                 </span>
-                <span
-                  className={clsx(
-                    'whitespace-nowrap text-[11px] tracking-[0.4em] transition-all duration-200',
-                    navCollapsed ? 'pointer-events-none w-0 opacity-0' : 'w-auto opacity-100'
-                  )}
-                >
-                  {item.label}
-                </span>
+                {!navCollapsed ? (
+                  <span className="flex-1 whitespace-nowrap text-[11px] tracking-[0.4em] transition-all duration-200">
+                    {item.label}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
