@@ -4,6 +4,11 @@ const dotenv = require('dotenv');
 const { PrismaClient } = require('@prisma/client');
 const authMiddleware = require('./middleware/auth');
 const { uploadsRoot } = require('./utils/avatar');
+const {
+  tempAssetRoot,
+  ensureTempAssetDir,
+  scheduleTempAssetCleanup,
+} = require('./utils/tempAssets');
 const ensureAdminUser = require('./utils/ensureAdminUser');
 
 dotenv.config();
@@ -55,7 +60,10 @@ app.use(
 app.options('*', cors());
 console.log(`[cors] Using CORS origin: ${resolvedCorsOrigin}`);
 
+ensureTempAssetDir();
+scheduleTempAssetCleanup();
 app.use('/uploads', express.static(uploadsRoot));
+app.use('/temp-assets', express.static(tempAssetRoot));
 
 // Stripe webhook must remain raw before JSON parsing
 app.use('/api/billing/stripe/webhook', express.raw({ type: 'application/json' }));
@@ -96,6 +104,7 @@ const accountRoutes = require('./routes/account');
 const brandRoutes = require('./routes/brand');
 const adminRoutes = require('./routes/admin');
 const viteInvoiceRoutes = require('./routes/viteInvoice');
+const tempAssetUploadRoutes = require('./routes/tempAssetUpload');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', authMiddleware, userRoutes);
@@ -108,6 +117,7 @@ app.use('/api/account', accountRoutes);
 app.use('/api/brand', brandRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/vite-invoice', viteInvoiceRoutes);
+app.use('/api/vite-invoice', tempAssetUploadRoutes);
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not Found' }));
 

@@ -16,6 +16,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
   const total = subtotal + taxAmount;
   const template = data.template || 'luxury';
   const apiBase = (import.meta.env.VITE_TMR_API_URL || '').replace(/\/+$/, '');
+  const PUBLIC_API_URL = (import.meta.env.VITE_PUBLIC_API_URL || '').replace(/\/+$/, '');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -24,8 +25,18 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
     data.invoiceNumber ? `Invoice ${data.invoiceNumber}` : 'Your invoice'
   );
   const [emailMessage, setEmailMessage] = useState<string>('');
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
   const luxuryTitleRef = useRef<HTMLHeadingElement | null>(null);
   const emailInputRef = useRef<HTMLInputElement | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000);
+  };
   
   // Dynamic invoice styles based on user selection
   const invoiceStyle = {
@@ -128,6 +139,83 @@ ${htmlContent}
     return finalHtml;
   };
 
+  const dataUrlToBlob = async (dataUrl: string) => {
+    const response = await fetch(dataUrl);
+    if (!response.ok) {
+      throw new Error('Failed to read image data.');
+    }
+    return response.blob();
+  };
+
+  const uploadTempAsset = async (
+    source: string | undefined | null,
+    filenameHint: string
+  ): Promise<{ url: string }> => {
+    const trimmed = (source || '').trim();
+    if (!trimmed) return { url: '' };
+    if (!trimmed.startsWith('data:')) {
+      return /^https?:\/\//i.test(trimmed) ? { url: trimmed } : { url: '' };
+    }
+
+    const blob = await dataUrlToBlob(trimmed);
+    const extension = blob.type === 'image/jpeg' ? 'jpg' : 'png';
+    const formData = new FormData();
+    console.log('Uploading temp asset now:', blob);
+    formData.append('file', blob, `${filenameHint}.${extension}`);
+
+    const uploadResponse = await fetch(`${apiBase}/api/vite-invoice/upload-temp-asset`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      throw new Error(errorText || 'Failed to upload asset.');
+    }
+
+    const json = await uploadResponse.json().catch(() => null);
+    console.log('Upload result:', json);
+    return { url: (json && json.url) || '' };
+  };
+
+  const normalizeAssetUrl = (url: string) => {
+    const trimmed = (url || '').trim();
+    if (!trimmed) return '';
+    if (PUBLIC_API_URL && trimmed.startsWith(PUBLIC_API_URL)) return trimmed;
+
+    const pathStart = trimmed.indexOf('/temp-assets/');
+    if (PUBLIC_API_URL && pathStart !== -1) {
+      const assetPath = trimmed.substring(pathStart);
+      return `${PUBLIC_API_URL}${assetPath}`;
+    }
+
+    if (trimmed.startsWith('http://')) {
+      return trimmed.replace(/^http:\/\//i, 'https://');
+    }
+
+    return trimmed;
+  };
+
+  const toast = showToast ? (
+    <div
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        background: '#14532d',
+        color: '#ffffff',
+        padding: '14px 20px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.18)',
+        fontSize: '14px',
+        zIndex: 9999,
+        transition: 'all 0.3s ease',
+      }}
+    >
+      {toastMessage}
+    </div>
+  ) : null;
+
   const handleDownloadPdf = async () => {
     if (isGeneratingPdf) return;
 
@@ -207,10 +295,30 @@ ${htmlContent}
     }
 
     const invoiceNumber = data.invoiceNumber || 'invoice';
+    const invoiceBgForEmail = (data.invoiceBackgroundColor && data.invoiceBackgroundColor.trim()) || '#0f172a';
 
     setIsSendingEmail(true);
     try {
       const finalHtml = buildInvoiceHtml(element);
+      const logoUploadResult = await uploadTempAsset(data.logoUrl, 'logo');
+      const bannerUploadResult = await uploadTempAsset(banner?.imageUrl, 'banner');
+      const logoUrlForEmail = normalizeAssetUrl(logoUploadResult.url);
+      const bannerImageUrlForEmail = normalizeAssetUrl(bannerUploadResult.url);
+
+      const bannerPayloadBase = banner && typeof banner === 'object' ? banner : { enabled: false, imageUrl: null };
+      const bannerPayload = {
+        enabled: !!bannerPayloadBase.enabled,
+        text: bannerPayloadBase.text || '',
+        backgroundColor: bannerPayloadBase.backgroundColor || '#0f172a',
+        textColor: bannerPayloadBase.textColor || '#ffffff',
+        ctaText: bannerPayloadBase.ctaText || '',
+        ctaLink: bannerPayloadBase.ctaLink || '',
+        ctaBackgroundColor: bannerPayloadBase.ctaBackgroundColor || bannerPayloadBase.textColor || '#ffffff',
+        ctaTextColor: bannerPayloadBase.ctaTextColor || bannerPayloadBase.backgroundColor || '#0f172a',
+        imageUrl: bannerImageUrlForEmail || null,
+      };
+
+      console.log('FINAL BANNER BEFORE SEND:', bannerPayload);
 
       const response = await fetch(`${apiBase}/api/vite-invoice/send-email`, {
         method: 'POST',
@@ -228,6 +336,9 @@ ${htmlContent}
           senderAddress: data.senderAddress,
           amount: total,
           currency: data.currency,
+          invoiceBackgroundColor: invoiceBgForEmail,
+          logoUrl: logoUrlForEmail,
+          banner: bannerPayload,
         }),
       });
 
@@ -236,7 +347,7 @@ ${htmlContent}
         throw new Error(errorText || 'Failed to send invoice email');
       }
 
-      alert('Invoice email sent.');
+      triggerToast('Invoice email sent successfully!');
       setShowEmailForm(false);
     } catch (err) {
       console.error('Invoice email send failed', err);
@@ -528,14 +639,18 @@ ${htmlContent}
 
   if (viewMode === 'banner') {
       return (
+        <>
           <div className="w-full mx-auto shadow-2xl rounded-sm overflow-hidden transform transition-transform hover:scale-[1.01]">
               <MarketingBanner className="rounded-sm" />
           </div>
+          {toast}
+        </>
       )
   }
 
   if (viewMode === 'header' && template === 'luxury') {
       return (
+        <>
           <div className="relative w-full mx-auto shadow-2xl rounded-sm overflow-hidden">
                {/* Smaller padding for compact view */}
                <div className={`w-full p-6 md:p-8 flex flex-col relative z-10 ${fonts.body}`} style={invoiceStyle}>
@@ -578,15 +693,17 @@ ${htmlContent}
                                 <h6 className={`text-[10px] uppercase tracking-widest opacity-40 mb-2 ${fonts.accent}`}>Issued</h6>
                                 <p className={`text-lg ${fonts.header}`}>{data.date}</p>
                             </div>
-                            <div className="text-right">
-                                <h6 className={`text-[10px] uppercase tracking-widest opacity-40 mb-2 ${fonts.accent}`}>Due</h6>
-                                <p className={`text-lg ${fonts.header}`}>{data.dueDate}</p>
-                            </div>
-                         </div>
+                           <div className="text-right">
+                               <h6 className={`text-[10px] uppercase tracking-widest opacity-40 mb-2 ${fonts.accent}`}>Due</h6>
+                               <p className={`text-lg ${fonts.header}`}>{data.dueDate}</p>
+                           </div>
+                        </div>
                     </div>
                </div>
           </div>
-      )
+          {toast}
+        </>
+      );
   }
 
   // --- FUTURISTIC TEMPLATE ---
@@ -606,6 +723,7 @@ ${htmlContent}
                     : 'text-4xl md:text-5xl';
 
     return (
+    <>
         <div className={wrapperClasses}>
             {showControls && actionButtons}
             <div id="invoice-content" className={`${innerClasses} ${fonts.body}`} style={invoiceStyle}>
@@ -730,6 +848,8 @@ ${htmlContent}
                 <MarketingBanner className="mt-auto w-full rounded-none" />
             </div>
         </div>
+        {toast}
+    </>
     );
   }
 
@@ -746,6 +866,7 @@ ${htmlContent}
             : 'text-4xl md:text-5xl lg:text-6xl';
 
     return (
+      <>
       <div className={wrapperClasses}>
         {showControls && actionButtons}
         <div id="invoice-content" className={`${innerClasses} ${fonts.body}`} style={invoiceStyle}>
@@ -933,12 +1054,15 @@ ${htmlContent}
           <MarketingBanner className="mt-auto w-full rounded-none" />
         </div>
       </div>
+      {toast}
+    </>
     );
   }
 
   // --- PROFESSIONAL TEMPLATE ---
   if (template === 'professional') {
     return (
+      <>
       <div className={wrapperClasses}>
         {showControls && actionButtons}
         <div id="invoice-content" className={`${innerClasses} ${fonts.body}`} style={invoiceStyle}>
@@ -1048,12 +1172,15 @@ ${htmlContent}
           </div>
         </div>
       </div>
+      {toast}
+      </>
     );
   }
 
   // --- CLASSIC TEMPLATE ---
   if (template === 'classic') {
     return (
+      <>
       <div className={wrapperClasses}>
         {showControls && actionButtons}
         <div id="invoice-content" className={`${innerClasses} ${fonts.body} p-8`} style={invoiceStyle}>
@@ -1169,6 +1296,8 @@ ${htmlContent}
           </div>
         </div>
       </div>
+      {toast}
+      </>
     );
   }
 

@@ -1,0 +1,24 @@
+# Keep node_modules out of the build
+node_modules
+npm-debug.log
+*.log
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore repo metadata
+.git
+.gitignore
+
+# Ignore build artifacts
+dist
+build
+coverage
+
+# Ignore temp folders
+tmp
+temp
+
+# Ignore uploaded files
+uploads

@@ -173,6 +173,11 @@ router.post('/send-email', async (req, res) => {
       preferCSSPageSize: true,
     });
 
+    // Drop the raw invoice HTML from the request payload so it never rides along in the email MIME body.
+    if (req?.body && Object.prototype.hasOwnProperty.call(req.body, 'html')) {
+      delete req.body.html;
+    }
+
     const escapeHtml = (value) =>
       String(value || '')
         .replace(/&/g, '&amp;')
@@ -180,6 +185,21 @@ router.post('/send-email', async (req, res) => {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+
+    const sanitizeAssetUrl = (value) => {
+      if (typeof value !== 'string') return '';
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      const publicBase = (process.env.PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
+      const isHttp = /^https?:\/\//i.test(trimmed);
+      if (publicBase && trimmed.startsWith(publicBase)) {
+        return escapeHtml(trimmed);
+      }
+      if (isHttp) {
+        return escapeHtml(trimmed);
+      }
+      return '';
+    };
 
     const displaySenderName =
       typeof senderName === 'string' && senderName.trim()
@@ -200,7 +220,7 @@ router.post('/send-email', async (req, res) => {
         ? escapeHtml(invoiceBackgroundColor.trim())
         : '#0f172a';
     const brandColorHeader = headerColor;
-    const safeLogoUrl = typeof logoUrl === 'string' && logoUrl.trim() ? escapeHtml(logoUrl.trim()) : '';
+    const safeLogoUrl = sanitizeAssetUrl(logoUrl);
     const bannerData = banner && typeof banner === 'object' ? banner : {};
     const bannerEnabled = !!bannerData.enabled;
     const bannerText =
@@ -215,6 +235,7 @@ router.post('/send-email', async (req, res) => {
       typeof bannerData.textColor === 'string' && bannerData.textColor.trim()
         ? escapeHtml(bannerData.textColor.trim())
         : '#ffffff';
+    const bannerImageUrl = sanitizeAssetUrl(bannerData.imageUrl);
     const bannerCtaText =
       typeof bannerData.ctaText === 'string' && bannerData.ctaText.trim()
         ? escapeHtml(bannerData.ctaText.trim())
@@ -223,6 +244,14 @@ router.post('/send-email', async (req, res) => {
       typeof bannerData.ctaLink === 'string' && bannerData.ctaLink.trim()
         ? escapeHtml(bannerData.ctaLink.trim())
         : '';
+    const bannerCtaBg =
+      typeof bannerData.ctaBackgroundColor === 'string' && bannerData.ctaBackgroundColor.trim()
+        ? escapeHtml(bannerData.ctaBackgroundColor.trim())
+        : bannerTextColor;
+    const bannerCtaTextColor =
+      typeof bannerData.ctaTextColor === 'string' && bannerData.ctaTextColor.trim()
+        ? escapeHtml(bannerData.ctaTextColor.trim())
+        : bannerBg;
 
     const numericAmount = typeof amount === 'number' ? amount : Number(amount);
     const hasAmount = Number.isFinite(numericAmount);
@@ -292,12 +321,16 @@ router.post('/send-email', async (req, res) => {
           ${bannerEnabled ? `<tr>
             <td style="padding:0 20px 20px 20px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${bannerBg};color:${bannerTextColor};border-radius:10px;overflow:hidden;">
+                ${bannerImageUrl ? `<tr>
+                  <td style="padding:0;">
+                    <img src="${bannerImageUrl}" alt="Marketing Banner" style="width:100%;display:block;border:0;outline:none;text-decoration:none;max-height:260px;object-fit:cover;" />
+                  </td>
+                </tr>` : ''}
                 <tr>
                   <td style="padding:18px;text-align:left;">
-                    <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:${bannerTextColor};">Special Offer</div>
-                    <div style="font-size:16px;line-height:1.5;color:${bannerTextColor};">${bannerText}</div>
+                    ${bannerText ? `<div style="font-size:16px;line-height:1.5;color:${bannerTextColor};font-weight:600;">${bannerText}</div>` : ''}
                     ${bannerCtaText ? `<div style="margin-top:12px;">
-                      <a href="${bannerCtaLink || '#'}" style="display:inline-block;padding:10px 16px;background:${bannerTextColor};color:${bannerBg};text-decoration:none;font-weight:700;border-radius:6px;">${bannerCtaText}</a>
+                      <a href="${bannerCtaLink || '#'}" style="display:inline-block;padding:10px 16px;background:${bannerCtaBg};color:${bannerCtaTextColor};text-decoration:none;font-weight:700;border-radius:6px;">${bannerCtaText}</a>
                     </div>` : ''}
                   </td>
                 </tr>
@@ -318,6 +351,8 @@ router.post('/send-email', async (req, res) => {
 
     const fromAddress = resolveDefaultSender();
     const envelopeFrom = resolveEnvelopeFrom();
+
+    console.info('[ViteInvoice] Final emailHtml sample:', emailHtml.slice(0, 400));
 
     const info = await sharedTransporter.sendMail({
       from: fromAddress,

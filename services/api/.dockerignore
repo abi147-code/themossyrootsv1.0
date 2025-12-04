@@ -1,9 +1,8 @@
 node_modules
 npm-debug.log
-.npmrc
+*.log
 .env
 .env.*
-*.log
 .git
 .gitignore
 dist
@@ -11,6 +10,4 @@ build
 coverage
 tmp
 temp
-/uploads
-prisma/dev.db
-!src/**
+uploads

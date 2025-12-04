@@ -1,0 +1,15 @@
+POST http://localhost:4000/api/vite-invoice/send-email
+Content-Type: application/json
+
+{
+  "html": "<div>Test PDF HTML</div>",
+  "invoiceNumber": "TST-9999",
+  "toEmail": "test@example.com",
+  "subject": "Test Invoice Email",
+  "message": "Optional test message body",
+  "senderName": "Test Company",
+  "senderEmail": "billing@testcompany.com",
+  "senderAddress": "123 Test Street, Paris",
+  "amount": 199.99,
+  "currency": "EUR"
+}
