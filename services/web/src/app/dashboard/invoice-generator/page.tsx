@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -11,6 +11,7 @@ const iframeSrc =
 export default function InvoiceGeneratorPage() {
   const { token } = useAuth();
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const iframeOrigin = useMemo(() => {
     try {
@@ -20,6 +21,13 @@ export default function InvoiceGeneratorPage() {
     }
   }, []);
 
+  const scheduleToastClear = () => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => setStatusMessage(null), 3000);
+  };
+
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (!iframeOrigin || event.origin !== iframeOrigin) return;
@@ -28,6 +36,7 @@ export default function InvoiceGeneratorPage() {
 
       if (!token) {
         setStatusMessage({ type: 'error', message: 'Missing auth token; history not saved.' });
+        scheduleToastClear();
         return;
       }
 
@@ -44,18 +53,26 @@ export default function InvoiceGeneratorPage() {
         if (!response.ok) {
           const errorText = await response.text();
           setStatusMessage({ type: 'error', message: errorText || 'Failed to save invoice history.' });
+          scheduleToastClear();
           return;
         }
 
         setStatusMessage({ type: 'success', message: 'Invoice saved to dashboard history.' });
+        scheduleToastClear();
       } catch (err) {
         console.error('Failed to persist invoice history from Vite tool', err);
         setStatusMessage({ type: 'error', message: 'Failed to save invoice history.' });
+        scheduleToastClear();
       }
     };
 
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
   }, [iframeOrigin, token]);
 
   return (

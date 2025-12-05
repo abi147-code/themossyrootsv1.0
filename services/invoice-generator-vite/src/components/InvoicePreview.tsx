@@ -228,7 +228,7 @@ ${htmlContent}
     <div
       style={{
         position: 'fixed',
-        bottom: '24px',
+        top: '24px',
         right: '24px',
         background: '#14532d',
         color: '#ffffff',
