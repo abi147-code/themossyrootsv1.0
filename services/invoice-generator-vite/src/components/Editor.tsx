@@ -437,7 +437,7 @@ export const Editor: React.FC<EditorProps> = ({
                   >
                     <option value="USD" className={optionClass}>USD ($)</option>
                     <option value="EUR" className={optionClass}>EUR (€)</option>
-                    <option value="INR" className={optionClass}>INR (₹)</option>
+                    <option value="INR" className={optionClass}>INR (INR)</option>
                     <option value="GBP" className={optionClass}>GBP (£)</option>
                   </select>
                 </div>

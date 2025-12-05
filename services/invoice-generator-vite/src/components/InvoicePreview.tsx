@@ -258,12 +258,6 @@ ${htmlContent}
       return;
     }
 
-    const authHeaders = resolveAuthHeaders();
-    if (!authHeaders) {
-      setIsGeneratingPdf(false);
-      return;
-    }
-
     try {
       const finalHtml = buildInvoiceHtml(element);
 
@@ -271,7 +265,6 @@ ${htmlContent}
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...authHeaders,
         },
         body: JSON.stringify({
           html: finalHtml,
@@ -466,7 +459,19 @@ ${htmlContent}
   }
 
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: data.currency }).format(val);
+    const amount = Number.isFinite(val) ? val : 0;
+    const code = (data.currency || 'USD').trim();
+    if (code === 'INR') {
+      return `INR ${amount.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+    try {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).format(amount);
+    } catch (_err) {
+      return `${code} ${amount.toFixed(2)}`;
+    }
   };
 
   // Font Configuration Logic - Removed 'Modern'

@@ -34,6 +34,17 @@ type UserSummary = {
   }>;
 };
 
+type HistoryAnalytics = {
+  totalBilled: number;
+  topCustomer: {
+    name: string | null;
+    email: string | null;
+    count: number;
+    totalBilled: number;
+  } | null;
+  lastInvoiceDate: string | null;
+};
+
 export default function DashboardPage() {
   const { token, user, subscription, loading } = useAuth();
   const [userSummary, setUserSummary] = useState<UserSummary | null>(null);
@@ -42,6 +53,9 @@ export default function DashboardPage() {
   const [excelError, setExcelError] = useState<string | null>(null);
   const [csvExporting, setCsvExporting] = useState(false);
   const [csvError, setCsvError] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<HistoryAnalytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const isAdmin = user?.role === 'ADMIN';
 
   const planStatus = useMemo(() => {
@@ -127,6 +141,54 @@ export default function DashboardPage() {
     };
   }, [token, isAdmin]);
 
+  useEffect(() => {
+    if (!token) {
+      setAnalytics(null);
+      setAnalyticsError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    let isActive = true;
+
+    const loadAnalytics = async () => {
+      setAnalyticsLoading(true);
+      setAnalyticsError(null);
+      try {
+        const response = await apiFetch('/api/history/analytics', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load analytics.');
+        }
+
+        const payload = (await response.json()) as HistoryAnalytics;
+        if (!isActive) return;
+        setAnalytics(payload);
+      } catch (error) {
+        if (!isActive || controller.signal.aborted) return;
+        console.error('Failed to load history analytics', error);
+        setAnalytics(null);
+        setAnalyticsError('Unable to load analytics.');
+      } finally {
+        if (isActive && !controller.signal.aborted) {
+          setAnalyticsLoading(false);
+        }
+      }
+    };
+
+    void loadAnalytics();
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, [token]);
+
   if (loading || !token) {
     return null;
   }
@@ -136,6 +198,23 @@ export default function DashboardPage() {
     customers: 0,
     invoices: 0,
   };
+  const formatMoney = (value: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+      Number.isFinite(value) ? value : 0
+    );
+  const lastInvoiceDateText = analytics?.lastInvoiceDate
+    ? new Date(analytics.lastInvoiceDate).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '—';
+  const topCustomerLabel = analytics?.topCustomer
+    ? analytics.topCustomer.name || analytics.topCustomer.email || 'Top customer'
+    : '—';
+  const topCustomerStat = analytics?.topCustomer
+    ? `${analytics.topCustomer.count} sent • ${formatMoney(analytics.topCustomer.totalBilled)}`
+    : 'No data yet';
   const showUserSummarySkeleton = isAdmin && userSummary === null && !summaryError;
   const totalUsersText = userSummary ? userSummary.totalUsers.toLocaleString() : '—';
   const recentUsers = userSummary?.recentUsers ?? [];
@@ -231,6 +310,24 @@ export default function DashboardPage() {
         <MetricCard label="Invoices" value={stats.invoices} />
       </section>
 
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <MetricCard
+          label="Total billed"
+          value={analyticsLoading ? '…' : formatMoney(analytics?.totalBilled ?? 0)}
+          sublabel={analyticsError ? analyticsError : 'All-time from your history'}
+        />
+        <MetricCard
+          label="Top customer"
+          value={analyticsLoading ? '…' : topCustomerLabel}
+          sublabel={analyticsLoading ? '' : topCustomerStat}
+        />
+        <MetricCard
+          label="Last invoice sent"
+          value={analyticsLoading ? '…' : lastInvoiceDateText}
+          sublabel={analyticsError ? analyticsError : ''}
+        />
+      </section>
+
       {isAdmin ? (
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-slate-800/70 bg-slate-950/70 p-6 shadow-lg shadow-slate-900/40">
@@ -322,11 +419,20 @@ export default function DashboardPage() {
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: number }) {
+function MetricCard({
+  label,
+  value,
+  sublabel,
+}: {
+  label: string;
+  value: number | string;
+  sublabel?: string;
+}) {
   return (
     <div className="rounded-2xl border border-slate-800/70 bg-slate-950/70 p-6 shadow-lg shadow-slate-900/40">
       <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{label}</p>
       <p className="mt-3 text-3xl font-semibold text-white">{value}</p>
+      {sublabel ? <p className="mt-2 text-xs text-slate-400">{sublabel}</p> : null}
     </div>
   );
 }
