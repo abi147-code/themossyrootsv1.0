@@ -5,99 +5,11 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { chromium } = require('playwright-chromium');
 const { sharedTransporter, resolveDefaultSender, resolveEnvelopeFrom } = require('../utils/mailer');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/generate-pdf', async (req, res) => {
-  const { html, invoiceNumber } = req.body || {};
-
-  if (!html || typeof html !== 'string' || !html.trim()) {
-    return res.status(400).json({ error: 'HTML content is required.' });
-  }
-
-  if (!invoiceNumber || typeof invoiceNumber !== 'string' || !invoiceNumber.trim()) {
-    return res.status(400).json({ error: 'invoiceNumber is required.' });
-  }
-
-  let browser;
-  let context;
-  let page;
-  let tmpDir;
-
-  try {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tmr-vite-invoice-'));
-    const htmlPath = path.join(tmpDir, 'invoice.html');
-    await fs.writeFile(htmlPath, html, 'utf8');
-
-    browser = await chromium.launch({ headless: true });
-    context = await browser.newContext({ deviceScaleFactor: 2 });
-    page = await context.newPage();
-
-    const fileUrl = pathToFileURL(htmlPath).href;
-    await page.goto(fileUrl, { waitUntil: 'networkidle' });
-    await page.emulateMedia({ media: 'screen' });
-
-    const fullHeight = await page.evaluate(() => {
-      const doc = document.documentElement;
-      const body = document.body;
-      const maxHeight = Math.max(
-        doc?.scrollHeight || 0,
-        body?.scrollHeight || 0,
-        doc?.offsetHeight || 0,
-        body?.offsetHeight || 0,
-        doc?.clientHeight || 0,
-        body?.clientHeight || 0,
-        window.innerHeight || 0
-      );
-      return Math.max(maxHeight, 1);
-    });
-
-    const pdfBuffer = await page.pdf({
-      width: '210mm',
-      height: `${fullHeight}px`,
-      margin: { top: '0', right: '0', bottom: '0', left: '0' },
-      printBackground: true,
-      preferCSSPageSize: true,
-    });
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoiceNumber}.pdf`);
-    res.send(pdfBuffer);
-  } catch (err) {
-    console.error('[vite-invoice] Failed to generate PDF', err);
-    res.status(500).json({ error: 'Failed to generate PDF' });
-  } finally {
-    if (page) {
-      try {
-        await page.close();
-      } catch (err) {
-        // ignore
-      }
-    }
-    if (context) {
-      try {
-        await context.close();
-      } catch (err) {
-        // ignore
-      }
-    }
-    if (browser) {
-      try {
-        await browser.close();
-      } catch (err) {
-        // ignore
-      }
-    }
-    if (tmpDir) {
-      try {
-        await fs.rm(tmpDir, { recursive: true, force: true });
-      } catch (err) {
-        // ignore
-      }
-    }
-  }
-});
-
+// Public send-email endpoint for the Vite app; keep auth off so the browser can call it cross-origin.
 router.post('/send-email', async (req, res) => {
   console.info('[ViteInvoice] Incoming payload:', req.body);
   const {
@@ -114,7 +26,11 @@ router.post('/send-email', async (req, res) => {
     invoiceBackgroundColor,
     logoUrl,
     banner,
+    customerName,
+    customerEmail,
   } = req.body || {};
+  const prisma = req.prisma;
+  const userId = req.user?.id;
 
   if (!html || typeof html !== 'string' || !html.trim()) {
     return res.status(400).json({ error: 'HTML content is required.' });
@@ -374,10 +290,147 @@ router.post('/send-email', async (req, res) => {
 
     console.info('[ViteInvoice] SendGrid sendMail result:', info);
 
+    // Persist invoice history so the dashboard reflects Vite-sent invoices.
+    try {
+      const numericAmount = typeof amount === 'number' ? amount : Number(amount);
+      const amountValue = Number.isFinite(numericAmount) ? numericAmount : 0;
+      const summaryPayload = {
+        invoiceNumber,
+        amount: amountValue,
+        currency,
+        senderName,
+        senderEmail,
+        senderAddress,
+        banner,
+        logoUrl,
+      };
+
+      if (prisma?.invoiceHistory && userId) {
+        await prisma.invoiceHistory.create({
+          data: {
+            userId,
+            customerName:
+              typeof customerName === 'string' && customerName.trim()
+                ? customerName.trim()
+                : 'Unknown customer',
+            customerEmail:
+              typeof customerEmail === 'string' && customerEmail.trim()
+                ? customerEmail.trim()
+                : null,
+            recipient: toEmail,
+            subject,
+            totalAmount: amountValue.toFixed(2),
+            status: 'sent',
+            summary: summaryPayload,
+            sentAt: new Date(),
+          },
+        });
+      } else {
+        console.info(
+          '[ViteInvoice] Skipping invoice history write because no authenticated user context was provided.'
+        );
+      }
+    } catch (historyError) {
+      console.error('[ViteInvoice] Failed to write invoice history:', historyError);
+    }
+
     res.json({ status: 'ok', message: 'Invoice email sent.' });
   } catch (err) {
     console.error('[vite-invoice] Failed to send invoice email', err);
     res.status(500).json({ error: 'Failed to send invoice email' });
+  } finally {
+    if (page) {
+      try {
+        await page.close();
+      } catch (err) {
+        // ignore
+      }
+    }
+    if (context) {
+      try {
+        await context.close();
+      } catch (err) {
+        // ignore
+      }
+    }
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (err) {
+        // ignore
+      }
+    }
+    if (tmpDir) {
+      try {
+        await fs.rm(tmpDir, { recursive: true, force: true });
+      } catch (err) {
+        // ignore
+      }
+    }
+  }
+});
+
+// Protect the remaining routes (e.g., PDF generation, future history endpoints).
+router.use(auth);
+
+router.post('/generate-pdf', async (req, res) => {
+  const { html, invoiceNumber } = req.body || {};
+
+  if (!html || typeof html !== 'string' || !html.trim()) {
+    return res.status(400).json({ error: 'HTML content is required.' });
+  }
+
+  if (!invoiceNumber || typeof invoiceNumber !== 'string' || !invoiceNumber.trim()) {
+    return res.status(400).json({ error: 'invoiceNumber is required.' });
+  }
+
+  let browser;
+  let context;
+  let page;
+  let tmpDir;
+
+  try {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tmr-vite-invoice-'));
+    const htmlPath = path.join(tmpDir, 'invoice.html');
+    await fs.writeFile(htmlPath, html, 'utf8');
+
+    browser = await chromium.launch({ headless: true });
+    context = await browser.newContext({ deviceScaleFactor: 2 });
+    page = await context.newPage();
+
+    const fileUrl = pathToFileURL(htmlPath).href;
+    await page.goto(fileUrl, { waitUntil: 'networkidle' });
+    await page.emulateMedia({ media: 'screen' });
+
+    const fullHeight = await page.evaluate(() => {
+      const doc = document.documentElement;
+      const body = document.body;
+      const maxHeight = Math.max(
+        doc?.scrollHeight || 0,
+        body?.scrollHeight || 0,
+        doc?.offsetHeight || 0,
+        body?.offsetHeight || 0,
+        doc?.clientHeight || 0,
+        body?.clientHeight || 0,
+        window.innerHeight || 0
+      );
+      return Math.max(maxHeight, 1);
+    });
+
+    const pdfBuffer = await page.pdf({
+      width: '210mm',
+      height: `${fullHeight}px`,
+      margin: { top: '0', right: '0', bottom: '0', left: '0' },
+      printBackground: true,
+      preferCSSPageSize: true,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoiceNumber}.pdf`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('[vite-invoice] Failed to generate PDF', err);
+    res.status(500).json({ error: 'Failed to generate PDF' });
   } finally {
     if (page) {
       try {

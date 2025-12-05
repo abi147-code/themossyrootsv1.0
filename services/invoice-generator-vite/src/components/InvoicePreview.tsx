@@ -25,6 +25,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
     data.invoiceNumber ? `Invoice ${data.invoiceNumber}` : 'Your invoice'
   );
   const [emailMessage, setEmailMessage] = useState<string>('');
+  const [customerName, setCustomerName] = useState<string>(data.clientName || '');
+  const [customerEmail, setCustomerEmail] = useState<string>(data.clientEmail || '');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const luxuryTitleRef = useRef<HTMLHeadingElement | null>(null);
@@ -50,6 +52,32 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
       node.focus({ preventScroll: true });
     }
   }, [showEmailForm]);
+
+  useEffect(() => {
+    setCustomerName(data.clientName || '');
+    setCustomerEmail(data.clientEmail || '');
+  }, [data.clientName, data.clientEmail]);
+
+  const resolveAuthHeaders = () => {
+    const storageToken =
+      (typeof window !== 'undefined' && window.localStorage?.getItem('tmr-token')) ||
+      (typeof window !== 'undefined' && window.sessionStorage?.getItem('tmr-token')) ||
+      '';
+    if (!storageToken) {
+      console.error('Missing auth token — user must log in');
+      return null;
+    }
+    return { Authorization: `Bearer ${storageToken}` };
+  };
+
+  const resolveAuthHeadersOptional = () => {
+    const storageToken =
+      (typeof window !== 'undefined' && window.localStorage?.getItem('tmr-token')) ||
+      (typeof window !== 'undefined' && window.sessionStorage?.getItem('tmr-token')) ||
+      '';
+    if (!storageToken) return null;
+    return { Authorization: `Bearer ${storageToken}` };
+  };
 
   const buildInvoiceHtml = (element: HTMLElement) => {
     const clone = element.cloneNode(true) as HTMLElement;
@@ -230,6 +258,12 @@ ${htmlContent}
       return;
     }
 
+    const authHeaders = resolveAuthHeaders();
+    if (!authHeaders) {
+      setIsGeneratingPdf(false);
+      return;
+    }
+
     try {
       const finalHtml = buildInvoiceHtml(element);
 
@@ -237,6 +271,7 @@ ${htmlContent}
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify({
           html: finalHtml,
@@ -294,6 +329,9 @@ ${htmlContent}
       return;
     }
 
+    // Auth is optional for send-email; include token if available but don't block when absent.
+    const authHeaders = resolveAuthHeadersOptional() || {};
+
     const invoiceNumber = data.invoiceNumber || 'invoice';
     const invoiceBgForEmail = (data.invoiceBackgroundColor && data.invoiceBackgroundColor.trim()) || '#0f172a';
 
@@ -320,10 +358,14 @@ ${htmlContent}
 
       console.log('FINAL BANNER BEFORE SEND:', bannerPayload);
 
+      const resolvedCustomerName = (customerName || data.clientName || '').trim();
+      const resolvedCustomerEmail = (customerEmail || data.clientEmail || '').trim();
+
       const response = await fetch(`${apiBase}/api/vite-invoice/send-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify({
           html: finalHtml,
@@ -339,6 +381,8 @@ ${htmlContent}
           invoiceBackgroundColor: invoiceBgForEmail,
           logoUrl: logoUrlForEmail,
           banner: bannerPayload,
+          customerName: resolvedCustomerName,
+          customerEmail: resolvedCustomerEmail || undefined,
         }),
       });
 
@@ -488,6 +532,26 @@ ${htmlContent}
                 type="text"
                 value={emailSubject}
                 onChange={(e) => setEmailSubject(e.target.value)}
+                className="w-full text-sm px-2 py-1 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] uppercase tracking-wide text-slate-600">Customer name</label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Client Name"
+                className="w-full text-sm px-2 py-1 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] uppercase tracking-wide text-slate-600">Customer email (optional)</label>
+              <input
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder="client@example.com"
                 className="w-full text-sm px-2 py-1 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400"
               />
             </div>
