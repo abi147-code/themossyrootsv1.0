@@ -289,50 +289,7 @@ router.post('/send-email', async (req, res) => {
     });
 
     console.info('[ViteInvoice] SendGrid sendMail result:', info);
-
-    // Persist invoice history so the dashboard reflects Vite-sent invoices.
-    try {
-      const numericAmount = typeof amount === 'number' ? amount : Number(amount);
-      const amountValue = Number.isFinite(numericAmount) ? numericAmount : 0;
-      const summaryPayload = {
-        invoiceNumber,
-        amount: amountValue,
-        currency,
-        senderName,
-        senderEmail,
-        senderAddress,
-        banner,
-        logoUrl,
-      };
-
-      if (prisma?.invoiceHistory && userId) {
-        await prisma.invoiceHistory.create({
-          data: {
-            userId,
-            customerName:
-              typeof customerName === 'string' && customerName.trim()
-                ? customerName.trim()
-                : 'Unknown customer',
-            customerEmail:
-              typeof customerEmail === 'string' && customerEmail.trim()
-                ? customerEmail.trim()
-                : null,
-            recipient: toEmail,
-            subject,
-            totalAmount: amountValue.toFixed(2),
-            status: 'sent',
-            summary: summaryPayload,
-            sentAt: new Date(),
-          },
-        });
-      } else {
-        console.info(
-          '[ViteInvoice] Skipping invoice history write because no authenticated user context was provided.'
-        );
-      }
-    } catch (historyError) {
-      console.error('[ViteInvoice] Failed to write invoice history:', historyError);
-    }
+    // History saving is now handled exclusively via /save-history (dashboard → API).
 
     res.json({ status: 'ok', message: 'Invoice email sent.' });
   } catch (err) {
@@ -372,6 +329,106 @@ router.post('/send-email', async (req, res) => {
 
 // Protect the remaining routes (e.g., PDF generation, future history endpoints).
 router.use(auth);
+
+router.post('/save-history', async (req, res) => {
+  const prisma = req.prisma;
+  const userId = req.user?.id;
+  if (!prisma || !userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const {
+    customerName,
+    customerEmail,
+    recipient,
+    subject,
+    totalAmount,
+    sentAt,
+    invoiceNumber,
+    currency,
+    summary,
+    senderName,
+    senderEmail,
+    senderAddress,
+    message,
+    banner,
+    logoUrl,
+    invoiceBackgroundColor,
+  } = req.body || {};
+
+  const cleanString = (value) => (typeof value === 'string' ? value.trim() : '');
+  const requiredString = (value) => cleanString(value) || null;
+
+  const nameValue = requiredString(customerName);
+  if (!nameValue) {
+    return res.status(400).json({ error: 'customerName is required.' });
+  }
+
+  const recipientValue = requiredString(recipient);
+  if (!recipientValue || !recipientValue.includes('@')) {
+    return res.status(400).json({ error: 'A valid recipient email is required.' });
+  }
+
+  const subjectValue = requiredString(subject);
+  if (!subjectValue) {
+    return res.status(400).json({ error: 'subject is required.' });
+  }
+
+  const invoiceNumberValue = requiredString(invoiceNumber);
+  if (!invoiceNumberValue) {
+    return res.status(400).json({ error: 'invoiceNumber is required.' });
+  }
+
+  const currencyValue = requiredString(currency);
+  if (!currencyValue) {
+    return res.status(400).json({ error: 'currency is required.' });
+  }
+
+  const numericTotal =
+    typeof totalAmount === 'number' ? totalAmount : Number(totalAmount);
+  if (!Number.isFinite(numericTotal)) {
+    return res.status(400).json({ error: 'totalAmount must be a number.' });
+  }
+
+  const sentAtDate = sentAt ? new Date(sentAt) : null;
+  if (!sentAtDate || Number.isNaN(sentAtDate.getTime())) {
+    return res.status(400).json({ error: 'sentAt must be a valid date/time.' });
+  }
+
+  const summaryPayload = summary && typeof summary === 'object' ? summary : {};
+  summaryPayload.invoiceNumber = invoiceNumberValue;
+  summaryPayload.currency = currencyValue;
+  summaryPayload.senderName = summaryPayload.senderName || cleanString(senderName);
+  summaryPayload.senderEmail = summaryPayload.senderEmail || cleanString(senderEmail);
+  summaryPayload.senderAddress =
+    summaryPayload.senderAddress || cleanString(senderAddress);
+  summaryPayload.message = summaryPayload.message || cleanString(message);
+  summaryPayload.banner = summaryPayload.banner || banner;
+  summaryPayload.logoUrl = summaryPayload.logoUrl || cleanString(logoUrl);
+  summaryPayload.invoiceBackgroundColor =
+    summaryPayload.invoiceBackgroundColor || cleanString(invoiceBackgroundColor);
+
+  try {
+    const record = await prisma.invoiceHistory.create({
+      data: {
+        userId,
+        customerName: nameValue,
+        customerEmail: cleanString(customerEmail) || null,
+        recipient: recipientValue,
+        subject: subjectValue,
+        totalAmount: numericTotal.toFixed(2),
+        status: 'sent',
+        summary: summaryPayload,
+        sentAt: sentAtDate,
+      },
+    });
+
+    return res.json({ status: 'saved', id: record.id });
+  } catch (err) {
+    console.error('[vite-invoice] Failed to save invoice history', err);
+    return res.status(500).json({ error: 'Failed to save invoice history.' });
+  }
+});
 
 router.post('/generate-pdf', async (req, res) => {
   const { html, invoiceNumber } = req.body || {};

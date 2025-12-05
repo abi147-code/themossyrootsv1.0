@@ -391,6 +391,42 @@ ${htmlContent}
         throw new Error(errorText || 'Failed to send invoice email');
       }
 
+      const sentAt = new Date().toISOString();
+      const historyPayload = {
+        customerName: resolvedCustomerName || 'Unknown customer',
+        customerEmail: resolvedCustomerEmail || null,
+        recipient: trimmedTo,
+        subject: trimmedSubject,
+        invoiceNumber,
+        currency: data.currency || 'USD',
+        totalAmount: total,
+        sentAt,
+        senderName: (data as any)?.from?.businessName || data.senderName,
+        senderEmail: data.senderEmail,
+        senderAddress: data.senderAddress,
+        message: emailMessage,
+        banner: bannerPayload,
+        logoUrl: logoUrlForEmail,
+        invoiceBackgroundColor: invoiceBgForEmail,
+        summary: {
+          invoiceNumber,
+          currency: data.currency || 'USD',
+          amount: total,
+          senderName: (data as any)?.from?.businessName || data.senderName,
+          senderEmail: data.senderEmail,
+          senderAddress: data.senderAddress,
+          message: emailMessage,
+          banner: bannerPayload,
+          logoUrl: logoUrlForEmail,
+          invoiceBackgroundColor: invoiceBgForEmail,
+        },
+      };
+
+      // Notify parent dashboard (if embedded) that the invoice was sent so it can persist history.
+      if (typeof window !== 'undefined' && window.parent) {
+        window.parent.postMessage({ type: 'tmr:vite-invoice:sent', payload: historyPayload }, '*');
+      }
+
       triggerToast('Invoice email sent successfully!');
       setShowEmailForm(false);
     } catch (err) {

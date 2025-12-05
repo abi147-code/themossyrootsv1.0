@@ -1,9 +1,63 @@
-import Link from "next/link";
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 const iframeSrc =
-  process.env.NEXT_PUBLIC_INVOICE_GENERATOR_URL ?? "http://localhost:5173";
+  process.env.NEXT_PUBLIC_INVOICE_GENERATOR_URL ?? 'http://localhost:5173';
 
 export default function InvoiceGeneratorPage() {
+  const { token } = useAuth();
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const iframeOrigin = useMemo(() => {
+    try {
+      return new URL(iframeSrc).origin;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (!iframeOrigin || event.origin !== iframeOrigin) return;
+      const data = event.data;
+      if (!data || data.type !== 'tmr:vite-invoice:sent' || !data.payload) return;
+
+      if (!token) {
+        setStatusMessage({ type: 'error', message: 'Missing auth token; history not saved.' });
+        return;
+      }
+
+      try {
+        const response = await apiFetch('/api/vite-invoice/save-history', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data.payload),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          setStatusMessage({ type: 'error', message: errorText || 'Failed to save invoice history.' });
+          return;
+        }
+
+        setStatusMessage({ type: 'success', message: 'Invoice saved to dashboard history.' });
+      } catch (err) {
+        console.error('Failed to persist invoice history from Vite tool', err);
+        setStatusMessage({ type: 'error', message: 'Failed to save invoice history.' });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [iframeOrigin, token]);
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
       <div className="p-4">
@@ -22,6 +76,14 @@ export default function InvoiceGeneratorPage() {
           allow="clipboard-read; clipboard-write"
         />
       </div>
+      {statusMessage ? (
+        <div
+          className="fixed bottom-4 right-4 rounded-lg px-4 py-3 text-sm shadow-lg"
+          style={{ background: statusMessage.type === 'success' ? '#0f172a' : '#7f1d1d', color: '#fff' }}
+        >
+          {statusMessage.message}
+        </div>
+      ) : null}
     </div>
   );
 }

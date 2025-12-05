@@ -115,9 +115,9 @@ app.use('/api/history', authMiddleware, historyRoutes);
 app.use('/api/admin', authMiddleware, adminRoutes);
 app.use('/api/account', accountRoutes);
 app.use('/api/brand', brandRoutes);
-app.use('/api/billing', billingRoutes);
-app.use('/api/vite-invoice', viteInvoiceRoutes);
-app.use('/api/vite-invoice', tempAssetUploadRoutes);
+  app.use('/api/billing', billingRoutes);
+  app.use('/api/vite-invoice', tempAssetUploadRoutes);
+  app.use('/api/vite-invoice', viteInvoiceRoutes);
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not Found' }));
 
