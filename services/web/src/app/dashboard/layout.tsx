@@ -12,7 +12,6 @@ type DashboardLayoutProps = {
 
 const navItems = [
   { href: '/dashboard', label: 'Overview' },
-  { href: '/dashboard/invoices', label: 'Invoices' },
   { href: '/dashboard/invoice-generator', label: 'Invoice Generator' },
   { href: '/dashboard/history', label: 'History' },
   { href: '/dashboard/settings', label: 'Settings' },

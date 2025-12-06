@@ -7,12 +7,6 @@ import { apiFetch } from '@/lib/api';
 
 const quickLinks = [
   {
-    href: '/dashboard/invoices',
-    label: 'Invoice builder',
-    description: 'Draft invoices, generate PDFs, and share polished summaries with clients.',
-    accent: 'text-sky-200',
-  },
-  {
     href: '/dashboard/history',
     label: 'Delivery history',
     description: 'Review the invoices you have dispatched and check recent activity logs.',
