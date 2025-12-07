@@ -14,7 +14,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
   const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
   const taxAmount = subtotal * (data.taxRate / 100);
   const total = subtotal + taxAmount;
-  const template = data.template || 'luxury';
+  // Temporarily disable futuristic template by falling back to professional
+  const rawTemplate = data.template || 'luxury';
+  const template = rawTemplate === 'futuristic' ? 'professional' : rawTemplate;
   const apiBase = (import.meta.env.VITE_TMR_API_URL || '').replace(/\/+$/, '');
   const PUBLIC_API_URL = (import.meta.env.VITE_PUBLIC_API_URL || '').replace(/\/+$/, '');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -29,6 +31,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
   const [customerEmail, setCustomerEmail] = useState<string>(data.clientEmail || '');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const futuristicRef = useRef<HTMLDivElement | null>(null);
+  const [futuristicScale, setFuturisticScale] = useState(1);
+  const [futuristicHeight, setFuturisticHeight] = useState<number | null>(null);
   const luxuryTitleRef = useRef<HTMLHeadingElement | null>(null);
   const emailInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -57,6 +62,30 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
     setCustomerName(data.clientName || '');
     setCustomerEmail(data.clientEmail || '');
   }, [data.clientName, data.clientEmail]);
+
+  // Auto-scale futuristic template to stay on one page without removing content
+  useEffect(() => {
+    if (template !== 'futuristic') {
+      if (futuristicScale !== 1) setFuturisticScale(1);
+      if (futuristicHeight !== null) setFuturisticHeight(null);
+      return;
+    }
+    const el = futuristicRef.current;
+    if (!el) return;
+    // Target A4 height in px (~1123px at 96dpi). Keep a small buffer.
+    const targetHeight = 1123;
+    const contentHeight = el.scrollHeight;
+    const overage = contentHeight - targetHeight;
+    // Scale only if meaningfully over, allow down to 0.85 for dense invoices.
+    const nextScale =
+      overage > 16 ? Math.max(0.85, Math.min(1, targetHeight / contentHeight)) : 1;
+    if (nextScale !== futuristicScale) {
+      setFuturisticScale(nextScale);
+    }
+    if (futuristicHeight !== contentHeight) {
+      setFuturisticHeight(contentHeight);
+    }
+  }, [template, data, banner, viewMode, futuristicScale, futuristicHeight]);
 
   const resolveAuthHeaders = () => {
     const storageToken =
@@ -506,7 +535,7 @@ ${htmlContent}
         type="button"
         onClick={handleDownloadPdf}
         disabled={isGeneratingPdf}
-        className={`flex items-center justify-center h-10 bg-moss-700 text-gold-300 rounded-full transition-all shadow-lg border border-white/10 ${isGeneratingPdf ? 'opacity-50 pointer-events-none px-4' : 'w-10 hover:bg-moss-600 hover:scale-110'}`}
+        className={`flex items-center justify-center h-10 bg-emerald-600 text-white rounded-full transition-all shadow-lg shadow-emerald-200 border border-emerald-200 ${isGeneratingPdf ? 'opacity-50 pointer-events-none px-4' : 'w-10 hover:bg-emerald-500 hover:scale-110'}`}
         title="Download PDF"
       >
         {isGeneratingPdf ? (
@@ -521,7 +550,7 @@ ${htmlContent}
       <button 
         type="button"
         onClick={() => window.print()}
-        className="flex items-center justify-center w-10 h-10 bg-ink text-porcelain rounded-full hover:bg-black hover:scale-110 transition-all shadow-lg border border-white/10"
+        className="flex items-center justify-center w-10 h-10 bg-white text-slate-900 rounded-full hover:bg-slate-100 hover:scale-110 transition-all shadow-lg border border-slate-200"
         title="Print"
       >
         <Printer size={18} />
@@ -531,7 +560,7 @@ ${htmlContent}
           type="button"
           onClick={() => setShowEmailForm(true)}
           disabled={isSendingEmail}
-          className={`flex items-center justify-center h-10 bg-gold-300 text-ink rounded-full transition-all shadow-lg border border-white/10 ${isSendingEmail ? 'opacity-50 pointer-events-none px-4' : 'w-10 hover:bg-gold-200 hover:scale-110'}`}
+          className={`flex items-center justify-center h-10 bg-amber-400 text-white rounded-full transition-all shadow-lg shadow-amber-200 border border-amber-200 ${isSendingEmail ? 'opacity-50 pointer-events-none px-4' : 'w-10 hover:bg-amber-300 hover:scale-110'}`}
           title="Send via email"
         >
           {isSendingEmail ? (
@@ -608,7 +637,7 @@ ${htmlContent}
             <button
               onClick={handleSendEmail}
               disabled={isSendingEmail}
-              className={`w-full flex items-center justify-center h-9 rounded-md font-semibold transition-colors ${isSendingEmail ? 'bg-moss-800 text-gold-200 opacity-70' : 'bg-moss-700 text-gold-300 hover:bg-moss-600'}`}
+              className={`w-full flex items-center justify-center h-9 rounded-md font-semibold transition-colors ${isSendingEmail ? 'bg-emerald-200 text-emerald-800 opacity-70' : 'bg-emerald-600 text-white hover:bg-emerald-500'}`}
             >
               {isSendingEmail ? 'Sending...' : 'Send Email'}
             </button>
@@ -818,29 +847,42 @@ ${htmlContent}
     
     // Dynamically scale font size to keep on one line, more aggressive for long numbers
     const totalSizeClass = totalLen > 24
-        ? 'text-lg md:text-xl'
+        ? 'text-base md:text-lg'
         : totalLen > 18
-            ? 'text-xl md:text-2xl'
+            ? 'text-lg md:text-xl'
             : totalLen > 13
-                ? 'text-2xl md:text-3xl' 
+                ? 'text-xl md:text-2xl' 
                 : totalLen > 9 
-                    ? 'text-3xl md:text-4xl' 
-                    : 'text-4xl md:text-5xl';
+                    ? 'text-2xl md:text-3xl' 
+                    : 'text-3xl md:text-4xl';
 
     return (
     <>
         <div className={wrapperClasses}>
             {showControls && actionButtons}
-            <div id="invoice-content" className={`${innerClasses} ${fonts.body}`} style={invoiceStyle}>
+            <div
+              id="invoice-content"
+              ref={futuristicRef}
+              className={`${innerClasses} ${fonts.body}`}
+              style={{
+                ...invoiceStyle,
+                transform: futuristicScale < 1 ? `scale(${futuristicScale})` : undefined,
+                transformOrigin: 'top center',
+                height:
+                  futuristicScale < 1 && futuristicHeight
+                    ? `${futuristicHeight * futuristicScale}px`
+                    : undefined,
+              }}
+            >
                 {/* Geometric Background Elements */}
                 <div className="absolute top-0 right-0 w-[80%] h-[40%] bg-current opacity-[0.03] clip-path-polygon-[0_0,100%_0,100%_100%,20%_100%] pointer-events-none"></div>
                 <div className="absolute bottom-0 left-0 w-[60%] h-[30%] bg-current opacity-[0.02] clip-path-polygon-[0_100%,100%_100%,80%_0,0_0] pointer-events-none"></div>
                 
                 {/* Main Content Area with padding, pushing banner to bottom */}
-                <div className="flex-grow flex flex-col relative z-10 p-10 md:p-14">
+                <div className="flex-grow flex flex-col relative z-10 p-8 md:p-10">
                     
                     {/* Header Section */}
-                    <header className="flex flex-col md:flex-row justify-between items-start mb-16 pb-6">
+                    <header className="flex flex-col md:flex-row justify-between items-start mb-10 pb-4">
                         <div className="flex flex-col gap-4">
                              {/* Logo Area - Clean: Only show if exists, no placeholder */}
                              {data.logoUrl && (
@@ -855,8 +897,8 @@ ${htmlContent}
                              </div>
                         </div>
 
-                        <div className="mt-8 md:mt-0 text-right">
-                             <h1 className={`text-6xl md:text-7xl font-black tracking-tighter opacity-10 ${fonts.title} leading-none`}>INVOICE</h1>
+                        <div className="mt-6 md:mt-0 text-right">
+                             <h1 className={`text-5xl md:text-6xl font-black tracking-tighter opacity-10 ${fonts.title} leading-none`}>INVOICE</h1>
                              <div className="flex flex-col items-end mt-4 gap-1">
                                  <div className="flex items-center gap-4">
                                      <span className="text-[10px] uppercase tracking-[0.2em] opacity-60">NO.</span>
@@ -871,7 +913,7 @@ ${htmlContent}
                     </header>
 
                     {/* Client Info & Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
                          <div className="col-span-1 md:col-span-5">
                              <h6 className="text-[10px] uppercase tracking-[0.2em] opacity-40 mb-4 border-l-2 border-current pl-3">Bill To</h6>
                              <h3 className={`text-2xl font-bold mb-2 ${fonts.header}`}>{data.clientName || 'Client Name'}</h3>
@@ -881,25 +923,25 @@ ${htmlContent}
                              </div>
                          </div>
                          <div className="col-span-1 md:col-span-7 flex flex-col justify-end items-end">
-                             <div className="w-full md:w-auto md:min-w-[300px] bg-current/5 p-6">
-                                 <h6 className="text-[10px] uppercase tracking-[0.2em] opacity-40 mb-1">Total Amount Due</h6>
-                                 <div className="text-right">
-                                     <span className={`${totalSizeClass} font-bold tracking-tight ${fonts.title} block leading-none whitespace-nowrap`}>{formattedTotal}</span>
-                                 </div>
-                                 <div className={`text-right text-xs ${fonts.accent} opacity-60 mt-2`}>Due by {data.dueDate}</div>
-                                 
-                                 {/* Futuristic Payment Widget Placement - Inside the box */}
-                                 {data.paymentLink && (
-                                    <div className="mt-4 pt-4 border-t border-current/10 flex justify-end">
+                            <div className="w-full md:w-auto md:min-w-[300px] bg-current/5 p-5">
+                                <h6 className="text-[10px] uppercase tracking-[0.2em] opacity-40 mb-1">Total Amount Due</h6>
+                                <div className="text-right">
+                                    <span className={`${totalSizeClass} font-bold tracking-tight ${fonts.title} block leading-none whitespace-nowrap`}>{formattedTotal}</span>
+                                </div>
+                                <div className={`text-right text-xs ${fonts.accent} opacity-60 mt-2`}>Due by {data.dueDate}</div>
+                                
+                                {/* Futuristic Payment Widget Placement - Inside the box */}
+                                {data.paymentLink && (
+                                    <div className="mt-3 pt-3 border-t border-current/10 flex justify-end text-sm">
                                       <PaymentWidget />
                                     </div>
-                                 )}
-                             </div>
-                         </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Items Table */}
-                    <div className="mb-12">
+                    <div className="mb-8">
                         <table className="w-full text-left border-collapse text-current" style={{ color: 'inherit' }}>
                             <thead>
                                 <tr className="border-b border-current opacity-100">
@@ -912,10 +954,10 @@ ${htmlContent}
                             <tbody className={`${fonts.accent} text-sm`}>
                                 {data.items.map((item) => (
                                     <tr key={item.id} className="border-b border-current/10">
-                                        <td className={`py-5 pr-4 font-bold text-base opacity-90 text-current ${fonts.body}`}>{item.description || 'Item Description'}</td>
-                                        <td className="py-5 px-2 text-center opacity-70 text-current">{item.quantity}</td>
-                                        <td className="py-5 px-2 text-right opacity-70 text-current">{formatCurrency(item.price)}</td>
-                                        <td className="py-5 pl-4 text-right font-bold opacity-100 text-current">{formatCurrency(item.quantity * item.price)}</td>
+                                        <td className={`py-3 pr-4 font-bold text-base opacity-90 text-current ${fonts.body}`}>{item.description || 'Item Description'}</td>
+                                        <td className="py-3 px-2 text-center opacity-70 text-current">{item.quantity}</td>
+                                        <td className="py-3 px-2 text-right opacity-70 text-current">{formatCurrency(item.price)}</td>
+                                        <td className="py-3 pl-4 text-right font-bold opacity-100 text-current">{formatCurrency(item.quantity * item.price)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -923,7 +965,7 @@ ${htmlContent}
                     </div>
 
                     {/* Summary & Notes */}
-                    <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-8">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-6">
                         <div className="w-full md:max-w-sm">
                             {data.notes && (
                                 <div className="relative">
@@ -950,7 +992,7 @@ ${htmlContent}
                 </div>
 
                 {/* Full Width Marketing Banner - Corner to Corner */}
-                <MarketingBanner className="mt-auto w-full rounded-none" />
+                <MarketingBanner className="mt-auto w-full rounded-none py-4" />
             </div>
         </div>
         {toast}

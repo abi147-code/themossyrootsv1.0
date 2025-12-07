@@ -5,9 +5,9 @@ import Link from 'next/link';
 import clsx from 'clsx';
 
 const NAV_LINKS = [
-  { label: 'About', href: '#about' },
-  { label: 'Portfolio', href: '#portfolio' },
-  { label: 'Software', href: '#software' },
+  { label: 'About', href: '/about' },
+  { label: 'Portfolio', href: '/portfolio' },
+  { label: 'Software', href: '/software' },
 ];
 
 export function Navbar() {
@@ -19,7 +19,7 @@ export function Navbar() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-6">
       <div className="glass-nav flex w-full max-w-6xl items-center justify-between rounded-full px-6 py-3">
-        <Link href="/" className="font-heading text-lg font-semibold text-white transition hover:text-[#E2B714]">
+        <Link href="/" className="font-heading text-lg font-semibold text-slate-900 transition hover:text-[#1f7a4d]">
           The Mossy Roots
         </Link>
 
@@ -28,14 +28,14 @@ export function Navbar() {
             <Link
               key={link.label}
               href={link.href}
-              className="nav-link relative text-sm font-medium text-white/80"
+              className="nav-link relative text-sm font-medium text-slate-700"
             >
               {link.label}
             </Link>
           ))}
           <Link
             href="/login"
-            className="nav-link relative text-sm font-medium text-white/80"
+            className="nav-link relative text-sm font-medium text-slate-700"
           >
             Login
           </Link>
@@ -51,7 +51,7 @@ export function Navbar() {
           type="button"
           aria-label="Toggle navigation"
           onClick={toggle}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm md:hidden"
         >
           <span className="sr-only">Toggle navigation</span>
           <svg
@@ -73,7 +73,7 @@ export function Navbar() {
 
       <div
         className={clsx(
-          'absolute inset-x-4 top-[72px] origin-top rounded-3xl border border-white/10 bg-[#0B0F14]/95 px-6 py-6 shadow-xl shadow-black/30 backdrop-blur-xl transition-all md:hidden',
+          'absolute inset-x-4 top-[72px] origin-top rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-xl shadow-slate-200/60 backdrop-blur-xl transition-all md:hidden',
           isOpen ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none -translate-y-2 scale-95 opacity-0',
         )}
       >
@@ -83,7 +83,7 @@ export function Navbar() {
               key={link.label}
               href={link.href}
               onClick={close}
-              className="text-base font-medium text-white/90 transition hover:text-[#E2B714]"
+              className="text-base font-medium text-slate-800 transition hover:text-[#1f7a4d]"
             >
               {link.label}
             </Link>
@@ -91,7 +91,7 @@ export function Navbar() {
           <Link
             href="/login"
             onClick={close}
-            className="text-base font-medium text-white/90 transition hover:text-[#E2B714]"
+            className="text-base font-medium text-slate-800 transition hover:text-[#1f7a4d]"
           >
             Login
           </Link>

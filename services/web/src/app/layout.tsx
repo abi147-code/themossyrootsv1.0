@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Geist_Mono, Inter, Sora } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+import GlobalNavWrapper from './global-nav-wrapper';
+import GlobalFooterWrapper from './global-footer-wrapper';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -33,7 +35,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${sora.variable} ${geistMono.variable} bg-[#0B0F14] text-[#F5F7F9] antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <GlobalNavWrapper />
+          {children}
+          <GlobalFooterWrapper />
+        </Providers>
       </body>
     </html>
   );

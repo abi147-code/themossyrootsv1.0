@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import DotGrid from '@/components/DotGrid';
+import VisibilityMount from '@/components/VisibilityMount';
 import MarketingOverview from './components/MarketingOverview';
 
 const features = [
@@ -62,28 +63,30 @@ export const metadata: Metadata = {
 
 export default function SoftwarePage() {
   return (
-    <div id="page-transition-wrapper" className="relative min-h-screen">
+    <div id="page-transition-wrapper" className="relative min-h-screen bg-[#f7f9fc]">
       <section className="relative flex min-h-[60vh] items-center justify-center overflow-hidden px-6 pt-24 pb-16 md:pt-32">
         <div className="absolute inset-0">
-          <DotGrid
-            className="pointer-events-none absolute inset-0"
-            dotSize={14}
-            gap={28}
-            baseColor="#0F1C14"
-            activeColor="#E2B714"
-            proximity={160}
-            speedTrigger={110}
-            shockRadius={240}
-            shockStrength={5}
-            resistance={540}
-            returnDuration={1.6}
-          />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(226,183,20,0.18),_transparent_72%)]" />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0B0F14]/25 via-[#0B0F14]/50 to-[#0B0F14]/85" />
+          <VisibilityMount className="pointer-events-none absolute inset-0" rootMargin="0px 0px -20% 0px" threshold={0.1}>
+            <DotGrid
+              className="pointer-events-none absolute inset-0"
+              dotSize={14}
+              gap={28}
+              baseColor="#e2eaf5"
+              activeColor="#1f7a4d"
+              proximity={160}
+              speedTrigger={110}
+              shockRadius={240}
+              shockStrength={5}
+              resistance={540}
+              returnDuration={1.6}
+            />
+          </VisibilityMount>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(31,122,77,0.14),_transparent_72%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/45 via-white/65 to-white/85" />
         </div>
         <div className="relative z-10 mx-auto w-full max-w-4xl text-center md:text-left">
-          <span className="text-4xl font-bold text-white sm:text-5xl md:text-6xl">TMR Software</span>
-          <p className="mt-3 text-base text-white/75 sm:text-lg">Turn your routine into an opportunity.</p>
+          <span className="text-4xl font-bold text-slate-900 sm:text-5xl md:text-6xl">TMR Software</span>
+          <p className="mt-3 text-base text-slate-700 sm:text-lg">Turn your routine into an opportunity.</p>
         </div>
       </section>
 
@@ -96,13 +99,13 @@ export default function SoftwarePage() {
         </div>
       </main>
 
-      <section className="relative z-10 mx-6 mb-24 mt-8 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#1A3A2A] via-[#0B0F14] to-[#0B0F14] px-8 py-14 text-center shadow-2xl shadow-black/30 md:mx-auto md:max-w-4xl">
+      <section className="relative z-10 mx-6 mb-24 mt-8 overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-[#f2f6fb] to-[#eef3fb] px-8 py-14 text-center shadow-2xl shadow-slate-200/70 md:mx-auto md:max-w-4xl">
         <div className="absolute inset-0 opacity-60">
-          <div className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(226,183,20,0.25),_transparent_65%)]" />
+          <div className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(31,122,77,0.16),_transparent_65%)]" />
         </div>
         <div className="relative z-10 space-y-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-white/70">Ready to rethink invoicing?</p>
-          <p className="text-base text-white/75">
+          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-slate-600">Ready to rethink invoicing?</p>
+          <p className="text-base text-slate-700">
             Join The Mossy Roots and turn your next billing cycle into a branded moment your customers will remember.
           </p>
           <Link href="/signup" className="btn-primary inline-flex items-center justify-center">

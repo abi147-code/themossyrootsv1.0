@@ -56,7 +56,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (isInvoiceTool) {
     return (
-      <div className="flex h-screen w-full flex-col overflow-hidden bg-slate-950 text-slate-100">
+      <div className="dashboard-light flex h-screen w-full flex-col overflow-hidden bg-[#f7f9fc] text-slate-900">
         {children}
       </div>
     );
@@ -68,19 +68,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-slate-100"
+      className="dashboard-light min-h-screen bg-[#f7f9fc] text-slate-900"
       style={{ '--nav-width': navWidthValue } as CSSProperties}
     >
       <aside
         className={clsx(
-          'fixed left-0 top-0 z-40 flex h-full flex-col justify-between overflow-hidden border-r border-slate-800 bg-slate-950/95 text-slate-100 shadow-[0_20px_45px_rgba(2,6,23,0.6)] transition-all duration-300',
+          'fixed left-0 top-0 z-40 flex h-full flex-col justify-between overflow-hidden border-r border-slate-200 bg-white/95 text-slate-900 shadow-[0_14px_40px_rgba(15,23,42,0.1)] transition-all duration-300',
           sidebarWidth
         )}
         style={{ width: navWidthValue } as CSSProperties}
       >
         <div className={clsx('px-4 pt-6 transition-opacity duration-200', navCollapsed && 'opacity-0 pointer-events-none')}>
-          <p className="text-[10px] uppercase tracking-[0.4em] text-sky-400/70">Tools</p>
-          <h2 className="mt-3 text-lg font-semibold text-white">Dashboard</h2>
+          <p className="text-[10px] uppercase tracking-[0.4em] text-emerald-600/80">Tools</p>
+          <h2 className="mt-3 text-lg font-semibold text-slate-900">Dashboard</h2>
         </div>
         <nav className="flex flex-1 flex-col gap-2 overflow-y-auto px-2 py-6">
           {navItems.map((item) => {
@@ -95,12 +95,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   'group flex w-full items-center rounded-xl border text-xs font-semibold uppercase tracking-[0.35em] transition',
                   navCollapsed ? 'justify-center gap-0 px-2 py-2' : 'justify-start gap-2 px-3 py-3',
                   isActive
-                    ? 'border-sky-500/60 bg-sky-500/15 text-sky-200 shadow-[0_10px_25px_rgba(56,189,248,0.25)]'
-                    : 'border-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-900/70 hover:text-slate-200'
+                    ? 'border-emerald-500/60 bg-emerald-50 text-emerald-700 shadow-[0_10px_25px_rgba(16,185,129,0.18)]'
+                    : 'border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-800'
                 )}
                 aria-label={item.label}
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700/70 bg-slate-900/70 text-[10px] font-semibold uppercase tracking-[0.4em] text-slate-300">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[10px] font-semibold uppercase tracking-[0.4em] text-slate-600">
                   {item.label.slice(0, 1)}
                 </span>
                 {!navCollapsed ? (
@@ -112,12 +112,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             );
           })}
         </nav>
-        <div className="border-t border-slate-800/80 px-3 py-4">
+        <div className="border-t border-slate-200 px-3 py-4">
           <button
             type="button"
             onClick={() => setNavCollapsed((prev) => !prev)}
             className={clsx(
-              'flex items-center justify-center gap-2 rounded-xl border border-slate-700/70 bg-slate-900/70 text-[10px] font-semibold uppercase tracking-[0.4em] text-slate-300 transition hover:border-sky-500 hover:text-white',
+              'flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-[10px] font-semibold uppercase tracking-[0.4em] text-slate-700 transition hover:border-emerald-500 hover:text-emerald-700',
               navCollapsed ? 'h-9 w-9 px-0' : 'h-9 w-full px-3'
             )}
             aria-expanded={!navCollapsed}
@@ -146,24 +146,24 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-8 px-4 py-10 lg:px-8">
           <header
             ref={headerRef}
-            className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-800/80 bg-slate-950/70 px-6 py-5 shadow-lg shadow-slate-950/40 sm:flex-row sm:items-center"
+            className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-200 bg-white/90 px-6 py-5 shadow-lg shadow-slate-200/80 sm:flex-row sm:items-center"
           >
             <div>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-sky-400/70">Welcome</p>
-              <h1 className="mt-2 text-2xl font-semibold text-white">
+              <p className="text-[10px] uppercase tracking-[0.4em] text-emerald-600/80">Welcome</p>
+              <h1 className="mt-2 text-2xl font-semibold text-slate-900">
                 {user?.name || user?.email?.split('@')[0] || 'builder'}
               </h1>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="https://dashboard.stripe.com/test/subscriptions"
-                className="text-xs font-semibold text-sky-300 transition hover:text-sky-200"
+                className="text-xs font-semibold text-emerald-700 transition hover:text-emerald-600"
               >
                 Manage Stripe subscription &rarr;
               </Link>
               <button
                 onClick={logout}
-                className="rounded-lg border border-slate-600/50 px-3 py-2 text-xs uppercase tracking-[0.3em] text-slate-400 transition hover:border-rose-400/60 hover:text-rose-300"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-xs uppercase tracking-[0.3em] text-slate-600 transition hover:border-rose-200 hover:text-rose-500"
               >
                 Log out
               </button>

@@ -38,8 +38,8 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  /* Updated to match app background (bg-ink #0b0f14) for seamless blending */
-  background-color: #0b0f14;
+  /* Updated to match bright app background */
+  background-color: #f7f9fc;
   z-index: -1;
 }
 

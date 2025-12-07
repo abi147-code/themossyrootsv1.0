@@ -58,13 +58,13 @@ main.sphere-main {
 }
 
 .overlay {
-  background-image: radial-gradient(rgba(235, 235, 235, 0) 65%, var(--overlay-blur-color, #060010) 100%);
+  background: none;
 }
 
 .overlay--blur {
   -webkit-mask-image: radial-gradient(rgba(235, 235, 235, 0) 70%, var(--overlay-blur-color, #060010) 90%);
   mask-image: radial-gradient(rgba(235, 235, 235, 0) 70%, var(--overlay-blur-color, #060010) 90%);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(2px);
 }
 
 .item {
@@ -143,11 +143,11 @@ main.sphere-main {
   position: absolute;
   inset: 0;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.08);
   pointer-events: none;
   opacity: 0;
   transition: opacity 500ms ease;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(2px);
 }
 
 .sphere-root[data-enlarging='true'] .viewer .scrim {
@@ -164,7 +164,7 @@ main.sphere-main {
     transform 500ms ease,
     opacity 500ms ease;
   transform-origin: top left;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
 }
 
 .viewer .enlarge img {
@@ -185,7 +185,7 @@ main.sphere-main {
   height: 120px;
   z-index: 5;
   pointer-events: none;
-  background: linear-gradient(to bottom, transparent, var(--overlay-blur-color, #060010));
+  background: linear-gradient(to bottom, transparent, var(--overlay-blur-color, rgba(15, 23, 42, 0.08)));
 }
 
 .edge-fade--top {

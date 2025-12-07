@@ -24,6 +24,7 @@ type DomeGalleryProps = {
   imageBorderRadius?: string;
   openedImageBorderRadius?: string;
   grayscale?: boolean;
+  autoSpin?: boolean;
 };
 
 type ItemDef = {
@@ -85,10 +86,11 @@ const DEFAULT_IMAGES: ImageItem[] = LOCAL_IMAGE_FILES.map((file) => ({
 }));
 
 const DEFAULTS = {
-  maxVerticalRotationDeg: 20,
-  dragSensitivity: 18,
+  maxVerticalRotationDeg: 45,
+  dragSensitivity: 12,
   enlargeTransitionMs: 300,
-  segments: 34
+  segments: 26,
+  autoSpin: true
 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
@@ -104,13 +106,13 @@ const getDataNumber = (el: HTMLElement, name: string, fallback: number) => {
 };
 
 function buildItems(pool: ImageItem[], seg: number): ItemDef[] {
-  const xCols = Array.from({ length: seg }, (_, i) => -37 + i * 2);
+  const xCols = Array.from({ length: seg }, (_, i) => -37.5 + i * 2);
   const evenYs = [-4, -2, 0, 2, 4];
   const oddYs = [-3, -1, 1, 3, 5];
 
   const coords = xCols.flatMap((x, c) => {
     const ys = c % 2 === 0 ? evenYs : oddYs;
-    return ys.map(y => ({ x, y, sizeX: 2, sizeY: 2 }));
+    return ys.map((y) => ({ x, y, sizeX: 1.8, sizeY: 1.8 }));
   });
 
   const totalSlots = coords.length;
@@ -166,7 +168,7 @@ export default function DomeGallery({
   minRadius = 1000,
   maxRadius = Infinity,
   padFactor = 0.25,
-  overlayBlurColor = '#060010',
+  overlayBlurColor = 'rgba(15, 23, 42, 0.08)',
   maxVerticalRotationDeg = DEFAULTS.maxVerticalRotationDeg,
   dragSensitivity = DEFAULTS.dragSensitivity,
   enlargeTransitionMs = DEFAULTS.enlargeTransitionMs,
@@ -176,7 +178,8 @@ export default function DomeGallery({
   openedImageHeight = '400px',
   imageBorderRadius = '30px',
   openedImageBorderRadius = '30px',
-  grayscale = false
+  grayscale = false,
+  autoSpin = DEFAULTS.autoSpin
 }: DomeGalleryProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -204,6 +207,7 @@ export default function DomeGallery({
   const openingRef = useRef(false);
   const openStartedAtRef = useRef(0);
   const lastDragEndAt = useRef(0);
+  const autoSpinRef = useRef<number | null>(null);
 
   const scrollLockedRef = useRef(false);
   const lockScroll = useCallback(() => {
@@ -327,6 +331,10 @@ export default function DomeGallery({
         cancelAnimationFrame(frameRequestRef.current);
         frameRequestRef.current = null;
       }
+      if (autoSpinRef.current) {
+        cancelAnimationFrame(autoSpinRef.current);
+        autoSpinRef.current = null;
+      }
     };
   }, [applyTransform]);
 
@@ -371,6 +379,27 @@ export default function DomeGallery({
     },
     [dragDampening, maxVerticalRotationDeg, stopInertia]
   );
+
+  useEffect(() => {
+    if (!autoSpin) return;
+
+    const step = () => {
+      if (!draggingRef.current && !focusedElRef.current && !openingRef.current) {
+        const nextY = wrapAngleSigned(rotationRef.current.y + 0.015);
+        rotationRef.current = { x: rotationRef.current.x, y: nextY };
+        applyTransform(rotationRef.current.x, rotationRef.current.y);
+      }
+      autoSpinRef.current = requestAnimationFrame(step);
+    };
+
+    autoSpinRef.current = requestAnimationFrame(step);
+    return () => {
+      if (autoSpinRef.current) {
+        cancelAnimationFrame(autoSpinRef.current);
+        autoSpinRef.current = null;
+      }
+    };
+  }, [applyTransform, autoSpin]);
 
   useGesture(
     {

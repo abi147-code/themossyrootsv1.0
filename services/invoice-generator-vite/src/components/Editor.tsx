@@ -151,27 +151,27 @@ export const Editor: React.FC<EditorProps> = ({
   };
 
   // Reusable input styles
-  const inputClass = "w-full px-3 py-2 border border-white/10 rounded-md text-sm bg-black/20 text-porcelain focus:ring-2 focus:ring-moss-500 focus:border-transparent outline-none transition-colors placeholder:text-porcelain/20";
-  const labelClass = "text-xs font-medium text-porcelain/50 mb-1 block uppercase tracking-wider";
-  const sectionClass = "bg-white/5 p-4 rounded-lg border border-white/5 space-y-4";
+  const inputClass = "w-full px-3 py-2 border border-slate-200 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none transition-colors placeholder:text-slate-400";
+  const labelClass = "text-xs font-medium text-slate-600 mb-1 block uppercase tracking-wider";
+  const sectionClass = "bg-white p-4 rounded-lg border border-slate-200 space-y-4 shadow-sm";
   // Updated option class for better visibility
-  const optionClass = "bg-gray-900 text-white";
+  const optionClass = "bg-white text-slate-900";
 
   return (
-    <div className="bg-ink/50 backdrop-blur-xl rounded-xl shadow-2xl border border-white/10 overflow-hidden flex flex-col h-full max-h-[80vh] transition-colors duration-300">
+    <div className="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col h-full max-h-[80vh] transition-colors duration-300">
       {/* Tabs */}
-      <div className="flex border-b border-white/10">
+      <div className="flex border-b border-slate-200 bg-slate-50/50">
         {['details', 'items', 'marketing'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as any)}
             className={`flex-1 py-4 text-sm font-medium capitalize transition-colors ${
               activeTab === tab
-                ? 'text-gold-400 border-b-2 border-gold-400 bg-white/5'
-                : 'text-porcelain/40 hover:text-porcelain hover:bg-white/5'
+                ? 'text-emerald-700 border-b-2 border-emerald-600 bg-emerald-50'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-emerald-50'
             }`}
           >
-            {tab === 'marketing' && <span className="mr-1">✨</span>}
+            {tab === 'marketing' && <span className="mr-1">•</span>}
             {tab}
           </button>
         ))}
@@ -198,7 +198,6 @@ export const Editor: React.FC<EditorProps> = ({
                         <option value="luxury" className={optionClass}>Luxury</option>
                         <option value="professional" className={optionClass}>Professional</option>
                         <option value="classic" className={optionClass}>Classic</option>
-                        <option value="futuristic" className={optionClass}>Futuristic</option>
                       </select>
                    </div>
                    <div>
@@ -219,7 +218,7 @@ export const Editor: React.FC<EditorProps> = ({
                    </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/10">
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-200">
                   <div>
                     <label className={labelClass}>Page Color</label>
                     <div className="flex items-center gap-2">
@@ -227,24 +226,24 @@ export const Editor: React.FC<EditorProps> = ({
                         type="color"
                         value={invoiceData.invoiceBackgroundColor || '#ffffff'}
                         onChange={(e) => handleChange('invoiceBackgroundColor', e.target.value)}
-                        className="h-8 w-8 rounded cursor-pointer border-none bg-transparent p-0 overflow-hidden"
+                        className="color-input"
                       />
-                      <span className="text-xs text-porcelain/40 font-mono">{invoiceData.invoiceBackgroundColor || '#ffffff'}</span>
+                       <span className="text-xs text-slate-500 font-mono">{invoiceData.invoiceBackgroundColor || '#ffffff'}</span>
                     </div>
-                  </div>
-                  <div>
+                 </div>
+                 <div>
                     <label className={labelClass}>Text Color</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
                         value={invoiceData.invoiceTextColor || '#1e293b'}
                         onChange={(e) => handleChange('invoiceTextColor', e.target.value)}
-                        className="h-8 w-8 rounded cursor-pointer border-none bg-transparent p-0 overflow-hidden"
+                        className="color-input"
                       />
-                      <span className="text-xs text-porcelain/40 font-mono">{invoiceData.invoiceTextColor || '#1e293b'}</span>
+                      <span className="text-xs text-slate-500 font-mono">{invoiceData.invoiceTextColor || '#1e293b'}</span>
                     </div>
-                  </div>
-                </div>
+                 </div>
+               </div>
              </div>
 
             <div className="space-y-4">
@@ -279,12 +278,12 @@ export const Editor: React.FC<EditorProps> = ({
               </div>
             </div>
 
-            <hr className="border-white/10" />
+            <hr className="border-slate-200" />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-porcelain">Sender Info</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Sender Info</h3>
               
-              <div className="flex items-center gap-4 mb-4 bg-white/5 p-3 rounded-lg border border-white/5">
+              <div className="flex items-center gap-4 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
                  {invoiceData.logoUrl ? (
                     <div className="relative group shrink-0">
                        <img src={invoiceData.logoUrl} alt="Logo" className="h-12 w-12 object-contain rounded bg-white p-1" />
@@ -298,7 +297,7 @@ export const Editor: React.FC<EditorProps> = ({
                  ) : (
                     <button
                        onClick={() => logoInputRef.current?.click()}
-                       className="h-12 w-12 shrink-0 rounded border border-dashed border-white/20 flex items-center justify-center text-porcelain/40 hover:text-moss-400 hover:border-moss-500 transition-colors bg-black/20"
+                       className="h-12 w-12 shrink-0 rounded border border-dashed border-slate-200 flex items-center justify-center text-slate-500 hover:text-moss-400 hover:border-moss-500 transition-colors bg-slate-100"
                        title="Upload Logo"
                     >
                        <ImageIcon size={16} />
@@ -342,10 +341,10 @@ export const Editor: React.FC<EditorProps> = ({
               />
             </div>
 
-            <hr className="border-white/10" />
+            <hr className="border-slate-200" />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-porcelain">Client Info</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Client Info</h3>
               <input
                 placeholder="Client Name"
                 value={invoiceData.clientName}
@@ -366,7 +365,7 @@ export const Editor: React.FC<EditorProps> = ({
               />
             </div>
 
-            <hr className="border-white/10" />
+            <hr className="border-slate-200" />
 
             {/* Payment Integration Section */}
             <div className={sectionClass}>
@@ -391,7 +390,7 @@ export const Editor: React.FC<EditorProps> = ({
                         {invoiceData.template !== 'luxury' && (
                            <button 
                              onClick={() => handleChange('paymentMethod', 'qr')}
-                             className={`flex items-center justify-center gap-2 py-2 px-2 rounded border text-xs transition-all ${invoiceData.paymentMethod !== 'button' ? 'bg-moss-600 border-moss-500 text-white' : 'bg-transparent border-white/10 text-porcelain/60 hover:bg-white/5'}`}
+                             className={`flex items-center justify-center gap-2 py-2 px-2 rounded border text-xs transition-all ${invoiceData.paymentMethod !== 'button' ? 'bg-moss-600 border-moss-500 text-white' : 'bg-transparent border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                            >
                              <QrCode size={14} />
                              QR Code
@@ -399,7 +398,7 @@ export const Editor: React.FC<EditorProps> = ({
                         )}
                          <button 
                            onClick={() => handleChange('paymentMethod', 'button')}
-                           className={`flex items-center justify-center gap-2 py-2 px-2 rounded border text-xs transition-all ${invoiceData.paymentMethod === 'button' ? 'bg-moss-600 border-moss-500 text-white' : 'bg-transparent border-white/10 text-porcelain/60 hover:bg-white/5'}`}
+                           className={`flex items-center justify-center gap-2 py-2 px-2 rounded border text-xs transition-all ${invoiceData.paymentMethod === 'button' ? 'bg-moss-600 border-moss-500 text-white' : 'bg-transparent border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                          >
                            <CreditCard size={14} />
                            Pay Button
@@ -427,13 +426,13 @@ export const Editor: React.FC<EditorProps> = ({
         {activeTab === 'items' && (
           <div className="space-y-4">
              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-semibold text-porcelain">Line Items</h3>
+                <h3 className="text-sm font-semibold text-slate-900">Line Items</h3>
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-porcelain/60">Currency:</span>
+                  <span className="text-slate-600">Currency:</span>
                   <select 
                      value={invoiceData.currency} 
                      onChange={e => handleChange('currency', e.target.value)}
-                     className="h-8 px-2 py-1 border border-white/10 rounded text-sm bg-black/20 text-porcelain outline-none focus:ring-2 focus:ring-moss-500 cursor-pointer"
+                     className="h-8 px-2 py-1 border border-slate-200 rounded text-sm bg-slate-100 text-slate-900 outline-none focus:ring-2 focus:ring-moss-500 cursor-pointer"
                   >
                     <option value="USD" className={optionClass}>USD ($)</option>
                     <option value="EUR" className={optionClass}>EUR (€)</option>
@@ -444,7 +443,7 @@ export const Editor: React.FC<EditorProps> = ({
              </div>
             
             {invoiceData.items.map((item) => (
-              <div key={item.id} className="flex gap-2 items-start bg-white/5 p-3 rounded-lg group border border-transparent border-b-white/5">
+              <div key={item.id} className="flex gap-2 items-start bg-slate-50 p-3 rounded-lg group border border-transparent border-b-white/5">
                 <div className="flex-grow space-y-2">
                   <input
                     placeholder="Description"
@@ -475,7 +474,7 @@ export const Editor: React.FC<EditorProps> = ({
                 </div>
                 <button
                   onClick={() => removeItem(item.id)}
-                  className="text-porcelain/20 hover:text-red-400 p-2 opacity-0 group-hover:opacity-100 transition-opacity mt-1"
+                  className="text-slate-400 hover:text-red-400 p-2 opacity-0 group-hover:opacity-100 transition-opacity mt-1"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -484,20 +483,20 @@ export const Editor: React.FC<EditorProps> = ({
             
             <button
               onClick={addItem}
-              className="w-full py-3 border border-dashed border-white/20 rounded-lg text-porcelain/60 hover:border-moss-500 hover:text-moss-400 hover:bg-moss-900/20 flex items-center justify-center gap-2 transition-colors font-medium text-sm"
+              className="w-full py-3 border border-dashed border-slate-200 rounded-lg text-slate-600 hover:border-moss-500 hover:text-moss-400 hover:bg-emerald-50 flex items-center justify-center gap-2 transition-colors font-medium text-sm"
             >
               <Plus size={16} />
               Add Item
             </button>
 
-             <div className="pt-4 border-t border-white/10">
+             <div className="pt-4 border-t border-slate-200">
                 <label className="flex items-center justify-between text-sm">
-                    <span className="text-porcelain/60">Tax Rate (%)</span>
+                    <span className="text-slate-600">Tax Rate (%)</span>
                     <input 
                         type="number" 
                         value={invoiceData.taxRate}
                         onChange={e => handleChange('taxRate', Number(e.target.value))}
-                        className="w-20 text-right px-2 py-1 border border-white/10 rounded bg-black/20 text-porcelain outline-none"
+                        className="w-20 text-right px-2 py-1 border border-slate-200 rounded bg-slate-100 text-slate-900 outline-none"
                     />
                 </label>
              </div>
@@ -519,26 +518,25 @@ export const Editor: React.FC<EditorProps> = ({
             <div className="flex items-center justify-between">
               <label className="flex items-center cursor-pointer">
                 <div className="relative">
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={marketingData.enabled}
-                    onChange={(e) => setMarketingData((prev) => ({ ...prev, enabled: e.target.checked }))}
-                  />
-                  <div className={`block w-10 h-6 rounded-full transition-colors ${marketingData.enabled ? 'bg-moss-500' : 'bg-white/10'}`}></div>
-                  <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${marketingData.enabled ? 'transform translate-x-4' : ''}`}></div>
-                </div>
-                <div className="ml-3 text-sm font-medium text-porcelain">Enable Banner</div>
-              </label>
-            </div>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={marketingData.enabled}
+                  onChange={(e) => setMarketingData((prev) => ({ ...prev, enabled: e.target.checked }))}
+                />
+                <div className={`block w-10 h-6 rounded-full transition-colors border ${marketingData.enabled ? 'bg-emerald-500 border-emerald-500' : 'bg-slate-200 border-slate-300'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform shadow ${marketingData.enabled ? 'transform translate-x-4' : ''}`}></div>
+              </div>
+              <div className="ml-3 text-sm font-medium text-slate-900">Enable Banner</div>
+            </label>
+          </div>
 
-            {marketingData.enabled && (
-              <>
-                <div className="bg-gradient-to-br from-moss-900/50 to-ink p-4 rounded-lg border border-moss-700/50 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-2 text-gold-500/20">
-                     <Wand2 size={64} />
-                  </div>
-                  <div className="relative z-10">
+            <div className={`${marketingData.enabled ? '' : 'opacity-60 pointer-events-none'} transition-opacity`}>
+              <div className="bg-gradient-to-br from-emerald-50 to-white p-4 rounded-lg border border-emerald-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 text-amber-500/20">
+                   <Wand2 size={64} />
+                </div>
+                <div className="relative z-10">
                       <div className="flex items-center gap-2 text-gold-400 mb-3 font-semibold text-sm">
                         <Wand2 size={16} />
                         <span>AI Content Generator</span>
@@ -574,7 +572,7 @@ export const Editor: React.FC<EditorProps> = ({
                         <button
                           key={i}
                           onClick={() => setMarketingData((prev) => ({ ...prev, text: s }))}
-                          className="w-full text-left text-xs p-2 bg-black/40 hover:bg-moss-900/80 rounded border border-white/5 text-porcelain transition-colors"
+                          className="w-full text-left text-xs p-2 bg-slate-200 hover:bg-moss-900/80 rounded border border-slate-200 text-slate-900 transition-colors"
                         >
                           {s}
                         </button>
@@ -593,7 +591,7 @@ export const Editor: React.FC<EditorProps> = ({
                     />
                   </div>
 
-                  <div className="pt-4 border-t border-white/10">
+                  <div className="pt-4 border-t border-slate-200">
                      <label className="text-xs font-bold uppercase text-gold-400 mb-3 block">Call To Action</label>
                      <div className="grid grid-cols-1 gap-3">
                          <input 
@@ -616,9 +614,9 @@ export const Editor: React.FC<EditorProps> = ({
                                         type="color"
                                         value={marketingData.ctaBackgroundColor || '#ffffff'}
                                         onChange={(e) => setMarketingData((prev) => ({ ...prev, ctaBackgroundColor: e.target.value }))}
-                                        className="h-8 w-8 rounded cursor-pointer border-none p-0 overflow-hidden bg-transparent"
+                                        className="color-input"
                                     />
-                                    <span className="text-xs text-porcelain/40 font-mono">{marketingData.ctaBackgroundColor || '#ffffff'}</span>
+                                    <span className="text-xs text-slate-500 font-mono">{marketingData.ctaBackgroundColor || '#ffffff'}</span>
                                 </div>
                              </div>
                               <div>
@@ -628,23 +626,23 @@ export const Editor: React.FC<EditorProps> = ({
                                         type="color"
                                         value={marketingData.ctaTextColor || '#000000'}
                                         onChange={(e) => setMarketingData((prev) => ({ ...prev, ctaTextColor: e.target.value }))}
-                                        className="h-8 w-8 rounded cursor-pointer border-none p-0 overflow-hidden bg-transparent"
+                                        className="color-input"
                                     />
-                                     <span className="text-xs text-porcelain/40 font-mono">{marketingData.ctaTextColor || '#000000'}</span>
+                                     <span className="text-xs text-slate-500 font-mono">{marketingData.ctaTextColor || '#000000'}</span>
                                 </div>
                              </div>
                          </div>
                      </div>
                   </div>
 
-                  <div className="pt-4 border-t border-white/10">
+                  <div className="pt-4 border-t border-slate-200">
                     <label className={labelClass}>Background Style</label>
                     <div className="grid grid-cols-3 gap-2 mb-4">
                        {(['solid', 'gradient', 'bordered'] as const).map((s) => (
                            <button
                               key={s}
                               onClick={() => setMarketingData(prev => ({ ...prev, style: s }))}
-                              className={`text-xs py-2 px-1 capitalize rounded border transition-colors ${marketingData.style === s ? 'border-moss-500 bg-moss-500/20 text-moss-400 font-medium' : 'border-white/10 text-porcelain/60 hover:bg-white/5'}`}
+                              className={`text-xs py-2 px-1 capitalize rounded border transition-colors ${marketingData.style === s ? 'border-moss-500 bg-moss-500/20 text-moss-400 font-medium' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                            >
                             {s}
                            </button>
@@ -659,9 +657,9 @@ export const Editor: React.FC<EditorProps> = ({
                             type="color"
                             value={marketingData.backgroundColor}
                             onChange={(e) => setMarketingData((prev) => ({ ...prev, backgroundColor: e.target.value }))}
-                            className="h-8 w-8 rounded cursor-pointer border-none p-0 overflow-hidden bg-transparent"
+                            className="color-input"
                           />
-                          <span className="text-xs text-porcelain/40 font-mono">{marketingData.backgroundColor}</span>
+                          <span className="text-xs text-slate-500 font-mono">{marketingData.backgroundColor}</span>
                         </div>
                       </div>
                       <div>
@@ -671,20 +669,20 @@ export const Editor: React.FC<EditorProps> = ({
                             type="color"
                             value={marketingData.textColor}
                             onChange={(e) => setMarketingData((prev) => ({ ...prev, textColor: e.target.value }))}
-                            className="h-8 w-8 rounded cursor-pointer border-none p-0 overflow-hidden bg-transparent"
+                            className="color-input"
                           />
-                          <span className="text-xs text-porcelain/40 font-mono">{marketingData.textColor}</span>
+                          <span className="text-xs text-slate-500 font-mono">{marketingData.textColor}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 border-t border-white/10 pt-4">
+                  <div className="mt-4 border-t border-slate-200 pt-4">
                     <label className={labelClass}>Custom Image</label>
                     {!marketingData.imageUrl ? (
                       <button 
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full h-24 border border-dashed border-white/20 rounded-lg flex flex-col items-center justify-center text-porcelain/40 hover:border-moss-500 hover:text-moss-400 hover:bg-moss-900/20 transition-all gap-2 bg-black/20"
+                        className="w-full h-24 border border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center text-slate-500 hover:border-moss-500 hover:text-moss-400 hover:bg-emerald-50 transition-all gap-2 bg-slate-100"
                       >
                         <ImageIcon size={20} />
                         <span className="text-xs">Upload Banner Image</span>
@@ -693,7 +691,7 @@ export const Editor: React.FC<EditorProps> = ({
                       <div className="space-y-2">
                         <div 
                           ref={imageContainerRef}
-                          className="relative h-24 w-full rounded-lg overflow-hidden border border-white/10 group bg-black/40 cursor-move select-none"
+                          className="relative h-24 w-full rounded-lg overflow-hidden border border-slate-200 group bg-slate-200 cursor-move select-none"
                           onMouseDown={onMouseDown}
                           onMouseMove={onMouseMove}
                           onMouseUp={onMouseUp}
@@ -709,10 +707,10 @@ export const Editor: React.FC<EditorProps> = ({
                             }}
                           />
                           
-                          {/* Reposition Hint Overlay */}
+                          {/* Reposition Hint Overlay (keeps image visible) */}
                           {!isDragging && (
-                             <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                <div className="bg-black/60 px-2 py-1 rounded text-[10px] text-white flex items-center gap-1 backdrop-blur-sm">
+                             <div className="absolute inset-0 flex items-center justify-center bg-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <div className="bg-slate-900/70 px-2 py-1 rounded text-[10px] text-white flex items-center gap-1 shadow-sm">
                                     <Move size={10} />
                                     Drag to Reposition
                                 </div>
@@ -737,7 +735,7 @@ export const Editor: React.FC<EditorProps> = ({
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <div className="flex justify-between text-xs text-porcelain/40">
+                          <div className="flex justify-between text-xs text-slate-500">
                             <span>Opacity</span>
                             <span>{Math.round((marketingData.imageOpacity ?? 0.2) * 100)}%</span>
                           </div>
@@ -762,8 +760,7 @@ export const Editor: React.FC<EditorProps> = ({
                     />
                   </div>
                 </div>
-              </>
-            )}
+              </div>
           </div>
         )}
       </div>

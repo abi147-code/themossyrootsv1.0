@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import DomeGallery from './components/dome';
 import RotatingText from './components/rotatingtext';
+import PortfolioHero from './components/PortfolioHero';
+import LogoLoop, { type LogoItem } from '@/components/LogoLoop';
 
 const rotatingRoles = [
   'A FULL-STACK MARKETER',
@@ -35,15 +36,26 @@ export const metadata: Metadata = {
 };
 
 export default function PortfolioPage() {
+  const logoItems: LogoItem[] = [
+    { src: '/logos/typescript.svg', alt: 'TypeScript' },
+    { src: '/logos/docker.svg', alt: 'Docker' },
+    { src: '/logos/python.svg', alt: 'Python' },
+    { src: '/logos/tailwind.svg', alt: 'Tailwind CSS' },
+    { src: '/logos/github.svg', alt: 'GitHub' },
+    { src: '/logos/hubspot.svg', alt: 'HubSpot' },
+    { src: '/logos/google-analytics.svg', alt: 'Google Analytics' },
+    { src: '/logos/microsoft-office.svg', alt: 'Microsoft Office' },
+    { node: <span className="font-semibold" style={{ color: '#007ACC' }}>VS Code</span> },
+    { src: '/logos/procreate.svg', alt: 'Procreate' },
+    { src: '/logos/vercel.svg', alt: 'Vercel' },
+    { src: '/logos/photoshop.svg', alt: 'Adobe Photoshop' },
+    { src: '/logos/davinci-resolve.svg', alt: 'DaVinci Resolve' },
+    { src: '/next.svg', alt: 'Next.js' }
+  ];
+
   return (
     <div className="relative min-h-screen">
-      <section className="relative flex min-h-[50vh] items-center justify-center overflow-hidden px-6 pt-24 pb-16 md:pt-32">
-        <div className="absolute inset-0 z-0">
-          <DomeGallery />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0B0F14]/35 via-[#0B0F14]/60 to-[#0B0F14]/90" />
-        </div>
-        <div className="relative z-10 h-32 w-full max-w-4xl md:h-40" aria-hidden="true" />
-      </section>
+      <PortfolioHero />
 
       <main className="relative z-10 px-6 pb-24">
         <div className="mx-auto w-full max-w-5xl pt-16 md:pt-20 text-white">
@@ -86,6 +98,18 @@ export default function PortfolioPage() {
               <p>
                 For me, great systems are not just efficient &mdash; they're empathetic. They remind us that growth is most beautiful when it still feels human.
               </p>
+              <div className="pt-8">
+                <LogoLoop
+                  logos={logoItems}
+                  speed={10}
+                  gap={48}
+                  logoHeight={64}
+                  fadeOut={false}
+                  scaleOnHover
+                  ariaLabel="Tooling logos"
+                  className="w-full"
+                />
+              </div>
             </div>
 
             <div className="mx-auto w-full max-w-xs sm:max-w-sm md:mx-0 md:mt-2">

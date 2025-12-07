@@ -28,14 +28,14 @@ const INITIAL_INVOICE: InvoiceData = {
 const INITIAL_MARKETING: MarketingBannerData = {
   enabled: true,
   text: 'Get 20% off your next project if you book before end of month!',
-  backgroundColor: '#14532d', // Moss default
-  textColor: '#ffffff',
+  backgroundColor: '#e8f4ec', // Light moss tint for bright theme
+  textColor: '#0f172a',
   style: 'gradient',
   imageOpacity: 0.2,
   ctaText: 'Book Now',
   ctaLink: 'https://acme.com/book',
-  ctaBackgroundColor: '#e2b714', // Gold default
-  ctaTextColor: '#0b0f14' // Ink default
+  ctaBackgroundColor: '#1f7a4d', // Moss default
+  ctaTextColor: '#ffffff' // Ink default
 };
 
 interface InvoiceToolProps {
@@ -48,22 +48,22 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   const [marketingData, setMarketingData] = useState<MarketingBannerData>(INITIAL_MARKETING);
 
   return (
-    <div className="min-h-screen bg-ink flex flex-col font-sans">
+    <div className="min-h-screen bg-[#f7f9fc] flex flex-col font-sans text-slate-900">
       {/* Top Bar - Hidden when printing */}
       {showHeader && (
-        <header className="bg-ink/50 backdrop-blur-md border-b border-white/10 px-6 py-4 flex items-center justify-between no-print sticky top-0 z-50">
+        <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between no-print sticky top-0 z-50">
           <div className="flex items-center gap-4">
             <button 
               onClick={onBack}
-              className="p-2 hover:bg-white/5 rounded-full text-porcelain/60 transition-colors"
+              className="p-2 hover:bg-emerald-50 rounded-full text-slate-600 transition-colors border border-transparent hover:border-emerald-100"
               title="Back to Website"
             >
               <ArrowLeft size={20} />
             </button>
             <div className="flex items-center gap-3">
               <div>
-                  <h1 className="text-lg font-bold text-porcelain tracking-tight">Invoice Editor</h1>
-                  <p className="text-[10px] text-porcelain/40 uppercase tracking-wider">Editor Mode</p>
+                  <h1 className="text-lg font-bold text-slate-900 tracking-tight">Invoice Editor</h1>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider">Editor Mode</p>
               </div>
             </div>
           </div>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <defs>
+    <linearGradient id="p-bg" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="30%" stop-color="#1e1f2f"/>
+      <stop offset="60%" stop-color="#2d1b4a"/>
+      <stop offset="100%" stop-color="#0b0f14"/>
+    </linearGradient>
+    <linearGradient id="p-swoosh" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6cf1ff"/>
+      <stop offset="35%" stop-color="#6cf1ff"/>
+      <stop offset="60%" stop-color="#ff6de0"/>
+      <stop offset="100%" stop-color="#ffc857"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="20" fill="url(#p-bg)"/>
+  <path d="M22 62c22-16 32-28 46-34 5-2 8-1 10 1 2 3 2 6-1 10-6 8-18 13-30 18-8 3-16 6-23 7l-2-2z" fill="url(#p-swoosh)"/>
+  <path d="M24 63c8-1 16-4 24-7 10-4 22-9 28-17 2-3 3-6 1-8" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="3" opacity="0.9"/>
+</svg>
