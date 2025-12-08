@@ -8,9 +8,10 @@ interface InvoicePreviewProps {
   banner: MarketingBannerData;
   showControls?: boolean;
   viewMode?: 'full' | 'header' | 'banner';
+  registerAnchor?: (key: string, el: HTMLElement | null) => void;
 }
 
-export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, showControls = true, viewMode = 'full' }) => {
+export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, showControls = true, viewMode = 'full', registerAnchor }) => {
   const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
   const taxAmount = subtotal * (data.taxRate / 100);
   const total = subtotal + taxAmount;
@@ -530,13 +531,17 @@ ${htmlContent}
   const fonts = getFonts();
 
   const actionButtons = (
-    <div className="absolute top-6 -right-16 no-print z-50 flex flex-col gap-2 group-hover:opacity-100 transition-opacity" data-html2canvas-ignore>
+    <div
+      ref={(el) => registerAnchor?.('actions', el)}
+      className="absolute top-6 -right-16 no-print z-50 flex flex-col gap-2 group-hover:opacity-100 transition-opacity"
+      data-html2canvas-ignore
+    >
       <button 
         type="button"
         onClick={handleDownloadPdf}
         disabled={isGeneratingPdf}
         className={`flex items-center justify-center h-10 bg-emerald-600 text-white rounded-full transition-all shadow-lg shadow-emerald-200 border border-emerald-200 ${isGeneratingPdf ? 'opacity-50 pointer-events-none px-4' : 'w-10 hover:bg-emerald-500 hover:scale-110'}`}
-        title="Download PDF"
+        title="Download a finalized PDF of this invoice"
       >
         {isGeneratingPdf ? (
           <div className="flex items-center gap-2">
@@ -551,7 +556,7 @@ ${htmlContent}
         type="button"
         onClick={() => window.print()}
         className="flex items-center justify-center w-10 h-10 bg-white text-slate-900 rounded-full hover:bg-slate-100 hover:scale-110 transition-all shadow-lg border border-slate-200"
-        title="Print"
+        title="Print or save as PDF"
       >
         <Printer size={18} />
       </button>
@@ -561,7 +566,7 @@ ${htmlContent}
           onClick={() => setShowEmailForm(true)}
           disabled={isSendingEmail}
           className={`flex items-center justify-center h-10 bg-amber-400 text-white rounded-full transition-all shadow-lg shadow-amber-200 border border-amber-200 ${isSendingEmail ? 'opacity-50 pointer-events-none px-4' : 'w-10 hover:bg-amber-300 hover:scale-110'}`}
-          title="Send via email"
+          title="Send this invoice by email"
         >
           {isSendingEmail ? (
             <div className="flex items-center gap-2">

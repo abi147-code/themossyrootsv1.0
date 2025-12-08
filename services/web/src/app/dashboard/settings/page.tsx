@@ -32,18 +32,18 @@ export default function SettingsHomePage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col space-y-8">
+    <div className="mx-auto flex max-w-5xl flex-col space-y-8 text-slate-900">
       <Link
         href="/dashboard"
-        className="inline-flex items-center text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 transition hover:text-slate-200"
+        className="inline-flex items-center text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700 transition hover:text-emerald-500"
       >
         &larr; Back to Dashboard
       </Link>
 
       <header className="space-y-4">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-400/80">Settings</p>
-        <h1 className="text-3xl font-semibold text-white">Workspace settings</h1>
-        <p className="max-w-2xl text-sm text-slate-300">
+        <p className="text-xs uppercase tracking-[0.3em] text-emerald-700/80">Settings</p>
+        <h1 className="text-3xl font-semibold text-slate-900">Workspace settings</h1>
+        <p className="max-w-2xl text-sm text-slate-600">
           Configure your personal profile today, and keep an eye out for upcoming organization and brand controls as we
           expand the CRM.
         </p>
@@ -54,10 +54,10 @@ export default function SettingsHomePage() {
           const content = (
             <>
               <div className="space-y-3">
-                <span className="text-xs uppercase tracking-[0.3em] text-slate-400/90">{section.title}</span>
-                <p className="text-sm text-slate-300">{section.description}</p>
+                <span className="text-xs uppercase tracking-[0.3em] text-slate-500">{section.title}</span>
+                <p className="text-sm text-slate-600">{section.description}</p>
               </div>
-              <span className="mt-6 inline-flex items-center text-xs font-semibold uppercase tracking-[0.3em] text-slate-300 transition group-hover:text-white">
+              <span className="mt-6 inline-flex items-center text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700 transition group-hover:text-emerald-600">
                 {section.available ? 'Open' : 'Coming soon'}
               </span>
             </>
@@ -68,7 +68,7 @@ export default function SettingsHomePage() {
               <Link
                 key={section.title}
                 href={section.href}
-                className="group flex flex-col justify-between rounded-3xl border border-slate-800/70 bg-slate-950/70 p-6 shadow-lg shadow-slate-900/40 transition hover:border-slate-700 hover:shadow-slate-900/60"
+                className="group flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-lg shadow-emerald-100 transition hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200"
               >
                 {content}
               </Link>
@@ -78,7 +78,7 @@ export default function SettingsHomePage() {
           return (
             <div
               key={section.title}
-              className="flex flex-col justify-between rounded-3xl border border-slate-800/70 bg-slate-950/60 p-6 shadow-lg shadow-slate-900/30 opacity-70"
+              className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-inner shadow-emerald-50"
             >
               {content}
             </div>

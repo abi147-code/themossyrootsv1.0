@@ -1,7 +1,7 @@
 .logoloop {
   position: relative;
 
-  --logoloop-gap: 32px;
+  --logoloop-gap: 52px;
   --logoloop-logoHeight: 28px;
   --logoloop-fadeColorAuto: #ffffff;
 }

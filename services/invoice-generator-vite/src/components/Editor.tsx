@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { InvoiceData, MarketingBannerData, InvoiceItem } from '../types';
 import { generateMarketingSlogans } from '../services/geminiService';
 import { Plus, Trash2, Wand2, Loader2, Image as ImageIcon, X, Layout, CreditCard, QrCode, Move } from 'lucide-react';
@@ -9,6 +9,8 @@ interface EditorProps {
   setInvoiceData: React.Dispatch<React.SetStateAction<InvoiceData>>;
   marketingData: MarketingBannerData;
   setMarketingData: React.Dispatch<React.SetStateAction<MarketingBannerData>>;
+  registerAnchor?: (key: string, el: HTMLElement | null) => void;
+  activeTabOverride?: 'details' | 'items' | 'marketing';
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -16,14 +18,24 @@ export const Editor: React.FC<EditorProps> = ({
   setInvoiceData,
   marketingData,
   setMarketingData,
+  registerAnchor,
+  activeTabOverride,
 }) => {
   const [activeTab, setActiveTab] = useState<'details' | 'items' | 'marketing'>('details');
+  const [showBannerGuide, setShowBannerGuide] = useState(true);
   const [prompt, setPrompt] = useState('');
   const [businessType, setBusinessType] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const styleRef = useRef<HTMLDivElement | null>(null);
+  const colorsRef = useRef<HTMLDivElement | null>(null);
+  const senderRef = useRef<HTMLDivElement | null>(null);
+  const clientRef = useRef<HTMLDivElement | null>(null);
+  const itemsRef = useRef<HTMLDivElement | null>(null);
+  const taxNotesRef = useRef<HTMLDivElement | null>(null);
+  const marketingRef = useRef<HTMLDivElement | null>(null);
 
   // Drag state for banner image repositioning
   const [isDragging, setIsDragging] = useState(false);
@@ -111,6 +123,22 @@ export const Editor: React.FC<EditorProps> = ({
     setMarketingData(prev => ({ ...prev, imagePosition: { x: 50, y: 50 } }));
   };
 
+  useEffect(() => {
+    if (activeTabOverride && activeTabOverride !== activeTab) {
+      setActiveTab(activeTabOverride);
+    }
+  }, [activeTabOverride, activeTab]);
+
+  useEffect(() => {
+    registerAnchor?.('style', styleRef.current);
+    registerAnchor?.('colors', colorsRef.current);
+    registerAnchor?.('sender', senderRef.current);
+    registerAnchor?.('client', clientRef.current);
+    registerAnchor?.('items', itemsRef.current);
+    registerAnchor?.('taxNotes', taxNotesRef.current);
+    registerAnchor?.('marketing', marketingRef.current);
+  }, [registerAnchor, activeTab, marketingData.enabled]);
+
   // Drag handlers
   const onMouseDown = (e: React.MouseEvent) => {
     if (!marketingData.imageUrl) return;
@@ -180,9 +208,9 @@ export const Editor: React.FC<EditorProps> = ({
       {/* Content */}
       <div className="p-6 overflow-y-auto flex-grow scrollbar-hide">
         {activeTab === 'details' && (
-          <div className="space-y-6">
+            <div className="space-y-6">
              {/* Style Settings Section */}
-             <div className={sectionClass}>
+             <div className={sectionClass} ref={styleRef}>
                 <div className="flex items-center gap-2 text-gold-400 font-medium text-sm">
                    <Layout size={16} />
                    <span>Visual Style</span>
@@ -218,7 +246,7 @@ export const Editor: React.FC<EditorProps> = ({
                    </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-200" ref={colorsRef}>
                   <div>
                     <label className={labelClass}>Page Color</label>
                     <div className="flex items-center gap-2">
@@ -280,7 +308,7 @@ export const Editor: React.FC<EditorProps> = ({
 
             <hr className="border-slate-200" />
 
-            <div className="space-y-4">
+            <div className="space-y-4" ref={senderRef}>
               <h3 className="text-sm font-semibold text-slate-900">Sender Info</h3>
               
               <div className="flex items-center gap-4 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
@@ -343,7 +371,7 @@ export const Editor: React.FC<EditorProps> = ({
 
             <hr className="border-slate-200" />
 
-            <div className="space-y-4">
+            <div className="space-y-4" ref={clientRef}>
               <h3 className="text-sm font-semibold text-slate-900">Client Info</h3>
               <input
                 placeholder="Client Name"
@@ -424,7 +452,7 @@ export const Editor: React.FC<EditorProps> = ({
         )}
 
         {activeTab === 'items' && (
-          <div className="space-y-4">
+          <div className="space-y-4" ref={itemsRef}>
              <div className="flex justify-between items-center mb-2">
                 <h3 className="text-sm font-semibold text-slate-900">Line Items</h3>
                 <div className="flex items-center gap-2 text-sm">
@@ -489,7 +517,7 @@ export const Editor: React.FC<EditorProps> = ({
               Add Item
             </button>
 
-             <div className="pt-4 border-t border-slate-200">
+             <div className="pt-4 border-t border-slate-200" ref={taxNotesRef}>
                 <label className="flex items-center justify-between text-sm">
                     <span className="text-slate-600">Tax Rate (%)</span>
                     <input 
@@ -509,12 +537,12 @@ export const Editor: React.FC<EditorProps> = ({
                     className={`${inputClass} h-20`}
                     placeholder="Payment terms, thank you notes, etc."
                 />
-             </div>
+            </div>
           </div>
         )}
 
-        {activeTab === 'marketing' && (
-          <div className="space-y-6">
+      {activeTab === 'marketing' && (
+          <div className="space-y-6" ref={marketingRef}>
             <div className="flex items-center justify-between">
               <label className="flex items-center cursor-pointer">
                 <div className="relative">
@@ -529,9 +557,40 @@ export const Editor: React.FC<EditorProps> = ({
               </div>
               <div className="ml-3 text-sm font-medium text-slate-900">Enable Banner</div>
             </label>
-          </div>
+            </div>
 
             <div className={`${marketingData.enabled ? '' : 'opacity-60 pointer-events-none'} transition-opacity`}>
+              {showBannerGuide ? (
+                <div className="rounded-xl border border-emerald-100 bg-white p-4 shadow-sm flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-700">How to craft a marketing banner</p>
+                      <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12px] text-slate-700">
+                        <li>Describe your business + goal, then click “Generate Ideas”.</li>
+                        <li>Pick a style, set background/text colors.</li>
+                        <li>Upload a banner image (drag to reposition).</li>
+                        <li>Adjust CTA text/colors, then preview + download/print/email.</li>
+                      </ol>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowBannerGuide(false)}
+                      className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-700 transition hover:bg-emerald-100 whitespace-nowrap"
+                    >
+                      Got it
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowBannerGuide(true)}
+                  className="text-[11px] font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-600"
+                >
+                  Show how to use the marketing banner
+                </button>
+              )}
+
               <div className="bg-gradient-to-br from-emerald-50 to-white p-4 rounded-lg border border-emerald-100 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-2 text-amber-500/20">
                    <Wand2 size={64} />
@@ -559,9 +618,13 @@ export const Editor: React.FC<EditorProps> = ({
                           onClick={handleGenerateSlogans}
                           disabled={isGenerating || !prompt}
                           className="w-full py-2 bg-moss-600 text-white rounded-md text-sm font-medium hover:bg-moss-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all shadow-lg"
+                          title="Generate headline ideas for your banner based on your goal"
                         >
                           {isGenerating ? <Loader2 size={16} className="animate-spin" /> : 'Generate Ideas'}
                         </button>
+                        <p className="text-[11px] text-slate-600">
+                          Tip: use a short goal (e.g., “Book a consult this week”) for focused suggestions.
+                        </p>
                       </div>
                   </div>
 
@@ -683,6 +746,7 @@ export const Editor: React.FC<EditorProps> = ({
                       <button 
                         onClick={() => fileInputRef.current?.click()}
                         className="w-full h-24 border border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center text-slate-500 hover:border-moss-500 hover:text-moss-400 hover:bg-emerald-50 transition-all gap-2 bg-slate-100"
+                        title="Add a banner image to your marketing block"
                       >
                         <ImageIcon size={20} />
                         <span className="text-xs">Upload Banner Image</span>
@@ -749,6 +813,7 @@ export const Editor: React.FC<EditorProps> = ({
                             className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-moss-500"
                           />
                         </div>
+                        <p className="text-[11px] text-slate-600">Tip: drag the image to reposition; lower opacity for subtle overlays.</p>
                       </div>
                     )}
                     <input 

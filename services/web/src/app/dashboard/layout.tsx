@@ -24,6 +24,27 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [navCollapsed, setNavCollapsed] = useState(false);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const isInvoiceTool = pathname.startsWith('/dashboard/invoice-generator');
+  const isOverview = pathname === '/dashboard';
+  const tourSteps = [
+    {
+      title: 'Overview',
+      body: 'See your latest activity and analytics cards so you know where to focus next.',
+    },
+    {
+      title: 'Invoice Generator',
+      body: 'Create and send branded invoices with marketing add-ons.',
+    },
+    {
+      title: 'History',
+      body: 'Review past invoices and status history.',
+    },
+    {
+      title: 'Settings',
+      body: 'Update your profile, password, and workspace preferences.',
+    },
+  ];
+  const [showTour, setShowTour] = useState(false);
+  const [tourStepIndex, setTourStepIndex] = useState(0);
 
   useEffect(() => {
     const updateHeaderOffset = () => {
@@ -49,6 +70,40 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     if (!token) return;
     refresh();
   }, [token, refresh]);
+
+  // One-time tour overlay on first visit to overview
+  useEffect(() => {
+    if (!isOverview) return;
+    const hasSeen = typeof window !== 'undefined' ? localStorage.getItem('tmr-dashboard-tour') : 'seen';
+    if (!hasSeen || hasSeen !== 'seen') {
+      setShowTour(true);
+    }
+  }, [isOverview]);
+
+  const dismissTour = () => {
+    setShowTour(false);
+    setTourStepIndex(0);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tmr-dashboard-tour', 'seen');
+    }
+  };
+
+  const nextTourStep = () => {
+    const next = tourStepIndex + 1;
+    if (next >= tourSteps.length) {
+      dismissTour();
+    } else {
+      setTourStepIndex(next);
+    }
+  };
+
+  const restartTour = () => {
+    setShowTour(true);
+    setTourStepIndex(0);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tmr-dashboard-tour');
+    }
+  };
 
   if (loading || !token) {
     return null;
@@ -88,27 +143,28 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               pathname === item.href ||
               (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`));
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={clsx(
-                  'group flex w-full items-center rounded-xl border text-xs font-semibold uppercase tracking-[0.35em] transition',
-                  navCollapsed ? 'justify-center gap-0 px-2 py-2' : 'justify-start gap-2 px-3 py-3',
-                  isActive
-                    ? 'border-emerald-500/60 bg-emerald-50 text-emerald-700 shadow-[0_10px_25px_rgba(16,185,129,0.18)]'
-                    : 'border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-800'
-                )}
-                aria-label={item.label}
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[10px] font-semibold uppercase tracking-[0.4em] text-slate-600">
-                  {item.label.slice(0, 1)}
-                </span>
-                {!navCollapsed ? (
-                  <span className="flex-1 whitespace-nowrap text-[11px] tracking-[0.4em] transition-all duration-200">
-                    {item.label}
+              <div key={item.href} className="relative">
+                <Link
+                  href={item.href}
+                  className={clsx(
+                    'group flex w-full items-center rounded-xl border text-xs font-semibold uppercase tracking-[0.35em] transition',
+                    navCollapsed ? 'justify-center gap-0 px-2 py-2' : 'justify-start gap-2 px-3 py-3',
+                    isActive
+                      ? 'border-emerald-500/60 bg-emerald-50 text-emerald-700 shadow-[0_10px_25px_rgba(16,185,129,0.18)]'
+                      : 'border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-800'
+                  )}
+                  aria-label={item.label}
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[10px] font-semibold uppercase tracking-[0.4em] text-slate-600">
+                    {item.label.slice(0, 1)}
                   </span>
-                ) : null}
-              </Link>
+                  {!navCollapsed ? (
+                    <span className="flex-1 whitespace-nowrap text-[11px] tracking-[0.4em] transition-all duration-200">
+                      {item.label}
+                    </span>
+                  ) : null}
+                </Link>
+              </div>
             );
           })}
         </nav>
@@ -155,6 +211,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </h1>
             </div>
             <div className="flex flex-wrap items-center gap-3">
+              {isOverview ? (
+                <button
+                  onClick={restartTour}
+                  className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-700 transition hover:bg-emerald-100"
+                >
+                  Show tour
+                </button>
+              ) : null}
               <Link
                 href="https://dashboard.stripe.com/test/subscriptions"
                 className="text-xs font-semibold text-emerald-700 transition hover:text-emerald-600"
@@ -169,6 +233,45 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </button>
             </div>
           </header>
+
+          {isOverview && showTour ? (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+              <div className="max-w-xl rounded-3xl border border-emerald-100 bg-white p-6 shadow-2xl shadow-emerald-100">
+                <p className="text-[11px] uppercase tracking-[0.35em] text-emerald-700">
+                  Step {tourStepIndex + 1} of {tourSteps.length}
+                </p>
+                <h2 className="mt-3 text-xl font-semibold text-slate-900">{tourSteps[tourStepIndex].title}</h2>
+                <p className="mt-2 text-sm text-slate-700">{tourSteps[tourStepIndex].body}</p>
+                <div className="mt-5 flex items-center justify-between">
+                  <button
+                    onClick={dismissTour}
+                    className="text-xs text-slate-500 underline underline-offset-4 hover:text-slate-700"
+                  >
+                    Skip
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      {tourSteps.map((_, idx) => (
+                        <span
+                          key={idx}
+                          className={clsx(
+                            'h-2 w-2 rounded-full transition',
+                            idx === tourStepIndex ? 'bg-emerald-600' : 'bg-slate-300'
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      onClick={nextTourStep}
+                      className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-emerald-500"
+                    >
+                      {tourStepIndex === tourSteps.length - 1 ? 'Done' : 'Next'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <main className="flex-1">{children}</main>
         </div>

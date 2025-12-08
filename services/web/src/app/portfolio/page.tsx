@@ -98,7 +98,7 @@ export default function PortfolioPage() {
               <p>
                 For me, great systems are not just efficient &mdash; they're empathetic. They remind us that growth is most beautiful when it still feels human.
               </p>
-              <div className="pt-8">
+              <div className="pt-20 md:pt-24">
                 <LogoLoop
                   logos={logoItems}
                   speed={10}
