@@ -18,6 +18,7 @@ const campaignSelect = {
   bannerCopyText: true,
   bannerCopyTextColor: true,
   bannerCopyOpacity: true,
+  bannerImagePosition: true,
   ctaBackgroundColor: true,
   ctaTextColor: true,
   invoicePageColor: true,
@@ -139,6 +140,7 @@ router.post('/', async (req, res) => {
         bannerCopyText: normalizeNullable(req.body.bannerCopyText) ?? null,
         bannerCopyTextColor: normalizeNullable(req.body.bannerCopyTextColor) ?? null,
         bannerCopyOpacity: normalizeNumber(req.body.bannerCopyOpacity) ?? null,
+        bannerImagePosition: normalizeNullable(req.body.bannerImagePosition) ?? null,
         invoicePageColor: normalizeNullable(req.body.invoicePageColor) ?? null,
         invoiceTextColor: normalizeNullable(req.body.invoiceTextColor) ?? null,
         pageBackgroundColor: normalizeNullable(req.body.pageBackgroundColor) ?? null,
@@ -212,6 +214,8 @@ router.put('/:id', async (req, res) => {
   if (bannerCopyTextColor !== undefined) data.bannerCopyTextColor = bannerCopyTextColor;
   const bannerCopyOpacity = normalizeNumber(req.body.bannerCopyOpacity);
   if (bannerCopyOpacity !== undefined) data.bannerCopyOpacity = bannerCopyOpacity;
+  const bannerImagePosition = normalizeNullable(req.body.bannerImagePosition);
+  if (bannerImagePosition !== undefined) data.bannerImagePosition = bannerImagePosition;
   const invoicePageColor = normalizeNullable(req.body.invoicePageColor);
   if (invoicePageColor !== undefined) data.invoicePageColor = invoicePageColor;
   const invoiceTextColor = normalizeNullable(req.body.invoiceTextColor);

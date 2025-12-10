@@ -296,6 +296,21 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   }, [authReady]);
 
   const mapCampaignToState = (campaign: any) => {
+    const parseImagePosition = (pos: unknown) => {
+      if (typeof pos !== 'string') return null;
+      const parts = pos.trim().split(/\s+/);
+      if (parts.length < 2) return null;
+      const [xRaw, yRaw] = parts;
+      const parsePart = (val: string) => {
+        const num = parseFloat(val.replace('%', ''));
+        return Number.isFinite(num) ? Math.max(0, Math.min(100, num)) : null;
+      };
+      const x = parsePart(xRaw);
+      const y = parsePart(yRaw);
+      if (x === null || y === null) return null;
+      return { x, y };
+    };
+
     setInvoiceData((prev) => ({
       ...prev,
       invoicePageColor: campaign.invoicePageColor || '#ffffff',
@@ -328,7 +343,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       ctaTargetUrl: campaign.ctaTargetUrl ?? prev.ctaTargetUrl,
       ctaBackgroundColor: campaign.ctaBackgroundColor ?? prev.ctaBackgroundColor,
       ctaTextColor: campaign.ctaTextColor ?? prev.ctaTextColor,
-      imagePosition: campaign.imagePosition ?? prev.imagePosition,
+      imagePosition: parseImagePosition(campaign.bannerImagePosition) ?? campaign.imagePosition ?? prev.imagePosition,
     }));
   };
 
@@ -414,6 +429,9 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       bannerTextColor: marketingData.bannerTextColor || null,
       bannerImageOpacity:
         typeof marketingData.bannerImageOpacity === 'number' ? marketingData.bannerImageOpacity : null,
+      bannerImagePosition: marketingData.imagePosition
+        ? `${marketingData.imagePosition.x}% ${marketingData.imagePosition.y}%`
+        : null,
       imagePosition: marketingData.imagePosition || null,
       ctaText: marketingData.ctaText || null,
       ctaTargetUrl: marketingData.ctaTargetUrl || null,
