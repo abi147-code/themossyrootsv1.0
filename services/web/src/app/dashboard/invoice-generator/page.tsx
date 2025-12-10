@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -12,6 +12,7 @@ export default function InvoiceGeneratorPage() {
   const { token } = useAuth();
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const iframeOrigin = useMemo(() => {
     try {
@@ -19,7 +20,25 @@ export default function InvoiceGeneratorPage() {
     } catch {
       return null;
     }
-  }, []);
+  }, [iframeSrc]);
+
+  const postTokenToIframe = useCallback(() => {
+    if (!iframeRef.current || !token || !iframeOrigin) return;
+    try {
+      const targetWindow = iframeRef.current.contentWindow;
+      console.log('[InvoiceGenerator] Posting token to iframe', {
+        hasContentWindow: !!targetWindow,
+        iframeOrigin,
+        tokenPresent: !!token,
+      });
+      iframeRef.current.contentWindow?.postMessage(
+        { type: 'TMR_TOKEN_BRIDGE', token },
+        '*' // permissive for dev to allow localhost origin mismatches
+      );
+    } catch (err) {
+      console.error('Failed to post auth token to invoice iframe', err);
+    }
+  }, [iframeOrigin, token]);
 
   const scheduleToastClear = () => {
     if (toastTimeoutRef.current) {
@@ -75,6 +94,14 @@ export default function InvoiceGeneratorPage() {
     };
   }, [iframeOrigin, token]);
 
+  useEffect(() => {
+    postTokenToIframe();
+  }, [postTokenToIframe]);
+
+  const handleIframeLoad = () => {
+    postTokenToIframe();
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
       <div className="p-4">
@@ -87,10 +114,12 @@ export default function InvoiceGeneratorPage() {
       </div>
       <div className="flex-1 min-h-0">
         <iframe
+          ref={iframeRef}
           src={iframeSrc}
           title="Invoice Generator"
           className="h-full w-full border-0"
           allow="clipboard-read; clipboard-write"
+          onLoad={handleIframeLoad}
         />
       </div>
       {statusMessage ? (

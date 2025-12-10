@@ -58,6 +58,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
   const [isCampaignLoaded, setIsCampaignLoaded] = useState(false);
   const [loadedCampaignId, setLoadedCampaignId] = useState<number | null>(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | ''>('');
   const [activeTabOverride, setActiveTabOverride] = useState<'details' | 'items' | 'marketing' | undefined>();
   const [highlightRect, setHighlightRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const anchorsRef = useRef<Record<string, HTMLElement | null>>({});
@@ -165,7 +166,21 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     setTourStep((s) => Math.max(0, s - 1));
   };
 
-  const apiBase = (import.meta.env.VITE_TMR_API_URL || '').replace(/\/+$/, '');
+  const apiBase = (
+    import.meta.env.VITE_PUBLIC_API_URL || // prefer explicit public API (typically :4000)
+    import.meta.env.VITE_TMR_API_URL || // fallback to legacy var
+    (typeof window !== 'undefined' ? window.location.origin : '')
+  ).replace(/\/+$/, '');
+
+  const hasAuthToken = () =>
+    !!(
+      (typeof window !== 'undefined' && window.localStorage?.getItem('tmr-token')) ||
+      (typeof window !== 'undefined' && window.sessionStorage?.getItem('tmr-token'))
+    );
+
+  const initialAuth = hasAuthToken();
+  const [authReady, setAuthReady] = useState(initialAuth);
+  const [awaitingAuth, setAwaitingAuth] = useState(!initialAuth);
 
   const resolveAuthHeaders = () => {
     const token =
@@ -176,41 +191,109 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     return { Authorization: `Bearer ${token}` };
   };
 
+  // Listen for auth tokens posted by the dashboard iframe and persist them locally.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const allowedOrigins = [
+      import.meta.env.VITE_TMR_WEB_URL,
+      import.meta.env.VITE_PUBLIC_WEB_URL,
+      import.meta.env.VITE_PUBLIC_APP_URL,
+    ]
+      .filter((origin): origin is string => typeof origin === 'string' && !!origin.trim())
+      .map((origin) => origin.replace(/\/+$/, ''));
+
+    const localhostOrigins = ['http://localhost:3000', 'http://localhost:4000', 'http://localhost']
+      .map((origin) => origin.replace(/\/+$/, ''));
+    localhostOrigins.forEach((origin) => {
+      if (!allowedOrigins.includes(origin)) {
+        allowedOrigins.push(origin);
+      }
+    });
+
+    if (allowedOrigins.length === 0 && typeof window !== 'undefined') {
+      allowedOrigins.push(window.location.origin.replace(/\/+$/, ''));
+    }
+
+    const handler = (event: MessageEvent) => {
+      if (!event.data || event.data.type !== 'TMR_TOKEN_BRIDGE') return;
+      if (allowedOrigins.length && !allowedOrigins.includes(event.origin)) return;
+
+      const incomingToken =
+        typeof event.data.token === 'string' ? event.data.token.trim() : '';
+      if (!incomingToken) return;
+
+      window.localStorage.setItem('tmr-token', incomingToken);
+      window.sessionStorage.setItem('tmr-token', incomingToken);
+      setAuthReady(true);
+      setAwaitingAuth(false);
+    };
+
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  useEffect(() => {
+    if (authReady) {
+      setAwaitingAuth(false);
+    }
+  }, [authReady]);
+
   const notify = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
-    if (type === 'error') {
-      console.error(message);
-    } else {
-      console.log(message);
-    }
-    if (typeof window !== 'undefined') {
-      window.alert(message);
-    }
+    if (type === 'error') console.error(message);
+    else console.log(message);
+    if (type === 'error' && typeof window !== 'undefined') window.alert(message);
   };
 
-  const fetchCampaigns = async () => {
-    const auth = resolveAuthHeaders();
-    if (!auth) {
-      notify('Please log in to load campaigns.', 'error');
+  const fetchCampaigns = async (options?: { silent?: boolean }) => {
+    const token =
+      (typeof window !== 'undefined' && window.localStorage?.getItem('tmr-token')) ||
+      (typeof window !== 'undefined' && window.sessionStorage?.getItem('tmr-token')) ||
+      '';
+    console.log('[Campaigns] fetchCampaigns called', { apiBase, hasToken: !!token });
+
+    if (!authReady) {
+      setAwaitingAuth(true);
       return;
     }
+
+    const auth = resolveAuthHeaders();
+    if (!auth) {
+      if (!options?.silent) {
+        notify('Please log in to load campaigns.', 'error');
+      }
+      return;
+    }
+
     setCampaignsLoading(true);
     try {
+      console.log('[Campaigns] Fetch list', `${apiBase}/api/campaigns`);
       const response = await fetch(`${apiBase}/api/campaigns`, {
         headers: {
           'Content-Type': 'application/json',
           ...auth,
         },
       });
+      console.log('[Campaigns] Response status', response.status);
       if (!response.ok) throw new Error('Failed to load campaigns');
       const data = await response.json();
+      console.log('[Campaigns] Payload', data);
       setCampaigns(Array.isArray(data.campaigns) ? data.campaigns : []);
     } catch (err) {
-      console.error('Failed to fetch campaigns', err);
+      console.error('[Campaigns] Failed to load campaigns', err);
       notify('Failed to load campaigns', 'error');
     } finally {
       setCampaignsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (authReady) {
+      fetchCampaigns({ silent: true }).catch(() => {
+        /* errors already handled */
+      });
+    }
+  }, [authReady]);
 
   const mapCampaignToState = (campaign: any) => {
     setInvoiceData((prev) => ({
@@ -245,37 +328,62 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       ctaTargetUrl: campaign.ctaTargetUrl ?? prev.ctaTargetUrl,
       ctaBackgroundColor: campaign.ctaBackgroundColor ?? prev.ctaBackgroundColor,
       ctaTextColor: campaign.ctaTextColor ?? prev.ctaTextColor,
+      imagePosition: campaign.imagePosition ?? prev.imagePosition,
     }));
   };
 
   const loadCampaignById = async (id: number) => {
+    const token =
+      (typeof window !== 'undefined' && window.localStorage?.getItem('tmr-token')) ||
+      (typeof window !== 'undefined' && window.sessionStorage?.getItem('tmr-token')) ||
+      '';
+    console.log('[Campaigns] loadCampaignById', { id, apiBase, hasToken: !!token });
+
+    if (!authReady) {
+      setAwaitingAuth(true);
+      notify('Waiting for authentication to load campaigns...', 'info');
+      return;
+    }
+
     const auth = resolveAuthHeaders();
     if (!auth) {
       notify('Please log in to load campaigns.', 'error');
       return;
     }
     try {
+      console.log('[Campaigns] Fetch single', `${apiBase}/api/campaigns/${id}`);
       const response = await fetch(`${apiBase}/api/campaigns/${id}`, {
         headers: {
           'Content-Type': 'application/json',
           ...auth,
         },
       });
+      console.log('[Campaigns] Response status', response.status);
       if (!response.ok) throw new Error('Failed to fetch campaign');
       const data = await response.json();
       if (data?.campaign) {
+        console.log('[Campaigns] Loaded campaign payload', data.campaign);
         mapCampaignToState(data.campaign);
         setIsCampaignLoaded(true);
         setLoadedCampaignId(id);
-        notify('Campaign loaded', 'success');
+        notify(
+          `Campaign "${data.campaign.name || id}" loaded (branding + marketing settings applied).`,
+          'success'
+        );
       }
     } catch (err) {
-      console.error('Failed to load campaign', err);
+      console.error('[Campaigns] Failed to load campaign', err);
       notify('Failed to load campaign', 'error');
     }
   };
 
   const handleSaveCampaign = async () => {
+    if (!authReady) {
+      setAwaitingAuth(true);
+      notify('Waiting for authentication to save campaigns...', 'info');
+      return;
+    }
+
     const auth = resolveAuthHeaders();
     if (!auth) {
       notify('Please log in to save campaigns.', 'error');
@@ -306,6 +414,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       bannerTextColor: marketingData.bannerTextColor || null,
       bannerImageOpacity:
         typeof marketingData.bannerImageOpacity === 'number' ? marketingData.bannerImageOpacity : null,
+      imagePosition: marketingData.imagePosition || null,
       ctaText: marketingData.ctaText || null,
       ctaTargetUrl: marketingData.ctaTargetUrl || null,
       ctaBackgroundColor: marketingData.ctaBackgroundColor || null,
@@ -341,6 +450,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   const scrollX = typeof window !== 'undefined' ? window.scrollX : 0;
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+  const effectiveCampaignsLoading = campaignsLoading || awaitingAuth;
 
   return (
     <div className="min-h-screen bg-[#f7f9fc] flex flex-col font-sans text-slate-900">
@@ -418,7 +528,9 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
                 onOpenCampaigns={fetchCampaigns}
                 onLoadCampaign={loadCampaignById}
                 campaigns={campaigns}
-                campaignsLoading={campaignsLoading}
+                campaignsLoading={effectiveCampaignsLoading}
+                selectedCampaignId={selectedCampaignId}
+                setSelectedCampaignId={setSelectedCampaignId}
                 isSavingCampaign={isSavingCampaign}
               />
             </div>
@@ -504,3 +616,8 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     </div>
   );
 }
+
+// Manual verification checklist:
+// - Open the invoice tool via the dashboard iframe, ensure a valid login token is present (console logs should show hasToken: true).
+// - Watch devtools network/logs: fetchCampaigns should hit `${apiBase}/api/campaigns` with 200 status and populate the dropdown.
+// - Select a campaign: expect success toast confirming branding/marketing applied and see those visual changes in the preview.

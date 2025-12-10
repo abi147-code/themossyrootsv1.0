@@ -14,6 +14,8 @@ interface InvoicePreviewProps {
   onLoadCampaign?: (id: number) => void;
   campaigns?: { id: number; name: string; description?: string }[];
   campaignsLoading?: boolean;
+  selectedCampaignId?: string | '';
+  setSelectedCampaignId?: (id: string) => void;
   isSavingCampaign?: boolean;
 }
 
@@ -28,6 +30,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   onLoadCampaign,
   campaigns = [],
   campaignsLoading = false,
+  selectedCampaignId = '',
+  setSelectedCampaignId,
   isSavingCampaign = false,
 }) => {
   const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
@@ -45,7 +49,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const [emailSubject, setEmailSubject] = useState<string>(
     data.invoiceNumber ? `Invoice ${data.invoiceNumber}` : 'Your invoice'
   );
-  const [selectedCampaignId, setSelectedCampaignId] = useState<number | ''>('');
   const [emailMessage, setEmailMessage] = useState<string>('');
   const [customerName, setCustomerName] = useState<string>(data.clientName || '');
   const [customerEmail, setCustomerEmail] = useState<string>(data.clientEmail || '');
@@ -56,6 +59,15 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const [futuristicHeight, setFuturisticHeight] = useState<number | null>(null);
   const luxuryTitleRef = useRef<HTMLHeadingElement | null>(null);
   const emailInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Keep dropdown interactive when campaigns are already loaded; only disable during initial empty load
+  const selectDisabled = campaignsLoading && campaigns.length === 0;
+  console.log('[Dropdown] rendered', {
+    selectedCampaignId,
+    campaignsLength: campaigns?.length,
+    campaignsLoading,
+    disabled: selectDisabled,
+  });
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -560,57 +572,6 @@ ${htmlContent}
       className="absolute top-6 -right-16 no-print z-50 flex flex-col gap-2 group-hover:opacity-100 transition-opacity"
       data-html2canvas-ignore
     >
-      <div className="bg-white border border-slate-200 rounded-lg shadow-lg p-3 space-y-2 w-64">
-        <div className="space-y-1">
-          <label className="text-[11px] uppercase tracking-wide text-slate-600">Load Campaign</label>
-          <div className="flex gap-2">
-            <select
-              className="flex-1 text-sm border border-slate-200 rounded-md px-2 py-1 bg-white"
-              value={selectedCampaignId === '' ? '' : String(selectedCampaignId)}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (!val) {
-                  setSelectedCampaignId('');
-                  return;
-                }
-                const id = Number(val);
-                setSelectedCampaignId(id);
-                onLoadCampaign?.(id);
-              }}
-              onFocus={() => onOpenCampaigns?.()}
-              disabled={campaignsLoading}
-            >
-              <option value="">Select campaign…</option>
-              {campaigns.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => onOpenCampaigns?.()}
-              className="px-2 py-1 text-xs rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100"
-              title="Refresh campaigns"
-              disabled={campaignsLoading}
-            >
-              ↻
-            </button>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => onSaveCampaign?.()}
-          disabled={isSavingCampaign}
-          className={`w-full flex items-center justify-center h-9 rounded-md font-semibold transition-colors ${
-            isSavingCampaign
-              ? 'bg-emerald-200 text-emerald-800 opacity-70'
-              : 'bg-emerald-600 text-white hover:bg-emerald-500'
-          }`}
-        >
-          {isSavingCampaign ? 'Saving…' : 'Save as Campaign'}
-        </button>
-      </div>
       <button 
         type="button"
         onClick={handleDownloadPdf}
@@ -713,6 +674,64 @@ ${htmlContent}
                 rows={3}
                 className="w-full text-sm px-2 py-1 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400 resize-none"
               />
+            </div>
+            <div className="space-y-2 border-t border-slate-100 pt-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] uppercase tracking-wide text-slate-600">Load Campaign</label>
+                <button
+                  type="button"
+                  onClick={() => onOpenCampaigns?.()}
+                  className="text-[11px] text-emerald-700 hover:text-emerald-800"
+                  disabled={campaignsLoading}
+                >
+                  Refresh
+                </button>
+              </div>
+              <div>CLICK TEST</div>
+              <select
+                className="w-full text-sm border border-slate-200 rounded-md px-2 py-1 bg-white"
+                value={selectedCampaignId}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  console.log('[Dropdown] onChange fired:', id);
+                  setSelectedCampaignId?.(id);
+                  if (id) onLoadCampaign?.(Number(id));
+                }}
+                onFocus={() => {
+                  if (campaigns.length === 0) onOpenCampaigns?.();
+                }}
+                disabled={selectDisabled}
+              >
+                <option value="">Select a saved campaign</option>
+                {campaigns.map((c) => (
+                  <option key={c.id} value={String(c.id)}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <div>CLICK TEST</div>
+              <button
+                type="button"
+                className="w-full text-xs rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 py-2"
+                onClick={() => {
+                  console.log('[Dropdown] manual trigger button', selectedCampaignId);
+                  if (selectedCampaignId) onLoadCampaign?.(Number(selectedCampaignId));
+                }}
+              >
+                Manual Apply Selected Campaign
+              </button>
+              <button
+                type="button"
+                onClick={() => onSaveCampaign?.()}
+                disabled={isSavingCampaign}
+                className={`w-full flex items-center justify-center h-9 rounded-md font-semibold transition-colors ${
+                  isSavingCampaign
+                    ? 'bg-emerald-200 text-emerald-800 opacity-70'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                }`}
+              >
+                {isSavingCampaign ? 'Saving...' : 'Save as Campaign'}
+              </button>
             </div>
             <button
               onClick={handleSendEmail}
