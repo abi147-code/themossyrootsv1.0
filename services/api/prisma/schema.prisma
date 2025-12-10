@@ -38,6 +38,7 @@ model User {
   subscriptions  Subscription[]
   customers      Customer[]
   invoices       Invoice[]
+  campaigns      Campaign[]
   emailCampaigns EmailCampaign[]
   socialSnippets SocialSnippet[]
   invoiceHistory InvoiceHistory[]
@@ -170,4 +171,41 @@ model BrandSettings {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Campaign {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  name        String
+  description String?
+  status      String   @default("draft")
+  bannerUrl   String?
+  logoUrl     String?
+  ctaText     String?
+  ctaTargetUrl String?
+  bannerBackgroundColor String?
+  bannerTextColor String?
+  bannerImageOpacity Float?
+  bannerCopyText String?
+  bannerCopyTextColor String?
+  bannerCopyOpacity Float?
+  ctaBackgroundColor String?
+  ctaTextColor String?
+  invoicePageColor String?
+  invoiceTextColor String?
+  typographyKey String?
+  invoiceTemplateKey String?
+  invoiceTypographyKey String?
+  pageBackgroundColor String?
+  pageColor String?
+  colorPrimary String?
+  colorAccent String?
+  fromCompanyName String?
+  fromCompanyAddress String?
+  fromCompanyEmail String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }

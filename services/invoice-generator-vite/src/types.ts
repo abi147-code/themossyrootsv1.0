@@ -21,11 +21,14 @@ export interface InvoiceData {
   taxRate: number;
   items: InvoiceItem[];
   notes: string;
-  invoiceBackgroundColor?: string;
+  invoicePageColor?: string;
   invoiceTextColor?: string;
-  fontSelection?: 'editorial' | 'clean' | 'classic' | 'professional' | 'elegant' | 'tech';
+  invoiceTypographyKey?: string;
   logoUrl?: string;
-  template?: 'luxury' | 'professional' | 'classic' | 'futuristic';
+  invoiceTemplateKey?: 'luxury' | 'professional' | 'classic' | 'futuristic';
+  fromCompanyName?: string;
+  fromCompanyAddress?: string;
+  fromCompanyEmail?: string;
   paymentLink?: string;
   paymentMethod?: 'qr' | 'button';
   paymentButtonText?: string;
@@ -33,15 +36,17 @@ export interface InvoiceData {
 
 export interface MarketingBannerData {
   enabled: boolean;
-  text: string;
-  backgroundColor: string;
-  textColor: string;
-  style: 'solid' | 'gradient' | 'bordered';
-  imageUrl?: string;
-  imageOpacity?: number;
+  bannerCopyText?: string;
+  bannerCopyTextColor?: string;
+  bannerCopyOpacity?: number;
+  bannerBackgroundColor?: string;
+  bannerTextColor?: string;
+  bannerImageOpacity?: number;
+  bannerUrl?: string;
   imagePosition?: { x: number; y: number };
+  style: 'solid' | 'gradient' | 'bordered';
   ctaText?: string;
-  ctaLink?: string;
+  ctaTargetUrl?: string;
   ctaBackgroundColor?: string;
   ctaTextColor?: string;
 }

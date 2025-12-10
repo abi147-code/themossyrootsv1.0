@@ -91,14 +91,19 @@ export const Editor: React.FC<EditorProps> = ({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setMarketingData(prev => ({ ...prev, imageUrl: reader.result as string, imageOpacity: prev.imageOpacity ?? 0.2, imagePosition: { x: 50, y: 50 } }));
+        setMarketingData(prev => ({
+          ...prev,
+          bannerUrl: reader.result as string,
+          bannerImageOpacity: prev.bannerImageOpacity ?? 0.2,
+          imagePosition: { x: 50, y: 50 },
+        }));
       };
       reader.readAsDataURL(file);
     }
   };
 
   const clearImage = () => {
-    setMarketingData(prev => ({ ...prev, imageUrl: undefined, imagePosition: undefined }));
+    setMarketingData(prev => ({ ...prev, bannerUrl: undefined, imagePosition: undefined }));
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -141,7 +146,7 @@ export const Editor: React.FC<EditorProps> = ({
 
   // Drag handlers
   const onMouseDown = (e: React.MouseEvent) => {
-    if (!marketingData.imageUrl) return;
+    if (!marketingData.bannerUrl) return;
     e.preventDefault();
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
@@ -219,8 +224,8 @@ export const Editor: React.FC<EditorProps> = ({
                    <div>
                       <label className={labelClass}>Template</label>
                       <select
-                        value={invoiceData.template || 'luxury'}
-                        onChange={(e) => handleChange('template', e.target.value)}
+                        value={invoiceData.invoiceTemplateKey || 'luxury'}
+                        onChange={(e) => handleChange('invoiceTemplateKey', e.target.value)}
                         className={inputClass}
                       >
                         <option value="luxury" className={optionClass}>Luxury</option>
@@ -231,8 +236,8 @@ export const Editor: React.FC<EditorProps> = ({
                    <div>
                       <label className={labelClass}>Typography</label>
                       <select
-                        value={invoiceData.fontSelection || 'editorial'}
-                        onChange={(e) => handleChange('fontSelection', e.target.value)}
+                        value={invoiceData.invoiceTypographyKey || 'editorial'}
+                        onChange={(e) => handleChange('invoiceTypographyKey', e.target.value)}
                         className={inputClass}
                       >
                         <option value="editorial" className={optionClass}>Editorial</option>
@@ -252,11 +257,11 @@ export const Editor: React.FC<EditorProps> = ({
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        value={invoiceData.invoiceBackgroundColor || '#ffffff'}
-                        onChange={(e) => handleChange('invoiceBackgroundColor', e.target.value)}
+                        value={invoiceData.invoicePageColor || '#ffffff'}
+                        onChange={(e) => handleChange('invoicePageColor', e.target.value)}
                         className="color-input"
                       />
-                       <span className="text-xs text-slate-500 font-mono">{invoiceData.invoiceBackgroundColor || '#ffffff'}</span>
+                       <span className="text-xs text-slate-500 font-mono">{invoiceData.invoicePageColor || '#ffffff'}</span>
                     </div>
                  </div>
                  <div>
@@ -415,7 +420,7 @@ export const Editor: React.FC<EditorProps> = ({
                   {invoiceData.paymentLink && (
                     <>
                       <div className="grid grid-cols-2 gap-2">
-                        {invoiceData.template !== 'luxury' && (
+                        {invoiceData.invoiceTemplateKey !== 'luxury' && (
                            <button 
                              onClick={() => handleChange('paymentMethod', 'qr')}
                              className={`flex items-center justify-center gap-2 py-2 px-2 rounded border text-xs transition-all ${invoiceData.paymentMethod !== 'button' ? 'bg-moss-600 border-moss-500 text-white' : 'bg-transparent border-slate-200 text-slate-600 hover:bg-slate-50'}`}
@@ -634,7 +639,7 @@ export const Editor: React.FC<EditorProps> = ({
                       {suggestions.map((s, i) => (
                         <button
                           key={i}
-                          onClick={() => setMarketingData((prev) => ({ ...prev, text: s }))}
+                          onClick={() => setMarketingData((prev) => ({ ...prev, bannerCopyText: s }))}
                           className="w-full text-left text-xs p-2 bg-slate-200 hover:bg-moss-900/80 rounded border border-slate-200 text-slate-900 transition-colors"
                         >
                           {s}
@@ -648,10 +653,30 @@ export const Editor: React.FC<EditorProps> = ({
                   <div>
                     <label className={labelClass}>Banner Copy</label>
                     <textarea
-                      value={marketingData.text}
-                      onChange={(e) => setMarketingData((prev) => ({ ...prev, text: e.target.value }))}
+                      value={marketingData.bannerCopyText || ''}
+                      onChange={(e) => setMarketingData((prev) => ({ ...prev, bannerCopyText: e.target.value }))}
                       className={`${inputClass} h-20`}
                     />
+                    <div className="mt-2">
+                      <div className="flex justify-between text-xs text-slate-500 mb-1">
+                        <span>Copy Opacity</span>
+                        <span>{Math.round((marketingData.bannerCopyOpacity ?? 1) * 100)}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={marketingData.bannerCopyOpacity ?? 1}
+                        onChange={(e) =>
+                          setMarketingData((prev) => ({
+                            ...prev,
+                            bannerCopyOpacity: parseFloat(e.target.value),
+                          }))
+                        }
+                        className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-moss-500"
+                      />
+                    </div>
                   </div>
 
                   <div className="pt-4 border-t border-slate-200">
@@ -665,8 +690,8 @@ export const Editor: React.FC<EditorProps> = ({
                          />
                          <input 
                             placeholder="URL (https://...)" 
-                            value={marketingData.ctaLink || ''}
-                            onChange={e => setMarketingData(prev => ({...prev, ctaLink: e.target.value}))}
+                            value={marketingData.ctaTargetUrl || ''}
+                            onChange={e => setMarketingData(prev => ({...prev, ctaTargetUrl: e.target.value}))}
                             className={inputClass}
                          />
                          <div className="grid grid-cols-2 gap-4 mt-2">
@@ -718,11 +743,11 @@ export const Editor: React.FC<EditorProps> = ({
                         <div className="flex items-center gap-2">
                           <input
                             type="color"
-                            value={marketingData.backgroundColor}
-                            onChange={(e) => setMarketingData((prev) => ({ ...prev, backgroundColor: e.target.value }))}
+                            value={marketingData.bannerBackgroundColor || '#e8f4ec'}
+                            onChange={(e) => setMarketingData((prev) => ({ ...prev, bannerBackgroundColor: e.target.value }))}
                             className="color-input"
                           />
-                          <span className="text-xs text-slate-500 font-mono">{marketingData.backgroundColor}</span>
+                          <span className="text-xs text-slate-500 font-mono">{marketingData.bannerBackgroundColor || '#e8f4ec'}</span>
                         </div>
                       </div>
                       <div>
@@ -730,11 +755,18 @@ export const Editor: React.FC<EditorProps> = ({
                          <div className="flex items-center gap-2">
                           <input
                             type="color"
-                            value={marketingData.textColor}
-                            onChange={(e) => setMarketingData((prev) => ({ ...prev, textColor: e.target.value }))}
+                            value={marketingData.bannerCopyTextColor || marketingData.bannerTextColor || '#0f172a'}
+                            onChange={(e) => {
+                              const next = e.target.value;
+                              setMarketingData((prev) => ({
+                                ...prev,
+                                bannerTextColor: next,
+                                bannerCopyTextColor: next,
+                              }));
+                            }}
                             className="color-input"
                           />
-                          <span className="text-xs text-slate-500 font-mono">{marketingData.textColor}</span>
+                          <span className="text-xs text-slate-500 font-mono">{marketingData.bannerCopyTextColor || marketingData.bannerTextColor || '#0f172a'}</span>
                         </div>
                       </div>
                     </div>
@@ -742,7 +774,7 @@ export const Editor: React.FC<EditorProps> = ({
 
                   <div className="mt-4 border-t border-slate-200 pt-4">
                     <label className={labelClass}>Custom Image</label>
-                    {!marketingData.imageUrl ? (
+                    {!marketingData.bannerUrl ? (
                       <button 
                         onClick={() => fileInputRef.current?.click()}
                         className="w-full h-24 border border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center text-slate-500 hover:border-moss-500 hover:text-moss-400 hover:bg-emerald-50 transition-all gap-2 bg-slate-100"
@@ -764,7 +796,7 @@ export const Editor: React.FC<EditorProps> = ({
                           <div 
                             className="absolute inset-0"
                             style={{
-                                backgroundImage: `url(${marketingData.imageUrl})`,
+                                backgroundImage: `url(${marketingData.bannerUrl})`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: `${marketingData.imagePosition?.x ?? 50}% ${marketingData.imagePosition?.y ?? 50}%`,
                                 opacity: 0.8
@@ -801,15 +833,15 @@ export const Editor: React.FC<EditorProps> = ({
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs text-slate-500">
                             <span>Opacity</span>
-                            <span>{Math.round((marketingData.imageOpacity ?? 0.2) * 100)}%</span>
+                            <span>{Math.round((marketingData.bannerImageOpacity ?? 0.2) * 100)}%</span>
                           </div>
                           <input 
                             type="range" 
                             min="0" 
                             max="1" 
                             step="0.1"
-                            value={marketingData.imageOpacity ?? 0.2}
-                            onChange={(e) => setMarketingData(prev => ({ ...prev, imageOpacity: parseFloat(e.target.value) }))}
+                            value={marketingData.bannerImageOpacity ?? 0.2}
+                            onChange={(e) => setMarketingData(prev => ({ ...prev, bannerImageOpacity: parseFloat(e.target.value) }))}
                             className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-moss-500"
                           />
                         </div>

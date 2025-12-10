@@ -19,22 +19,24 @@ const HEADER_DEMO_INVOICE: InvoiceData = {
   taxRate: 0,
   items: [],
   notes: '',
-  template: 'luxury',
-  fontSelection: 'editorial',
+  invoiceTemplateKey: 'luxury',
+  invoiceTypographyKey: 'editorial',
   // Specific colors requested for the design aesthetic section
-  invoiceBackgroundColor: '#f9fbff',
+  invoicePageColor: '#f9fbff',
   invoiceTextColor: '#0f172a',
 };
 
 // Mock Data for Banner Display
 const BANNER_DEMO_DATA: MarketingBannerData = {
   enabled: true,
-  text: 'Secure your Q4 dedicated support team. Early booking discount ends soon.',
-  backgroundColor: '#e8f4ec',
-  textColor: '#0f172a',
+  bannerCopyText: 'Secure your Q4 dedicated support team. Early booking discount ends soon.',
+  bannerBackgroundColor: '#e8f4ec',
+  bannerTextColor: '#0f172a',
+  bannerCopyTextColor: '#0f172a',
+  bannerCopyOpacity: 1,
   style: 'gradient',
   ctaText: 'Book Priority Support',
-  ctaLink: '#',
+  ctaTargetUrl: '#',
   ctaBackgroundColor: '#1f7a4d',
   ctaTextColor: '#ffffff',
 };
@@ -42,9 +44,9 @@ const BANNER_DEMO_DATA: MarketingBannerData = {
 // Empty banner for the header view so it doesn't crash or show anything
 const EMPTY_BANNER: MarketingBannerData = {
   enabled: false,
-  text: '',
-  backgroundColor: '',
-  textColor: '',
+  bannerCopyText: '',
+  bannerBackgroundColor: '',
+  bannerTextColor: '',
   style: 'solid'
 };
 

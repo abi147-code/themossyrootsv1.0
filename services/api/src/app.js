@@ -100,6 +100,7 @@ const emailRoutes = require('./routes/email');
 const socialRoutes = require('./routes/social');
 const billingRoutes = require('./routes/billing');
 const historyRoutes = require('./routes/history');
+const campaignRoutes = require('./routes/campaignRoutes');
 const accountRoutes = require('./routes/account');
 const brandRoutes = require('./routes/brand');
 const adminRoutes = require('./routes/admin');
@@ -112,12 +113,13 @@ app.use('/api/invoice', authMiddleware, invoiceRoutes);
 app.use('/api/email', authMiddleware, emailRoutes);
 app.use('/api/social', authMiddleware, socialRoutes);
 app.use('/api/history', authMiddleware, historyRoutes);
+app.use('/api/campaigns', authMiddleware, campaignRoutes);
 app.use('/api/admin', authMiddleware, adminRoutes);
 app.use('/api/account', accountRoutes);
 app.use('/api/brand', brandRoutes);
-  app.use('/api/billing', billingRoutes);
-  app.use('/api/vite-invoice', tempAssetUploadRoutes);
-  app.use('/api/vite-invoice', viteInvoiceRoutes);
+app.use('/api/billing', billingRoutes);
+app.use('/api/vite-invoice', tempAssetUploadRoutes);
+app.use('/api/vite-invoice', viteInvoiceRoutes);
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not Found' }));
 

@@ -9,14 +9,32 @@ interface InvoicePreviewProps {
   showControls?: boolean;
   viewMode?: 'full' | 'header' | 'banner';
   registerAnchor?: (key: string, el: HTMLElement | null) => void;
+  onSaveCampaign?: () => void;
+  onOpenCampaigns?: () => void;
+  onLoadCampaign?: (id: number) => void;
+  campaigns?: { id: number; name: string; description?: string }[];
+  campaignsLoading?: boolean;
+  isSavingCampaign?: boolean;
 }
 
-export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, showControls = true, viewMode = 'full', registerAnchor }) => {
+export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
+  data,
+  banner,
+  showControls = true,
+  viewMode = 'full',
+  registerAnchor,
+  onSaveCampaign,
+  onOpenCampaigns,
+  onLoadCampaign,
+  campaigns = [],
+  campaignsLoading = false,
+  isSavingCampaign = false,
+}) => {
   const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
   const taxAmount = subtotal * (data.taxRate / 100);
   const total = subtotal + taxAmount;
   // Temporarily disable futuristic template by falling back to professional
-  const rawTemplate = data.template || 'luxury';
+  const rawTemplate = data.invoiceTemplateKey || 'luxury';
   const template = rawTemplate === 'futuristic' ? 'professional' : rawTemplate;
   const apiBase = (import.meta.env.VITE_TMR_API_URL || '').replace(/\/+$/, '');
   const PUBLIC_API_URL = (import.meta.env.VITE_PUBLIC_API_URL || '').replace(/\/+$/, '');
@@ -27,6 +45,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
   const [emailSubject, setEmailSubject] = useState<string>(
     data.invoiceNumber ? `Invoice ${data.invoiceNumber}` : 'Your invoice'
   );
+  const [selectedCampaignId, setSelectedCampaignId] = useState<number | ''>('');
   const [emailMessage, setEmailMessage] = useState<string>('');
   const [customerName, setCustomerName] = useState<string>(data.clientName || '');
   const [customerEmail, setCustomerEmail] = useState<string>(data.clientEmail || '');
@@ -48,7 +67,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, banner, sh
   
   // Dynamic invoice styles based on user selection
   const invoiceStyle = {
-    backgroundColor: data.invoiceBackgroundColor || '#ffffff',
+    backgroundColor: data.invoicePageColor || '#ffffff',
     color: data.invoiceTextColor || '#1e293b',
   };
 
@@ -356,27 +375,31 @@ ${htmlContent}
     const authHeaders = resolveAuthHeadersOptional() || {};
 
     const invoiceNumber = data.invoiceNumber || 'invoice';
-    const invoiceBgForEmail = (data.invoiceBackgroundColor && data.invoiceBackgroundColor.trim()) || '#0f172a';
+    const invoiceBgForEmail = (data.invoicePageColor && data.invoicePageColor.trim()) || '#0f172a';
 
     setIsSendingEmail(true);
     try {
       const finalHtml = buildInvoiceHtml(element);
       const logoUploadResult = await uploadTempAsset(data.logoUrl, 'logo');
-      const bannerUploadResult = await uploadTempAsset(banner?.imageUrl, 'banner');
+      const bannerUploadResult = await uploadTempAsset(banner?.bannerUrl, 'banner');
       const logoUrlForEmail = normalizeAssetUrl(logoUploadResult.url);
       const bannerImageUrlForEmail = normalizeAssetUrl(bannerUploadResult.url);
 
-      const bannerPayloadBase = banner && typeof banner === 'object' ? banner : { enabled: false, imageUrl: null };
+      const bannerPayloadBase = banner && typeof banner === 'object' ? banner : { enabled: false, bannerUrl: null };
       const bannerPayload = {
         enabled: !!bannerPayloadBase.enabled,
-        text: bannerPayloadBase.text || '',
-        backgroundColor: bannerPayloadBase.backgroundColor || '#0f172a',
-        textColor: bannerPayloadBase.textColor || '#ffffff',
+        bannerCopyText: bannerPayloadBase.bannerCopyText || '',
+        bannerCopyTextColor: bannerPayloadBase.bannerCopyTextColor || bannerPayloadBase.bannerTextColor || '#ffffff',
+        bannerCopyOpacity: bannerPayloadBase.bannerCopyOpacity ?? 1,
+        bannerBackgroundColor: bannerPayloadBase.bannerBackgroundColor || '#0f172a',
+        bannerTextColor: bannerPayloadBase.bannerTextColor || '#ffffff',
         ctaText: bannerPayloadBase.ctaText || '',
-        ctaLink: bannerPayloadBase.ctaLink || '',
-        ctaBackgroundColor: bannerPayloadBase.ctaBackgroundColor || bannerPayloadBase.textColor || '#ffffff',
-        ctaTextColor: bannerPayloadBase.ctaTextColor || bannerPayloadBase.backgroundColor || '#0f172a',
-        imageUrl: bannerImageUrlForEmail || null,
+        ctaTargetUrl: bannerPayloadBase.ctaTargetUrl || '',
+        ctaBackgroundColor:
+          bannerPayloadBase.ctaBackgroundColor || bannerPayloadBase.bannerTextColor || '#ffffff',
+        ctaTextColor:
+          bannerPayloadBase.ctaTextColor || bannerPayloadBase.bannerBackgroundColor || '#0f172a',
+        bannerUrl: bannerImageUrlForEmail || null,
       };
 
       console.log('FINAL BANNER BEFORE SEND:', bannerPayload);
@@ -401,7 +424,7 @@ ${htmlContent}
           senderAddress: data.senderAddress,
           amount: total,
           currency: data.currency,
-          invoiceBackgroundColor: invoiceBgForEmail,
+          invoicePageColor: invoiceBgForEmail,
           logoUrl: logoUrlForEmail,
           banner: bannerPayload,
           customerName: resolvedCustomerName,
@@ -430,7 +453,7 @@ ${htmlContent}
         message: emailMessage,
         banner: bannerPayload,
         logoUrl: logoUrlForEmail,
-        invoiceBackgroundColor: invoiceBgForEmail,
+        invoicePageColor: invoiceBgForEmail,
         summary: {
           invoiceNumber,
           currency: data.currency || 'USD',
@@ -441,7 +464,7 @@ ${htmlContent}
           message: emailMessage,
           banner: bannerPayload,
           logoUrl: logoUrlForEmail,
-          invoiceBackgroundColor: invoiceBgForEmail,
+          invoicePageColor: invoiceBgForEmail,
         },
       };
 
@@ -461,23 +484,24 @@ ${htmlContent}
   };
 
   const getBannerStyle = () => {
+    const copyColor = banner.bannerCopyTextColor || banner.bannerTextColor;
     const base = {
-      color: banner.textColor,
-      backgroundColor: banner.backgroundColor,
+      color: copyColor,
+      backgroundColor: banner.bannerBackgroundColor,
     };
     
     if (banner.style === 'gradient') {
       return {
         ...base,
-        background: `linear-gradient(135deg, ${banner.backgroundColor} 0%, ${adjustColor(banner.backgroundColor, -40)} 100%)`,
+        background: `linear-gradient(135deg, ${banner.bannerBackgroundColor} 0%, ${adjustColor(banner.bannerBackgroundColor, -40)} 100%)`,
       };
     }
     if (banner.style === 'bordered') {
       return {
         ...base,
         backgroundColor: 'transparent',
-        border: `1px solid ${banner.backgroundColor}`,
-        color: banner.textColor, // Use selected text color for bordered style too
+        border: `1px solid ${banner.bannerBackgroundColor}`,
+        color: copyColor, // Use selected text color for bordered style too
       };
     }
     return base;
@@ -506,7 +530,7 @@ ${htmlContent}
 
   // Font Configuration Logic - Removed 'Modern'
   const getFonts = () => {
-    switch (data.fontSelection) {
+    switch (data.invoiceTypographyKey) {
       case 'clean': 
         return { body: 'font-sans', header: 'font-sans', accent: 'font-sans', title: 'font-sans' };
       case 'classic': 
@@ -536,6 +560,57 @@ ${htmlContent}
       className="absolute top-6 -right-16 no-print z-50 flex flex-col gap-2 group-hover:opacity-100 transition-opacity"
       data-html2canvas-ignore
     >
+      <div className="bg-white border border-slate-200 rounded-lg shadow-lg p-3 space-y-2 w-64">
+        <div className="space-y-1">
+          <label className="text-[11px] uppercase tracking-wide text-slate-600">Load Campaign</label>
+          <div className="flex gap-2">
+            <select
+              className="flex-1 text-sm border border-slate-200 rounded-md px-2 py-1 bg-white"
+              value={selectedCampaignId === '' ? '' : String(selectedCampaignId)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) {
+                  setSelectedCampaignId('');
+                  return;
+                }
+                const id = Number(val);
+                setSelectedCampaignId(id);
+                onLoadCampaign?.(id);
+              }}
+              onFocus={() => onOpenCampaigns?.()}
+              disabled={campaignsLoading}
+            >
+              <option value="">Select campaign…</option>
+              {campaigns.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => onOpenCampaigns?.()}
+              className="px-2 py-1 text-xs rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100"
+              title="Refresh campaigns"
+              disabled={campaignsLoading}
+            >
+              ↻
+            </button>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => onSaveCampaign?.()}
+          disabled={isSavingCampaign}
+          className={`w-full flex items-center justify-center h-9 rounded-md font-semibold transition-colors ${
+            isSavingCampaign
+              ? 'bg-emerald-200 text-emerald-800 opacity-70'
+              : 'bg-emerald-600 text-white hover:bg-emerald-500'
+          }`}
+        >
+          {isSavingCampaign ? 'Saving…' : 'Save as Campaign'}
+        </button>
+      </div>
       <button 
         type="button"
         onClick={handleDownloadPdf}
@@ -709,11 +784,13 @@ ${htmlContent}
   };
 
   const MarketingBanner = ({ className }: { className?: string }) => {
-    if (!banner.enabled || (!banner.text && !banner.imageUrl)) return null;
+    if (!banner.enabled || (!banner.bannerCopyText && !banner.bannerUrl)) return null;
     
     const bgPosition = banner.imagePosition 
       ? `${banner.imagePosition.x}% ${banner.imagePosition.y}%` 
       : '50% 50%';
+    const copyColor = banner.bannerCopyTextColor || banner.bannerTextColor || '#ffffff';
+    const copyOpacity = banner.bannerCopyOpacity ?? 1;
 
     return (
       <div 
@@ -721,35 +798,38 @@ ${htmlContent}
         style={getBannerStyle()}
       >
          {/* Image Background */}
-         {banner.imageUrl && (
+         {banner.bannerUrl && (
             <div 
               className="absolute inset-0 z-0"
               style={{
-                backgroundImage: `url(${banner.imageUrl})`,
+                backgroundImage: `url(${banner.bannerUrl})`,
                 backgroundSize: 'cover',
                 backgroundPosition: bgPosition,
-                opacity: banner.imageOpacity ?? 0.2,
+                opacity: banner.bannerImageOpacity ?? 0.2,
                 filter: 'grayscale(20%) contrast(120%)'
               }}
             />
          )}
          
          {/* Decorative Line if no image */}
-         {!banner.imageUrl && banner.style === 'solid' && (
+         {!banner.bannerUrl && banner.style === 'solid' && (
             <div className="absolute top-0 left-0 w-full h-1 bg-white/20"></div>
          )}
 
          <div className="relative z-10 p-8 w-full flex flex-col md:flex-row items-center md:justify-between gap-8">
             <div className="flex-1 text-center md:text-left">
-                <p className={`text-xl md:text-2xl font-bold leading-tight ${fonts.header}`}>
-                    {banner.text}
+                <p
+                  className={`text-xl md:text-2xl font-bold leading-tight ${fonts.header}`}
+                  style={{ color: copyColor, opacity: copyOpacity }}
+                >
+                  {banner.bannerCopyText}
                 </p>
             </div>
 
             {banner.ctaText && (
                 <div className="flex-shrink-0">
                      <a 
-                        href={banner.ctaLink} 
+                        href={banner.ctaTargetUrl} 
                         target="_blank" 
                         rel="noreferrer"
                         className={`inline-block px-8 py-3 text-sm font-bold uppercase tracking-widest transition-transform hover:-translate-y-1 active:translate-y-0 border border-current print:border-2 ${fonts.accent}`}

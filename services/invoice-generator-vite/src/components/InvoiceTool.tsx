@@ -22,18 +22,23 @@ const INITIAL_INVOICE: InvoiceData = {
     { id: '2', description: 'Homepage Mockup', quantity: 1, price: 800 },
   ],
   notes: 'Please process payment within 14 days. Thank you for your business!',
-  template: 'luxury'
+  invoiceTemplateKey: 'luxury',
+  invoiceTypographyKey: 'editorial',
+  invoicePageColor: '#ffffff',
+  invoiceTextColor: '#1e293b',
 };
 
 const INITIAL_MARKETING: MarketingBannerData = {
   enabled: true,
-  text: 'Get 20% off your next project if you book before end of month!',
-  backgroundColor: '#e8f4ec', // Light moss tint for bright theme
-  textColor: '#0f172a',
+  bannerCopyText: 'Get 20% off your next project if you book before end of month!',
+  bannerBackgroundColor: '#e8f4ec', // Light moss tint for bright theme
+  bannerTextColor: '#0f172a',
+  bannerCopyTextColor: '#0f172a',
+  bannerCopyOpacity: 1,
   style: 'gradient',
-  imageOpacity: 0.2,
+  bannerImageOpacity: 0.2,
   ctaText: 'Book Now',
-  ctaLink: 'https://acme.com/book',
+  ctaTargetUrl: 'https://acme.com/book',
   ctaBackgroundColor: '#1f7a4d', // Moss default
   ctaTextColor: '#ffffff' // Ink default
 };
@@ -48,6 +53,11 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   const [marketingData, setMarketingData] = useState<MarketingBannerData>(INITIAL_MARKETING);
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
+  const [campaigns, setCampaigns] = useState<{ id: number; name: string; description?: string }[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(false);
+  const [isSavingCampaign, setIsSavingCampaign] = useState(false);
+  const [isCampaignLoaded, setIsCampaignLoaded] = useState(false);
+  const [loadedCampaignId, setLoadedCampaignId] = useState<number | null>(null);
   const [activeTabOverride, setActiveTabOverride] = useState<'details' | 'items' | 'marketing' | undefined>();
   const [highlightRect, setHighlightRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const anchorsRef = useRef<Record<string, HTMLElement | null>>({});
@@ -155,6 +165,178 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     setTourStep((s) => Math.max(0, s - 1));
   };
 
+  const apiBase = (import.meta.env.VITE_TMR_API_URL || '').replace(/\/+$/, '');
+
+  const resolveAuthHeaders = () => {
+    const token =
+      (typeof window !== 'undefined' && window.localStorage?.getItem('tmr-token')) ||
+      (typeof window !== 'undefined' && window.sessionStorage?.getItem('tmr-token')) ||
+      '';
+    if (!token) return null;
+    return { Authorization: `Bearer ${token}` };
+  };
+
+  const notify = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
+    if (type === 'error') {
+      console.error(message);
+    } else {
+      console.log(message);
+    }
+    if (typeof window !== 'undefined') {
+      window.alert(message);
+    }
+  };
+
+  const fetchCampaigns = async () => {
+    const auth = resolveAuthHeaders();
+    if (!auth) {
+      notify('Please log in to load campaigns.', 'error');
+      return;
+    }
+    setCampaignsLoading(true);
+    try {
+      const response = await fetch(`${apiBase}/api/campaigns`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...auth,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to load campaigns');
+      const data = await response.json();
+      setCampaigns(Array.isArray(data.campaigns) ? data.campaigns : []);
+    } catch (err) {
+      console.error('Failed to fetch campaigns', err);
+      notify('Failed to load campaigns', 'error');
+    } finally {
+      setCampaignsLoading(false);
+    }
+  };
+
+  const mapCampaignToState = (campaign: any) => {
+    setInvoiceData((prev) => ({
+      ...prev,
+      invoicePageColor: campaign.invoicePageColor || '#ffffff',
+      invoiceTextColor: campaign.invoiceTextColor || '#1e293b',
+      invoiceTypographyKey: campaign.invoiceTypographyKey || prev.invoiceTypographyKey || 'editorial',
+      invoiceTemplateKey: campaign.invoiceTemplateKey || prev.invoiceTemplateKey || 'luxury',
+      logoUrl: campaign.logoUrl ?? prev.logoUrl,
+      senderName: campaign.fromCompanyName || prev.senderName,
+      senderEmail: campaign.fromCompanyEmail || prev.senderEmail,
+      senderAddress: campaign.fromCompanyAddress || prev.senderAddress,
+      fromCompanyName: campaign.fromCompanyName || prev.fromCompanyName,
+      fromCompanyEmail: campaign.fromCompanyEmail || prev.fromCompanyEmail,
+      fromCompanyAddress: campaign.fromCompanyAddress || prev.fromCompanyAddress,
+    }));
+
+    setMarketingData((prev) => ({
+      ...prev,
+      bannerCopyText: campaign.bannerCopyText ?? prev.bannerCopyText ?? '',
+      bannerCopyTextColor:
+        campaign.bannerCopyTextColor ??
+        campaign.bannerTextColor ??
+        prev.bannerCopyTextColor ??
+        prev.bannerTextColor,
+      bannerCopyOpacity: campaign.bannerCopyOpacity ?? prev.bannerCopyOpacity ?? 1,
+      bannerBackgroundColor: campaign.bannerBackgroundColor ?? prev.bannerBackgroundColor ?? '#e8f4ec',
+      bannerTextColor: campaign.bannerTextColor ?? prev.bannerTextColor ?? '#0f172a',
+      bannerImageOpacity: campaign.bannerImageOpacity ?? prev.bannerImageOpacity ?? 0.2,
+      bannerUrl: campaign.bannerUrl ?? prev.bannerUrl,
+      ctaText: campaign.ctaText ?? prev.ctaText,
+      ctaTargetUrl: campaign.ctaTargetUrl ?? prev.ctaTargetUrl,
+      ctaBackgroundColor: campaign.ctaBackgroundColor ?? prev.ctaBackgroundColor,
+      ctaTextColor: campaign.ctaTextColor ?? prev.ctaTextColor,
+    }));
+  };
+
+  const loadCampaignById = async (id: number) => {
+    const auth = resolveAuthHeaders();
+    if (!auth) {
+      notify('Please log in to load campaigns.', 'error');
+      return;
+    }
+    try {
+      const response = await fetch(`${apiBase}/api/campaigns/${id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...auth,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch campaign');
+      const data = await response.json();
+      if (data?.campaign) {
+        mapCampaignToState(data.campaign);
+        setIsCampaignLoaded(true);
+        setLoadedCampaignId(id);
+        notify('Campaign loaded', 'success');
+      }
+    } catch (err) {
+      console.error('Failed to load campaign', err);
+      notify('Failed to load campaign', 'error');
+    }
+  };
+
+  const handleSaveCampaign = async () => {
+    const auth = resolveAuthHeaders();
+    if (!auth) {
+      notify('Please log in to save campaigns.', 'error');
+      return;
+    }
+    const name = window.prompt('Campaign name', invoiceData.invoiceNumber || 'New Campaign');
+    if (!name || !name.trim()) {
+      notify('Campaign name is required', 'error');
+      return;
+    }
+    const description = window.prompt('Campaign description (optional)', '');
+
+    const payload = {
+      name: name.trim(),
+      description: description?.trim() || null,
+      invoicePageColor: invoiceData.invoicePageColor || null,
+      invoiceTextColor: invoiceData.invoiceTextColor || null,
+      invoiceTypographyKey: invoiceData.invoiceTypographyKey || null,
+      invoiceTemplateKey: invoiceData.invoiceTemplateKey || null,
+      logoUrl: invoiceData.logoUrl || null,
+      bannerUrl: marketingData.bannerUrl || null,
+      bannerCopyText: marketingData.bannerCopyText || null,
+      bannerCopyTextColor:
+        marketingData.bannerCopyTextColor || marketingData.bannerTextColor || null,
+      bannerCopyOpacity:
+        typeof marketingData.bannerCopyOpacity === 'number' ? marketingData.bannerCopyOpacity : null,
+      bannerBackgroundColor: marketingData.bannerBackgroundColor || null,
+      bannerTextColor: marketingData.bannerTextColor || null,
+      bannerImageOpacity:
+        typeof marketingData.bannerImageOpacity === 'number' ? marketingData.bannerImageOpacity : null,
+      ctaText: marketingData.ctaText || null,
+      ctaTargetUrl: marketingData.ctaTargetUrl || null,
+      ctaBackgroundColor: marketingData.ctaBackgroundColor || null,
+      ctaTextColor: marketingData.ctaTextColor || null,
+      fromCompanyName: invoiceData.fromCompanyName || invoiceData.senderName || null,
+      fromCompanyAddress: invoiceData.fromCompanyAddress || invoiceData.senderAddress || null,
+      fromCompanyEmail: invoiceData.fromCompanyEmail || invoiceData.senderEmail || null,
+      status: 'draft',
+    };
+
+    setIsSavingCampaign(true);
+    try {
+      const response = await fetch(`${apiBase}/api/campaigns`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...auth,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to save campaign');
+      await fetchCampaigns();
+      notify('Campaign saved successfully', 'success');
+    } catch (err) {
+      console.error('Failed to save campaign', err);
+      notify('Failed to save campaign', 'error');
+    } finally {
+      setIsSavingCampaign(false);
+    }
+  };
+
   const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
   const scrollX = typeof window !== 'undefined' ? window.scrollX : 0;
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
@@ -232,6 +414,12 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
                 data={invoiceData} 
                 banner={marketingData} 
                 registerAnchor={registerAnchor}
+                onSaveCampaign={handleSaveCampaign}
+                onOpenCampaigns={fetchCampaigns}
+                onLoadCampaign={loadCampaignById}
+                campaigns={campaigns}
+                campaignsLoading={campaignsLoading}
+                isSavingCampaign={isSavingCampaign}
               />
             </div>
           </div>
