@@ -37,6 +37,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
   const taxAmount = subtotal * (data.taxRate / 100);
   const total = subtotal + taxAmount;
+  const [bannerOrientation, setBannerOrientation] = useState<'portrait' | 'landscape'>('portrait');
   // Temporarily disable futuristic template by falling back to professional
   const rawTemplate = data.invoiceTemplateKey || 'luxury';
   const template = rawTemplate === 'futuristic' ? 'professional' : rawTemplate;
@@ -806,13 +807,29 @@ ${htmlContent}
     if (!banner.enabled || (!banner.bannerCopyText && !banner.bannerUrl)) return null;
     
     const imgPosition = banner.imagePosition || { x: 50, y: 50 };
+    const clamp = (val: number, min: number, max: number) => Math.min(max, Math.max(min, val));
     const copyColor = banner.bannerCopyTextColor || banner.bannerTextColor || '#ffffff';
     const copyOpacity = banner.bannerCopyOpacity ?? 1;
+    const isPortraitBanner = bannerOrientation === 'portrait';
+    const renderPosition = isPortraitBanner
+      ? { x: clamp(imgPosition.x, 35, 65), y: clamp(imgPosition.y, 35, 65) }
+      : imgPosition;
+    const bannerImageStyle = {
+      width: isPortraitBanner ? '100%' : '120%',
+      height: isPortraitBanner ? '100%' : '120%',
+      objectFit: isPortraitBanner ? 'contain' as const : 'cover' as const,
+    };
+    const handleBannerLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+      const { naturalWidth, naturalHeight } = e.currentTarget;
+      if (naturalWidth && naturalHeight) {
+        setBannerOrientation(naturalHeight > naturalWidth ? 'portrait' : 'landscape');
+      }
+    };
     const transformOrigin = 'center center';
     console.log('[Preview] Applying transform', {
-      x: imgPosition.x,
-      y: imgPosition.y,
-      transform: `translate(${imgPosition.x - 100}% , ${imgPosition.y - 100}%)`,
+      x: renderPosition.x,
+      y: renderPosition.y,
+      transform: `translate(${renderPosition.x - 100}% , ${renderPosition.y - 100}%)`,
     });
     console.log('[Preview] transformOrigin', transformOrigin);
 
@@ -829,22 +846,23 @@ ${htmlContent}
                 alt=""
                 className="absolute left-1/2 top-1/2"
                 style={{
-                  width: '120%',
-                  height: '120%',
-                  transform: `translate(${imgPosition.x - 100}%, ${imgPosition.y - 100}%)`,
+                  width: bannerImageStyle.width,
+                  height: bannerImageStyle.height,
+                  transform: `translate(${renderPosition.x - 100}%, ${renderPosition.y - 100}%)`,
                   transformOrigin,
                   opacity: banner.bannerImageOpacity ?? 0.2,
                   filter: 'grayscale(20%) contrast(120%)',
-                  objectFit: 'cover',
+                  objectFit: bannerImageStyle.objectFit,
                 }}
+                onLoad={handleBannerLoad}
                 ref={(node) => {
                   if (!node) return;
                   const containerRect = node.parentElement?.getBoundingClientRect();
                   const imgRect = node.getBoundingClientRect();
                   console.log('[Preview] Applying transform', {
-                    x: imgPosition.x,
-                    y: imgPosition.y,
-                    transform: `translate(${imgPosition.x - 100}% , ${imgPosition.y - 100}%)`,
+                    x: renderPosition.x,
+                    y: renderPosition.y,
+                    transform: `translate(${renderPosition.x - 100}% , ${renderPosition.y - 100}%)`,
                   });
                   console.log('[Preview] container & image metrics', {
                     containerWidth: containerRect?.width,

@@ -27,6 +27,7 @@ export const Editor: React.FC<EditorProps> = ({
   const [businessType, setBusinessType] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [thumbnailOrientation, setThumbnailOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const styleRef = useRef<HTMLDivElement | null>(null);
@@ -143,6 +144,24 @@ export const Editor: React.FC<EditorProps> = ({
     registerAnchor?.('taxNotes', taxNotesRef.current);
     registerAnchor?.('marketing', marketingRef.current);
   }, [registerAnchor, activeTab, marketingData.enabled]);
+
+  useEffect(() => {
+    if (!marketingData.bannerUrl) {
+      setThumbnailOrientation('landscape');
+      return;
+    }
+    let mounted = true;
+    const img = new Image();
+    img.onload = () => {
+      if (!mounted) return;
+      const next = img.naturalHeight > img.naturalWidth ? 'portrait' : 'landscape';
+      setThumbnailOrientation(next);
+    };
+    img.src = marketingData.bannerUrl;
+    return () => {
+      mounted = false;
+    };
+  }, [marketingData.bannerUrl]);
 
   // Drag handlers
   const onMouseDown = (e: React.MouseEvent) => {
@@ -799,7 +818,7 @@ export const Editor: React.FC<EditorProps> = ({
                             className="absolute inset-0"
                             style={{
                                 backgroundImage: `url(${marketingData.bannerUrl})`,
-                                backgroundSize: 'cover',
+                                backgroundSize: thumbnailOrientation === 'portrait' ? 'contain' : 'cover',
                                 backgroundPosition: `${marketingData.imagePosition?.x ?? 50}% ${marketingData.imagePosition?.y ?? 50}%`,
                                 opacity: 0.8
                             }}
