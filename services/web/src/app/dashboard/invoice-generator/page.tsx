@@ -23,15 +23,23 @@ export default function InvoiceGeneratorPage() {
   }, [iframeSrc]);
 
   const postTokenToIframe = useCallback(() => {
-    if (!iframeRef.current || !token || !iframeOrigin) return;
+    const currentIframe = iframeRef.current;
+    const contentWindow = currentIframe?.contentWindow ?? null;
+
+    console.log('[DEBUG][Dashboard] Posting token to iframe from origin:', window.location.origin);
+    console.log('[DEBUG][Dashboard] Token being sent:', token);
+    console.log('[DEBUG][Dashboard] iframeRef.current:', currentIframe);
+    console.log('[DEBUG][Dashboard] iframe contentWindow is', contentWindow ? 'defined' : 'null');
+
+    if (!currentIframe || !token || !iframeOrigin) return;
     try {
-      const targetWindow = iframeRef.current.contentWindow;
+      const targetWindow = currentIframe.contentWindow;
       console.log('[InvoiceGenerator] Posting token to iframe', {
         hasContentWindow: !!targetWindow,
         iframeOrigin,
         tokenPresent: !!token,
       });
-      iframeRef.current.contentWindow?.postMessage(
+      currentIframe.contentWindow?.postMessage(
         { type: 'TMR_TOKEN_BRIDGE', token },
         '*' // permissive for dev to allow localhost origin mismatches
       );
@@ -97,6 +105,23 @@ export default function InvoiceGeneratorPage() {
   useEffect(() => {
     postTokenToIframe();
   }, [postTokenToIframe]);
+
+  useEffect(() => {
+    const handleReady = (event: MessageEvent) => {
+      if (!event.data || event.data.type !== 'TMR_TOKEN_BRIDGE_READY') return;
+      if (iframeOrigin && event.origin !== iframeOrigin) return;
+
+      console.log('[DEBUG][Dashboard] Received READY from iframe. Origin:', event.origin);
+      if (!token) {
+        console.log('[DEBUG][Dashboard] No token available when READY received');
+        return;
+      }
+      postTokenToIframe();
+    };
+
+    window.addEventListener('message', handleReady);
+    return () => window.removeEventListener('message', handleReady);
+  }, [iframeOrigin, postTokenToIframe, token]);
 
   const handleIframeLoad = () => {
     postTokenToIframe();

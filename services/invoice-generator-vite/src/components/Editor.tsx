@@ -45,7 +45,13 @@ export const Editor: React.FC<EditorProps> = ({
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   const handleChange = (field: keyof InvoiceData, value: any) => {
-    setInvoiceData((prev) => ({ ...prev, [field]: value }));
+    setInvoiceData((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === 'logoUrl') {
+        console.log('[DEBUG] invoiceData.logoUrl after upload:', next.logoUrl);
+      }
+      return next;
+    });
   };
 
   const handleItemChange = (id: string, field: keyof InvoiceItem, value: any) => {
@@ -113,6 +119,7 @@ export const Editor: React.FC<EditorProps> = ({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log('[DEBUG] LogoUploader FileReader result:', reader.result);
         handleChange('logoUrl', reader.result as string);
       };
       reader.readAsDataURL(file);

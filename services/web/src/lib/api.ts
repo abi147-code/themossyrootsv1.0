@@ -5,6 +5,7 @@ const normalizeBaseUrl = (url: string): string => url.replace(/\/$/, '');
 const ensureLeadingSlash = (path: string): string => (path.startsWith('/') ? path : `/${path}`);
 
 const isAbsoluteUrl = (path: string): boolean => /^https?:\/\//i.test(path);
+const isDataUrl = (path: string): boolean => /^data:/i.test(path);
 
 const resolveBaseUrl = (): string => {
   const envBase = process.env.NEXT_PUBLIC_API_URL?.trim();
@@ -43,6 +44,9 @@ export const apiFetch = (path: string, init?: RequestInit) => fetch(buildApiUrl(
 export const resolveAssetUrl = (path?: string | null): string | null => {
   if (!path) {
     return null;
+  }
+  if (isDataUrl(path) || isAbsoluteUrl(path)) {
+    return path;
   }
   return buildApiUrl(path);
 };

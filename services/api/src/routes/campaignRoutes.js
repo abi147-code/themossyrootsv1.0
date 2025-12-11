@@ -56,6 +56,8 @@ router.get('/', async (req, res) => {
   const prisma = req.prisma;
   const userId = req.user?.id;
 
+  console.log('[DEBUG] List campaigns request', { reqUserId: userId });
+
   if (!userId) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
@@ -66,6 +68,16 @@ router.get('/', async (req, res) => {
       select: campaignSelect,
       orderBy: { createdAt: 'desc' },
     });
+
+    console.log('[DEBUG] List campaigns result', {
+      reqUserId: userId,
+      count: campaigns.length,
+      sampleIds: campaigns.slice(0, 5).map((c) => c.id),
+    });
+
+    if (req.query?.debug === 'true') {
+      console.log('[DEBUG] List campaigns payload', campaigns);
+    }
 
     return res.json({ campaigns });
   } catch (error) {
@@ -109,6 +121,12 @@ router.post('/', async (req, res) => {
   const userId = req.user?.id;
   const { name, description } = req.body || {};
 
+  console.log('[DEBUG] Save campaign request', {
+    reqUserId: userId,
+    name,
+    hasLogoUrl: typeof req.body?.logoUrl === 'string' && !!req.body.logoUrl.trim(),
+  });
+
   if (!userId) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
@@ -120,6 +138,9 @@ router.post('/', async (req, res) => {
 
   const trimmedDescription =
     typeof description === 'string' && description.trim() ? description.trim() : null;
+
+  console.log('CAMPAIGN SAVE BODY:', req.body);
+  console.log('[DEBUG] Received logoUrl in req.body:', req.body.logoUrl);
 
   try {
     const campaign = await prisma.campaign.create({

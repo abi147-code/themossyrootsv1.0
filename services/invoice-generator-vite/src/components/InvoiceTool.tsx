@@ -63,6 +63,9 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   const [highlightRect, setHighlightRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const anchorsRef = useRef<Record<string, HTMLElement | null>>({});
 
+  console.log('[STATE] invoiceData on every render:', invoiceData);
+  console.log('[DEBUG] InvoiceTool initial invoiceData.logoUrl:', invoiceData.logoUrl);
+
   const steps = useMemo(
     () => [
       { id: 'style', title: 'Visual Style', body: 'Choose your template and typography to set the tone.', tab: 'details' as const },
@@ -146,6 +149,16 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     }
   }, []);
 
+  const decodeUserId = (jwt?: string | null) => {
+    try {
+      if (!jwt) return null;
+      const payload = JSON.parse(atob(jwt.split('.')[1] || ''));
+      return (payload as any)?.userId ?? null;
+    } catch (_e) {
+      return null;
+    }
+  };
+
   const dismissTour = () => {
     setShowTour(false);
     setTourStep(0);
@@ -172,21 +185,12 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     (typeof window !== 'undefined' ? window.location.origin : '')
   ).replace(/\/+$/, '');
 
-  const hasAuthToken = () =>
-    !!(
-      (typeof window !== 'undefined' && window.localStorage?.getItem('tmr-token')) ||
-      (typeof window !== 'undefined' && window.sessionStorage?.getItem('tmr-token'))
-    );
-
-  const initialAuth = hasAuthToken();
-  const [authReady, setAuthReady] = useState(initialAuth);
-  const [awaitingAuth, setAwaitingAuth] = useState(!initialAuth);
+  const [bridgedToken, setBridgedToken] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [awaitingAuth, setAwaitingAuth] = useState(true);
 
   const resolveAuthHeaders = () => {
-    const token =
-      (typeof window !== 'undefined' && window.localStorage?.getItem('tmr-token')) ||
-      (typeof window !== 'undefined' && window.sessionStorage?.getItem('tmr-token')) ||
-      '';
+    const token = bridgedToken || '';
     if (!token) return null;
     return { Authorization: `Bearer ${token}` };
   };
@@ -194,6 +198,15 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   // Listen for auth tokens posted by the dashboard iframe and persist them locally.
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Expose a flag for manual checks that the listener mounted.
+    (window as any)._tmrBridgeListener = true;
+
+    console.log('[DEBUG][TokenBridge] env origins', {
+      VITE_TMR_WEB_URL: import.meta.env.VITE_TMR_WEB_URL,
+      VITE_PUBLIC_WEB_URL: import.meta.env.VITE_PUBLIC_WEB_URL,
+      VITE_PUBLIC_APP_URL: import.meta.env.VITE_PUBLIC_APP_URL,
+    });
 
     const allowedOrigins = [
       import.meta.env.VITE_TMR_WEB_URL,
@@ -215,22 +228,50 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       allowedOrigins.push(window.location.origin.replace(/\/+$/, ''));
     }
 
+    console.log('[DEBUG][TokenBridge] allowedOrigins:', allowedOrigins);
+
     const handler = (event: MessageEvent) => {
+      console.log('[DEBUG][TokenBridge] message received:', {
+        origin: event.origin,
+        data: event.data,
+      });
+
       if (!event.data || event.data.type !== 'TMR_TOKEN_BRIDGE') return;
-      if (allowedOrigins.length && !allowedOrigins.includes(event.origin)) return;
+      if (allowedOrigins.length && !allowedOrigins.includes(event.origin)) {
+        console.warn('[DEBUG][TokenBridge] origin rejected:', event.origin, 'not in', allowedOrigins);
+        return;
+      }
+
+      console.log('[DEBUG][TokenBridge] origin accepted:', event.origin);
 
       const incomingToken =
         typeof event.data.token === 'string' ? event.data.token.trim() : '';
       if (!incomingToken) return;
 
+      const existingToken =
+        window.localStorage.getItem('tmr-token') || window.sessionStorage.getItem('tmr-token') || '';
+      const newUserId = decodeUserId(incomingToken);
+      const oldUserId = decodeUserId(existingToken);
+      if (newUserId !== oldUserId) {
+        console.log('[TokenBridge] Overwriting stale token:', oldUserId, '->', newUserId);
+      }
+      console.log('[DEBUG][TokenBridge] origin accepted, setting token for userId:', newUserId);
+      console.log('[TokenBridge] Received token for userId:', newUserId);
+
       window.localStorage.setItem('tmr-token', incomingToken);
       window.sessionStorage.setItem('tmr-token', incomingToken);
+      setBridgedToken(incomingToken);
       setAuthReady(true);
       setAwaitingAuth(false);
     };
 
     window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
+    console.log('[DEBUG][TokenBridge] Sending READY to parent');
+    window.parent?.postMessage({ type: 'TMR_TOKEN_BRIDGE_READY' }, '*');
+    return () => {
+      window.removeEventListener('message', handler);
+      (window as any)._tmrBridgeListener = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -246,10 +287,11 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   };
 
   const fetchCampaigns = async (options?: { silent?: boolean }) => {
-    const token =
-      (typeof window !== 'undefined' && window.localStorage?.getItem('tmr-token')) ||
-      (typeof window !== 'undefined' && window.sessionStorage?.getItem('tmr-token')) ||
-      '';
+    const token = bridgedToken || '';
+    console.log('[DEBUG] InvoiceTool token (list)', {
+      token: token ? `${token.slice(0, 12)}...` : null,
+      decodedUserId: decodeUserId(token),
+    });
     console.log('[Campaigns] fetchCampaigns called', { apiBase, hasToken: !!token });
 
     if (!authReady) {
@@ -354,10 +396,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   };
 
   const loadCampaignById = async (id: number) => {
-    const token =
-      (typeof window !== 'undefined' && window.localStorage?.getItem('tmr-token')) ||
-      (typeof window !== 'undefined' && window.sessionStorage?.getItem('tmr-token')) ||
-      '';
+    const token = bridgedToken || '';
     console.log('[Campaigns] loadCampaignById', { id, apiBase, hasToken: !!token });
 
     if (!authReady) {
@@ -411,6 +450,11 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       notify('Please log in to save campaigns.', 'error');
       return;
     }
+    const token = bridgedToken || '';
+    console.log('[DEBUG] InvoiceTool token (save)', {
+      token: token ? `${token.slice(0, 12)}...` : null,
+      decodedUserId: decodeUserId(token),
+    });
     const name = window.prompt('Campaign name', invoiceData.invoiceNumber || 'New Campaign');
     if (!name || !name.trim()) {
       notify('Campaign name is required', 'error');
@@ -421,6 +465,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       ? `${marketingData.imagePosition.x}% ${marketingData.imagePosition.y}%`
       : null;
     console.log('[State] Saving bannerImagePosition', bannerImagePosition);
+    console.log('[DEBUG] invoiceData just before save:', invoiceData);
 
     const payload = {
       name: name.trim(),
@@ -451,6 +496,8 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       fromCompanyEmail: invoiceData.fromCompanyEmail || invoiceData.senderEmail || null,
       status: 'draft',
     };
+
+    console.log('[DEBUG] Payload.logoUrl =', invoiceData.logoUrl);
 
     setIsSavingCampaign(true);
     try {
