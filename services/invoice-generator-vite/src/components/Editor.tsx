@@ -159,6 +159,7 @@ export const Editor: React.FC<EditorProps> = ({
     const sensitivity = 0.2; // 1px move = 0.2% change
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
+    console.log('[Uploader] drag event', { rawX: e.clientX, rawY: e.clientY, dx, dy });
 
     // Moving mouse RIGHT means we want to see the LEFT side of image (moving view window left), 
     // or standard drag behavior: dragging image RIGHT reveals LEFT side. 
@@ -166,12 +167,13 @@ export const Editor: React.FC<EditorProps> = ({
     // Decreasing percentage moves image right (shows left side).
     // So +dx should decrease %.
     
-    let newX = startPos.current.x - (dx * sensitivity);
-    let newY = startPos.current.y - (dy * sensitivity);
+    let newX = startPos.current.x + (dx * sensitivity);
+    let newY = startPos.current.y + (dy * sensitivity);
 
     // Clamp between 0 and 100
     newX = Math.max(0, Math.min(100, newX));
     newY = Math.max(0, Math.min(100, newY));
+    console.log('[Uploader] normalized percents', { xPercent: newX, yPercent: newY });
 
     setMarketingData(prev => ({
       ...prev,

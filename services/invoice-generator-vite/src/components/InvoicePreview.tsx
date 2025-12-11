@@ -805,29 +805,57 @@ ${htmlContent}
   const MarketingBanner = ({ className }: { className?: string }) => {
     if (!banner.enabled || (!banner.bannerCopyText && !banner.bannerUrl)) return null;
     
-    const bgPosition = banner.imagePosition 
-      ? `${banner.imagePosition.x}% ${banner.imagePosition.y}%` 
-      : '50% 50%';
+    const imgPosition = banner.imagePosition || { x: 50, y: 50 };
     const copyColor = banner.bannerCopyTextColor || banner.bannerTextColor || '#ffffff';
     const copyOpacity = banner.bannerCopyOpacity ?? 1;
+    const transformOrigin = 'center center';
+    console.log('[Preview] Applying transform', {
+      x: imgPosition.x,
+      y: imgPosition.y,
+      transform: `translate(${imgPosition.x - 100}% , ${imgPosition.y - 100}%)`,
+    });
+    console.log('[Preview] transformOrigin', transformOrigin);
 
     return (
       <div 
         className={`mt-auto w-full print:break-inside-avoid relative overflow-hidden min-h-[200px] flex flex-col md:flex-row items-center rounded-sm ${className || ''}`}
         style={getBannerStyle()}
       >
-         {/* Image Background */}
+         {/* Image layer using absolute img to avoid background-position drift */}
          {banner.bannerUrl && (
-            <div 
-              className="absolute inset-0 z-0"
-              style={{
-                backgroundImage: `url(${banner.bannerUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: bgPosition,
-                opacity: banner.bannerImageOpacity ?? 0.2,
-                filter: 'grayscale(20%) contrast(120%)'
-              }}
-            />
+            <div className="absolute inset-0 z-0 overflow-hidden">
+              <img
+                src={banner.bannerUrl}
+                alt=""
+                className="absolute left-1/2 top-1/2"
+                style={{
+                  width: '120%',
+                  height: '120%',
+                  transform: `translate(${imgPosition.x - 100}%, ${imgPosition.y - 100}%)`,
+                  transformOrigin,
+                  opacity: banner.bannerImageOpacity ?? 0.2,
+                  filter: 'grayscale(20%) contrast(120%)',
+                  objectFit: 'cover',
+                }}
+                ref={(node) => {
+                  if (!node) return;
+                  const containerRect = node.parentElement?.getBoundingClientRect();
+                  const imgRect = node.getBoundingClientRect();
+                  console.log('[Preview] Applying transform', {
+                    x: imgPosition.x,
+                    y: imgPosition.y,
+                    transform: `translate(${imgPosition.x - 100}% , ${imgPosition.y - 100}%)`,
+                  });
+                  console.log('[Preview] container & image metrics', {
+                    containerWidth: containerRect?.width,
+                    containerHeight: containerRect?.height,
+                    imgWidth: imgRect.width,
+                    imgHeight: imgRect.height,
+                  });
+                  console.log('[Preview] transformOrigin', transformOrigin);
+                }}
+              />
+            </div>
          )}
          
          {/* Decorative Line if no image */}

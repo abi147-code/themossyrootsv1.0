@@ -343,7 +343,13 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       ctaTargetUrl: campaign.ctaTargetUrl ?? prev.ctaTargetUrl,
       ctaBackgroundColor: campaign.ctaBackgroundColor ?? prev.ctaBackgroundColor,
       ctaTextColor: campaign.ctaTextColor ?? prev.ctaTextColor,
-      imagePosition: parseImagePosition(campaign.bannerImagePosition) ?? campaign.imagePosition ?? prev.imagePosition,
+      imagePosition: (() => {
+        const parsed = parseImagePosition(campaign.bannerImagePosition);
+        if (parsed) {
+          console.log('[Banner] Parsed x,y:', parsed.x, parsed.y);
+        }
+        return parsed ?? campaign.imagePosition ?? prev.imagePosition;
+      })(),
     }));
   };
 
@@ -378,6 +384,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       const data = await response.json();
       if (data?.campaign) {
         console.log('[Campaigns] Loaded campaign payload', data.campaign);
+        console.log('[Banner] Loaded from API:', data.campaign?.bannerImagePosition);
         mapCampaignToState(data.campaign);
         setIsCampaignLoaded(true);
         setLoadedCampaignId(id);
@@ -410,6 +417,10 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       return;
     }
     const description = window.prompt('Campaign description (optional)', '');
+    const bannerImagePosition = marketingData.imagePosition
+      ? `${marketingData.imagePosition.x}% ${marketingData.imagePosition.y}%`
+      : null;
+    console.log('[State] Saving bannerImagePosition', bannerImagePosition);
 
     const payload = {
       name: name.trim(),
@@ -429,9 +440,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       bannerTextColor: marketingData.bannerTextColor || null,
       bannerImageOpacity:
         typeof marketingData.bannerImageOpacity === 'number' ? marketingData.bannerImageOpacity : null,
-      bannerImagePosition: marketingData.imagePosition
-        ? `${marketingData.imagePosition.x}% ${marketingData.imagePosition.y}%`
-        : null,
+      bannerImagePosition,
       imagePosition: marketingData.imagePosition || null,
       ctaText: marketingData.ctaText || null,
       ctaTargetUrl: marketingData.ctaTargetUrl || null,
