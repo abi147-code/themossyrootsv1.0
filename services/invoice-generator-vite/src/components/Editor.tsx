@@ -47,9 +47,6 @@ export const Editor: React.FC<EditorProps> = ({
   const handleChange = (field: keyof InvoiceData, value: any) => {
     setInvoiceData((prev) => {
       const next = { ...prev, [field]: value };
-      if (field === 'logoUrl') {
-        console.log('[DEBUG] invoiceData.logoUrl after upload:', next.logoUrl);
-      }
       return next;
     });
   };
@@ -119,7 +116,6 @@ export const Editor: React.FC<EditorProps> = ({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        console.log('[DEBUG] LogoUploader FileReader result:', reader.result);
         handleChange('logoUrl', reader.result as string);
       };
       reader.readAsDataURL(file);
@@ -185,7 +181,6 @@ export const Editor: React.FC<EditorProps> = ({
     const sensitivity = 0.2; // 1px move = 0.2% change
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
-    console.log('[Uploader] drag event', { rawX: e.clientX, rawY: e.clientY, dx, dy });
 
     // Moving mouse RIGHT means we want to see the LEFT side of image (moving view window left), 
     // or standard drag behavior: dragging image RIGHT reveals LEFT side. 
@@ -199,7 +194,6 @@ export const Editor: React.FC<EditorProps> = ({
     // Clamp between 0 and 100
     newX = Math.max(0, Math.min(100, newX));
     newY = Math.max(0, Math.min(100, newY));
-    console.log('[Uploader] normalized percents', { xPercent: newX, yPercent: newY });
 
     setMarketingData(prev => ({
       ...prev,

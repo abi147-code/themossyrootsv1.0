@@ -63,12 +63,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
 
   // Keep dropdown interactive when campaigns are already loaded; only disable during initial empty load
   const selectDisabled = campaignsLoading && campaigns.length === 0;
-  console.log('[Dropdown] rendered', {
-    selectedCampaignId,
-    campaignsLength: campaigns?.length,
-    campaignsLoading,
-    disabled: selectDisabled,
-  });
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -250,7 +244,6 @@ ${htmlContent}
     const blob = await dataUrlToBlob(trimmed);
     const extension = blob.type === 'image/jpeg' ? 'jpg' : 'png';
     const formData = new FormData();
-    console.log('Uploading temp asset now:', blob);
     formData.append('file', blob, `${filenameHint}.${extension}`);
 
     const uploadResponse = await fetch(`${apiBase}/api/vite-invoice/upload-temp-asset`, {
@@ -264,7 +257,6 @@ ${htmlContent}
     }
 
     const json = await uploadResponse.json().catch(() => null);
-    console.log('Upload result:', json);
     return { url: (json && json.url) || '' };
   };
 
@@ -414,8 +406,6 @@ ${htmlContent}
           bannerPayloadBase.ctaTextColor || bannerPayloadBase.bannerBackgroundColor || '#0f172a',
         bannerUrl: bannerImageUrlForEmail || null,
       };
-
-      console.log('FINAL BANNER BEFORE SEND:', bannerPayload);
 
       const resolvedCustomerName = (customerName || data.clientName || '').trim();
       const resolvedCustomerEmail = (customerEmail || data.clientEmail || '').trim();
@@ -694,7 +684,6 @@ ${htmlContent}
                 value={selectedCampaignId}
                 onChange={(e) => {
                   const id = e.target.value;
-                  console.log('[Dropdown] onChange fired:', id);
                   setSelectedCampaignId?.(id);
                   if (id) onLoadCampaign?.(Number(id));
                 }}
@@ -715,7 +704,6 @@ ${htmlContent}
                 type="button"
                 className="w-full text-xs rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 py-2"
                 onClick={() => {
-                  console.log('[Dropdown] manual trigger button', selectedCampaignId);
                   if (selectedCampaignId) onLoadCampaign?.(Number(selectedCampaignId));
                 }}
               >
@@ -826,12 +814,6 @@ ${htmlContent}
       }
     };
     const transformOrigin = 'center center';
-    console.log('[Preview] Applying transform', {
-      x: renderPosition.x,
-      y: renderPosition.y,
-      transform: `translate(${renderPosition.x - 100}% , ${renderPosition.y - 100}%)`,
-    });
-    console.log('[Preview] transformOrigin', transformOrigin);
 
     return (
       <div 
@@ -859,18 +841,6 @@ ${htmlContent}
                   if (!node) return;
                   const containerRect = node.parentElement?.getBoundingClientRect();
                   const imgRect = node.getBoundingClientRect();
-                  console.log('[Preview] Applying transform', {
-                    x: renderPosition.x,
-                    y: renderPosition.y,
-                    transform: `translate(${renderPosition.x - 100}% , ${renderPosition.y - 100}%)`,
-                  });
-                  console.log('[Preview] container & image metrics', {
-                    containerWidth: containerRect?.width,
-                    containerHeight: containerRect?.height,
-                    imgWidth: imgRect.width,
-                    imgHeight: imgRect.height,
-                  });
-                  console.log('[Preview] transformOrigin', transformOrigin);
                 }}
               />
             </div>

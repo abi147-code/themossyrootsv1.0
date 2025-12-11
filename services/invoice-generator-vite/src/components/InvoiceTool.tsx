@@ -63,9 +63,6 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   const [highlightRect, setHighlightRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const anchorsRef = useRef<Record<string, HTMLElement | null>>({});
 
-  console.log('[STATE] invoiceData on every render:', invoiceData);
-  console.log('[DEBUG] InvoiceTool initial invoiceData.logoUrl:', invoiceData.logoUrl);
-
   const steps = useMemo(
     () => [
       { id: 'style', title: 'Visual Style', body: 'Choose your template and typography to set the tone.', tab: 'details' as const },
@@ -202,12 +199,6 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     // Expose a flag for manual checks that the listener mounted.
     (window as any)._tmrBridgeListener = true;
 
-    console.log('[DEBUG][TokenBridge] env origins', {
-      VITE_TMR_WEB_URL: import.meta.env.VITE_TMR_WEB_URL,
-      VITE_PUBLIC_WEB_URL: import.meta.env.VITE_PUBLIC_WEB_URL,
-      VITE_PUBLIC_APP_URL: import.meta.env.VITE_PUBLIC_APP_URL,
-    });
-
     const allowedOrigins = [
       import.meta.env.VITE_TMR_WEB_URL,
       import.meta.env.VITE_PUBLIC_WEB_URL,
@@ -228,21 +219,11 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       allowedOrigins.push(window.location.origin.replace(/\/+$/, ''));
     }
 
-    console.log('[DEBUG][TokenBridge] allowedOrigins:', allowedOrigins);
-
     const handler = (event: MessageEvent) => {
-      console.log('[DEBUG][TokenBridge] message received:', {
-        origin: event.origin,
-        data: event.data,
-      });
-
       if (!event.data || event.data.type !== 'TMR_TOKEN_BRIDGE') return;
       if (allowedOrigins.length && !allowedOrigins.includes(event.origin)) {
-        console.warn('[DEBUG][TokenBridge] origin rejected:', event.origin, 'not in', allowedOrigins);
         return;
       }
-
-      console.log('[DEBUG][TokenBridge] origin accepted:', event.origin);
 
       const incomingToken =
         typeof event.data.token === 'string' ? event.data.token.trim() : '';
@@ -252,11 +233,6 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
         window.localStorage.getItem('tmr-token') || window.sessionStorage.getItem('tmr-token') || '';
       const newUserId = decodeUserId(incomingToken);
       const oldUserId = decodeUserId(existingToken);
-      if (newUserId !== oldUserId) {
-        console.log('[TokenBridge] Overwriting stale token:', oldUserId, '->', newUserId);
-      }
-      console.log('[DEBUG][TokenBridge] origin accepted, setting token for userId:', newUserId);
-      console.log('[TokenBridge] Received token for userId:', newUserId);
 
       window.localStorage.setItem('tmr-token', incomingToken);
       window.sessionStorage.setItem('tmr-token', incomingToken);
@@ -266,7 +242,6 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     };
 
     window.addEventListener('message', handler);
-    console.log('[DEBUG][TokenBridge] Sending READY to parent');
     window.parent?.postMessage({ type: 'TMR_TOKEN_BRIDGE_READY' }, '*');
     return () => {
       window.removeEventListener('message', handler);
@@ -282,17 +257,11 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
 
   const notify = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
     if (type === 'error') console.error(message);
-    else console.log(message);
     if (type === 'error' && typeof window !== 'undefined') window.alert(message);
   };
 
   const fetchCampaigns = async (options?: { silent?: boolean }) => {
     const token = bridgedToken || '';
-    console.log('[DEBUG] InvoiceTool token (list)', {
-      token: token ? `${token.slice(0, 12)}...` : null,
-      decodedUserId: decodeUserId(token),
-    });
-    console.log('[Campaigns] fetchCampaigns called', { apiBase, hasToken: !!token });
 
     if (!authReady) {
       setAwaitingAuth(true);
@@ -309,17 +278,14 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
 
     setCampaignsLoading(true);
     try {
-      console.log('[Campaigns] Fetch list', `${apiBase}/api/campaigns`);
       const response = await fetch(`${apiBase}/api/campaigns`, {
         headers: {
           'Content-Type': 'application/json',
           ...auth,
         },
       });
-      console.log('[Campaigns] Response status', response.status);
       if (!response.ok) throw new Error('Failed to load campaigns');
       const data = await response.json();
-      console.log('[Campaigns] Payload', data);
       setCampaigns(Array.isArray(data.campaigns) ? data.campaigns : []);
     } catch (err) {
       console.error('[Campaigns] Failed to load campaigns', err);
@@ -368,11 +334,11 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       fromCompanyAddress: campaign.fromCompanyAddress || prev.fromCompanyAddress,
     }));
 
-    setMarketingData((prev) => ({
-      ...prev,
-      bannerCopyText: campaign.bannerCopyText ?? prev.bannerCopyText ?? '',
-      bannerCopyTextColor:
-        campaign.bannerCopyTextColor ??
+      setMarketingData((prev) => ({
+        ...prev,
+        bannerCopyText: campaign.bannerCopyText ?? prev.bannerCopyText ?? '',
+        bannerCopyTextColor:
+          campaign.bannerCopyTextColor ??
         campaign.bannerTextColor ??
         prev.bannerCopyTextColor ??
         prev.bannerTextColor,
@@ -387,9 +353,6 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       ctaTextColor: campaign.ctaTextColor ?? prev.ctaTextColor,
       imagePosition: (() => {
         const parsed = parseImagePosition(campaign.bannerImagePosition);
-        if (parsed) {
-          console.log('[Banner] Parsed x,y:', parsed.x, parsed.y);
-        }
         return parsed ?? campaign.imagePosition ?? prev.imagePosition;
       })(),
     }));
@@ -397,7 +360,6 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
 
   const loadCampaignById = async (id: number) => {
     const token = bridgedToken || '';
-    console.log('[Campaigns] loadCampaignById', { id, apiBase, hasToken: !!token });
 
     if (!authReady) {
       setAwaitingAuth(true);
@@ -411,19 +373,15 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       return;
     }
     try {
-      console.log('[Campaigns] Fetch single', `${apiBase}/api/campaigns/${id}`);
       const response = await fetch(`${apiBase}/api/campaigns/${id}`, {
         headers: {
           'Content-Type': 'application/json',
           ...auth,
         },
       });
-      console.log('[Campaigns] Response status', response.status);
       if (!response.ok) throw new Error('Failed to fetch campaign');
       const data = await response.json();
       if (data?.campaign) {
-        console.log('[Campaigns] Loaded campaign payload', data.campaign);
-        console.log('[Banner] Loaded from API:', data.campaign?.bannerImagePosition);
         mapCampaignToState(data.campaign);
         setIsCampaignLoaded(true);
         setLoadedCampaignId(id);
@@ -451,10 +409,6 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       return;
     }
     const token = bridgedToken || '';
-    console.log('[DEBUG] InvoiceTool token (save)', {
-      token: token ? `${token.slice(0, 12)}...` : null,
-      decodedUserId: decodeUserId(token),
-    });
     const name = window.prompt('Campaign name', invoiceData.invoiceNumber || 'New Campaign');
     if (!name || !name.trim()) {
       notify('Campaign name is required', 'error');
@@ -464,8 +418,6 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     const bannerImagePosition = marketingData.imagePosition
       ? `${marketingData.imagePosition.x}% ${marketingData.imagePosition.y}%`
       : null;
-    console.log('[State] Saving bannerImagePosition', bannerImagePosition);
-    console.log('[DEBUG] invoiceData just before save:', invoiceData);
 
     const payload = {
       name: name.trim(),
@@ -496,8 +448,6 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       fromCompanyEmail: invoiceData.fromCompanyEmail || invoiceData.senderEmail || null,
       status: 'draft',
     };
-
-    console.log('[DEBUG] Payload.logoUrl =', invoiceData.logoUrl);
 
     setIsSavingCampaign(true);
     try {

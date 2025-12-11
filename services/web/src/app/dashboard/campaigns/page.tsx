@@ -156,13 +156,6 @@ export default function CampaignsPage() {
               ? payload
               : [];
 
-        console.log('[Campaigns] Fetched from /api/campaigns', {
-          receivedKeys: payload && typeof payload === 'object' ? Object.keys(payload as any) : null,
-          count: campaignsPayload.length,
-          dashboardTokenUserId: decodeUserId(token),
-          rawPayload: campaignsPayload,
-        });
-
         setCampaigns(campaignsPayload as Campaign[]);
       } catch (err) {
         if (controller.signal.aborted) return;
@@ -227,19 +220,14 @@ export default function CampaignsPage() {
         {hasCampaigns ? (
           <div className="mt-6 flex flex-col gap-6">
             {campaigns.map((campaign) => {
-              console.log('[DEBUG] Dashboard campaign object:', campaign);
               const name = getCampaignName(campaign);
               const bannerUrl = resolveAssetUrl(campaign.bannerUrl || undefined);
               const logoUrl = resolveAssetUrl(campaign.logoUrl || undefined);
-              console.log('[DEBUG] Dashboard received logoUrl:', campaign.logoUrl);
-              console.log('[DEBUG] resolvedLogoUrl:', resolveAssetUrl(campaign.logoUrl));
               const isExpanded = expanded[campaign.id] === true;
               const toggleExpanded = () =>
                 setExpanded((prev) => ({ ...prev, [campaign.id]: !isExpanded }));
               const bannerCopyPreview =
                 (campaign.bannerCopyText || '').trim() || 'No banner copy';
-
-              console.log('Logo URL:', campaign.logoUrl);
 
               return (
                 <div
