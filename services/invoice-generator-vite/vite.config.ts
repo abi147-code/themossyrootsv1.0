@@ -4,10 +4,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
-  const isProd = mode === 'production';
 
   return {
-    base: isProd ? '/invoice-generator/' : '/',
+    base: '/invoice-generator/',
     server: {
       port: 5173,
       host: '0.0.0.0',
