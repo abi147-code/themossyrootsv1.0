@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, resolveAssetUrl } from '@/lib/api';
 
@@ -40,6 +40,13 @@ type Campaign = {
   updatedAt?: string | null;
 };
 
+type CampaignAnalytics = {
+  clicksTotal: number;
+  clicksByDay: { date: string | null; count: number }[];
+  invoicesUsed: number;
+  ctr: number;
+};
+
 const formatDate = (value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -62,6 +69,16 @@ const formatNullable = (value?: string | number | null) => {
   if (value === null || value === undefined) return '-';
   if (typeof value === 'string' && !value.trim()) return '-';
   return String(value);
+};
+
+const formatNumber = (value?: number | null) => {
+  if (value === null || value === undefined || Number.isNaN(value)) return '0';
+  return value.toLocaleString();
+};
+
+const formatPercent = (value?: number | null) => {
+  if (value === null || value === undefined || Number.isNaN(value)) return '0%';
+  return `${(value * 100).toFixed(1)}%`;
 };
 
 const ColorSwatch = ({ label, value }: { label: string; value?: string | null }) => {
@@ -97,6 +114,13 @@ const Field = ({ label, value }: { label: string; value?: string | null }) => (
   </div>
 );
 
+const StatPill = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex flex-col items-start rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-left">
+    <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">{label}</span>
+    <span className="text-lg font-semibold text-white">{value}</span>
+  </div>
+);
+
 const Chevron = ({ open }: { open: boolean }) => (
   <svg
     className={`h-4 w-4 transform transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
@@ -118,6 +142,8 @@ export default function CampaignsPage() {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const [analytics, setAnalytics] = useState<Record<number, CampaignAnalytics>>({});
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const decodeUserId = (jwt?: string | null) => {
     try {
@@ -128,6 +154,49 @@ export default function CampaignsPage() {
       return null;
     }
   };
+
+  const loadAnalytics = useCallback(
+    async (campaignList: Campaign[]) => {
+      if (!token || campaignList.length === 0) {
+        setAnalytics({});
+        return;
+      }
+
+      setAnalyticsLoading(true);
+      try {
+        const results = await Promise.all(
+          campaignList.map(async (campaign) => {
+            try {
+              const response = await apiFetch(`/api/campaigns/${campaign.id}/analytics`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to load analytics');
+              }
+
+              const payload = (await response.json()) as CampaignAnalytics;
+              return [campaign.id, payload] as const;
+            } catch (err) {
+              console.error('[Campaigns] Failed to load analytics for campaign', campaign.id, err);
+              return [campaign.id, null] as const;
+            }
+          })
+        );
+
+        const nextAnalytics: Record<number, CampaignAnalytics> = {};
+        results.forEach(([id, data]) => {
+          if (data) nextAnalytics[id] = data;
+        });
+        setAnalytics(nextAnalytics);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    },
+    [token]
+  );
 
   useEffect(() => {
     if (!token || loading) return;
@@ -157,6 +226,7 @@ export default function CampaignsPage() {
               : [];
 
         setCampaigns(campaignsPayload as Campaign[]);
+        void loadAnalytics(campaignsPayload as Campaign[]);
       } catch (err) {
         if (controller.signal.aborted) return;
         console.error('[Campaigns] Failed to load from /api/campaigns', err);
@@ -172,7 +242,7 @@ export default function CampaignsPage() {
     void loadCampaigns();
 
     return () => controller.abort();
-  }, [token, loading]);
+  }, [token, loading, loadAnalytics]);
 
   const hasCampaigns = useMemo(() => campaigns.length > 0, [campaigns]);
 
@@ -193,8 +263,8 @@ export default function CampaignsPage() {
         <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Campaigns</p>
         <h2 className="mt-3 text-3xl font-semibold text-white">Marketing runs</h2>
         <p className="mt-2 max-w-2xl text-sm text-slate-300">
-          Every campaign generated from the Marketing Invoice Tool appears here. Banners, names, and timestamps
-          are ready to review while we prepare the analytics view.
+          Every campaign generated from the Marketing Invoice Tool appears here with live usage and click metrics.
+          Banners, names, and timestamps are ready to review alongside performance signals.
         </p>
       </div>
 
@@ -209,7 +279,7 @@ export default function CampaignsPage() {
           <div>
             <h3 className="text-lg font-semibold text-white">Invoice tool campaigns</h3>
             <p className="text-sm text-slate-300">
-              Pulled directly from the Marketing Invoice Tool feed. Analytics will land here soon.
+              Pulled directly from the Marketing Invoice Tool feed with click + invoice usage insights.
             </p>
           </div>
           {fetching ? (
@@ -228,6 +298,10 @@ export default function CampaignsPage() {
                 setExpanded((prev) => ({ ...prev, [campaign.id]: !isExpanded }));
               const bannerCopyPreview =
                 (campaign.bannerCopyText || '').trim() || 'No banner copy';
+              const metric = analytics[campaign.id];
+              const clicksTotal = metric?.clicksTotal ?? 0;
+              const invoicesUsed = metric?.invoicesUsed ?? 0;
+              const ctr = metric ? formatPercent(metric.ctr) : '0%';
 
               return (
                 <div
@@ -263,6 +337,17 @@ export default function CampaignsPage() {
                       {isExpanded ? 'Hide details' : 'More details'}
                       <Chevron open={isExpanded} />
                     </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <StatPill label="Clicks" value={formatNumber(clicksTotal)} />
+                    <StatPill label="Invoices Used" value={formatNumber(invoicesUsed)} />
+                    <StatPill label="CTR" value={ctr} />
+                    {analyticsLoading && !metric ? (
+                      <span className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                        Loading metrics...
+                      </span>
+                    ) : null}
                   </div>
 
                   <div

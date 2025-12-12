@@ -267,4 +267,74 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+router.get('/:id/analytics', async (req, res) => {
+  const prisma = req.prisma;
+  const userId = req.user?.id;
+  const id = Number(req.params.id);
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ message: 'Invalid campaign id.' });
+  }
+
+  try {
+    const campaign = await prisma.campaign.findFirst({
+      where: { id, userId },
+      select: { id: true },
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ message: 'Campaign not found.' });
+    }
+
+    const [clicksTotal, invoicesUsed, clicksByDayRaw] = await Promise.all([
+      prisma.campaignClickEvent.count({ where: { campaignId: id } }),
+      prisma.invoiceHistory.count({
+        where: {
+          userId,
+          OR: [
+            { summary: { path: ['campaignId'], equals: id } },
+            { summary: { path: ['campaignId'], equals: String(id) } },
+          ],
+        },
+      }),
+      prisma.$queryRaw`
+        SELECT
+          date_trunc('day', "createdAt") as day,
+          COUNT(*)::int as count
+        FROM "CampaignClickEvent"
+        WHERE "campaignId" = ${id} AND "createdAt" >= NOW() - INTERVAL '30 days'
+        GROUP BY 1
+        ORDER BY 1 ASC
+      `,
+    ]);
+
+    const clicksByDay = Array.isArray(clicksByDayRaw)
+      ? clicksByDayRaw.map((row) => ({
+          date:
+            row?.day instanceof Date
+              ? row.day.toISOString()
+              : typeof row?.day === 'string'
+                ? row.day
+                : null,
+          count: Number(row?.count) || 0,
+        }))
+      : [];
+    const ctr = invoicesUsed > 0 ? clicksTotal / invoicesUsed : 0;
+
+    return res.json({
+      clicksTotal,
+      clicksByDay,
+      invoicesUsed,
+      ctr,
+    });
+  } catch (error) {
+    console.error('[Campaign] Failed to load analytics:', error);
+    return res.status(500).json({ message: 'Failed to load analytics.' });
+  }
+});
+
 module.exports = router;

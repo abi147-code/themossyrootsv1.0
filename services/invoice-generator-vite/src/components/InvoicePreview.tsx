@@ -10,12 +10,13 @@ interface InvoicePreviewProps {
   viewMode?: 'full' | 'header' | 'banner';
   registerAnchor?: (key: string, el: HTMLElement | null) => void;
   onSaveCampaign?: () => void;
+  onCreateNewCampaign?: () => void;
   onOpenCampaigns?: () => void;
   onLoadCampaign?: (id: number) => void;
   campaigns?: { id: number; name: string; description?: string }[];
   campaignsLoading?: boolean;
-  selectedCampaignId?: string | '';
-  setSelectedCampaignId?: (id: string) => void;
+  selectedCampaignId?: string | null;
+  setSelectedCampaignId?: (id: string | null) => void;
   isSavingCampaign?: boolean;
 }
 
@@ -26,11 +27,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   viewMode = 'full',
   registerAnchor,
   onSaveCampaign,
+  onCreateNewCampaign,
   onOpenCampaigns,
   onLoadCampaign,
   campaigns = [],
   campaignsLoading = false,
-  selectedCampaignId = '',
+  selectedCampaignId = null,
   setSelectedCampaignId,
   isSavingCampaign = false,
 }) => {
@@ -41,7 +43,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   // Temporarily disable futuristic template by falling back to professional
   const rawTemplate = data.invoiceTemplateKey || 'luxury';
   const template = rawTemplate === 'futuristic' ? 'professional' : rawTemplate;
-  const apiBase = (import.meta.env.VITE_TMR_API_URL || '').replace(/\/+$/, '');
+  const apiBase = (
+    import.meta.env.VITE_PUBLIC_API_URL ||
+    import.meta.env.VITE_TMR_API_URL ||
+    (typeof window !== 'undefined' ? window.location.origin : '')
+  ).replace(/\/+$/, '');
   const PUBLIC_API_URL = (import.meta.env.VITE_PUBLIC_API_URL || '').replace(/\/+$/, '');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
@@ -365,6 +371,17 @@ ${htmlContent}
     const trimmedSubject =
       (emailSubject || '').trim() ||
       (data.invoiceNumber ? `Invoice ${data.invoiceNumber}` : 'Invoice');
+    const resolvedCampaignId = selectedCampaignId ? Number(selectedCampaignId) : null;
+    const campaignIdForPayload = Number.isFinite(resolvedCampaignId) ? resolvedCampaignId : null;
+    const trackingBase = (PUBLIC_API_URL || apiBase || (typeof window !== 'undefined' ? window.location.origin : '')).replace(/\/+$/, '');
+    const buildTrackedUrl = (raw?: string | null) => {
+      const trimmed = (raw || '').trim();
+      if (!trimmed) return '';
+      if (campaignIdForPayload && trackingBase) {
+        return `${trackingBase}/api/campaigns/${campaignIdForPayload}/click?u=${encodeURIComponent(trimmed)}`;
+      }
+      return trimmed;
+    };
 
     if (!trimmedTo || !trimmedTo.includes('@')) {
       alert('Please enter a valid recipient email.');
@@ -391,20 +408,37 @@ ${htmlContent}
       const bannerImageUrlForEmail = normalizeAssetUrl(bannerUploadResult.url);
 
       const bannerPayloadBase = banner && typeof banner === 'object' ? banner : { enabled: false, bannerUrl: null };
+      const trackedCtaLink = buildTrackedUrl(bannerPayloadBase.ctaTargetUrl);
       const bannerPayload = {
         enabled: !!bannerPayloadBase.enabled,
+        text: bannerPayloadBase.bannerCopyText || '',
+        textColor:
+          bannerPayloadBase.bannerCopyTextColor ||
+          bannerPayloadBase.bannerTextColor ||
+          '#ffffff',
+        backgroundColor: bannerPayloadBase.bannerBackgroundColor || '#0f172a',
+        imageUrl: bannerImageUrlForEmail || null,
+        ctaText: bannerPayloadBase.ctaText || '',
+        ctaLink: trackedCtaLink,
+        ctaBackgroundColor:
+          bannerPayloadBase.ctaBackgroundColor ||
+          bannerPayloadBase.bannerTextColor ||
+          '#ffffff',
+        ctaTextColor:
+          bannerPayloadBase.ctaTextColor ||
+          bannerPayloadBase.bannerBackgroundColor ||
+          '#0f172a',
+        // legacy fields kept for compatibility
         bannerCopyText: bannerPayloadBase.bannerCopyText || '',
-        bannerCopyTextColor: bannerPayloadBase.bannerCopyTextColor || bannerPayloadBase.bannerTextColor || '#ffffff',
+        bannerCopyTextColor:
+          bannerPayloadBase.bannerCopyTextColor ||
+          bannerPayloadBase.bannerTextColor ||
+          '#ffffff',
         bannerCopyOpacity: bannerPayloadBase.bannerCopyOpacity ?? 1,
         bannerBackgroundColor: bannerPayloadBase.bannerBackgroundColor || '#0f172a',
         bannerTextColor: bannerPayloadBase.bannerTextColor || '#ffffff',
-        ctaText: bannerPayloadBase.ctaText || '',
-        ctaTargetUrl: bannerPayloadBase.ctaTargetUrl || '',
-        ctaBackgroundColor:
-          bannerPayloadBase.ctaBackgroundColor || bannerPayloadBase.bannerTextColor || '#ffffff',
-        ctaTextColor:
-          bannerPayloadBase.ctaTextColor || bannerPayloadBase.bannerBackgroundColor || '#0f172a',
         bannerUrl: bannerImageUrlForEmail || null,
+        ctaTargetUrl: trackedCtaLink || '',
       };
 
       const resolvedCustomerName = (customerName || data.clientName || '').trim();
@@ -457,6 +491,7 @@ ${htmlContent}
         banner: bannerPayload,
         logoUrl: logoUrlForEmail,
         invoicePageColor: invoiceBgForEmail,
+        campaignId: campaignIdForPayload ?? undefined,
         summary: {
           invoiceNumber,
           currency: data.currency || 'USD',
@@ -468,12 +503,31 @@ ${htmlContent}
           banner: bannerPayload,
           logoUrl: logoUrlForEmail,
           invoicePageColor: invoiceBgForEmail,
+          campaignId: campaignIdForPayload ?? undefined,
         },
       };
 
       // Notify parent dashboard (if embedded) that the invoice was sent so it can persist history.
       if (typeof window !== 'undefined' && window.parent) {
         window.parent.postMessage({ type: 'tmr:vite-invoice:sent', payload: historyPayload }, '*');
+      }
+      // Also attempt to persist history directly when auth is available, so analytics stay in sync.
+      if (apiBase && Object.keys(authHeaders).length > 0) {
+        try {
+          const historyResponse = await fetch(`${apiBase}/api/vite-invoice/save-history`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...authHeaders,
+            },
+            body: JSON.stringify(historyPayload),
+          });
+          if (!historyResponse.ok) {
+            console.warn('[InvoicePreview] Failed to persist invoice history for analytics');
+          }
+        } catch (historyErr) {
+          console.error('[InvoicePreview] Error saving invoice history', historyErr);
+        }
       }
 
       triggerToast('Invoice email sent successfully!');
@@ -678,14 +732,14 @@ ${htmlContent}
                   Refresh
                 </button>
               </div>
-              <div>CLICK TEST</div>
               <select
                 className="w-full text-sm border border-slate-200 rounded-md px-2 py-1 bg-white"
-                value={selectedCampaignId}
+                value={selectedCampaignId ?? ''}
                 onChange={(e) => {
                   const id = e.target.value;
-                  setSelectedCampaignId?.(id);
-                  if (id) onLoadCampaign?.(Number(id));
+                  const nextId = id || null;
+                  setSelectedCampaignId?.(nextId);
+                  if (nextId) onLoadCampaign?.(Number(nextId));
                 }}
                 onFocus={() => {
                   if (campaigns.length === 0) onOpenCampaigns?.();
@@ -699,7 +753,6 @@ ${htmlContent}
                   </option>
                 ))}
               </select>
-              <div>CLICK TEST</div>
               <button
                 type="button"
                 className="w-full text-xs rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 py-2"
@@ -719,7 +772,19 @@ ${htmlContent}
                     : 'bg-emerald-600 text-white hover:bg-emerald-500'
                 }`}
               >
-                {isSavingCampaign ? 'Saving...' : 'Save as Campaign'}
+                {isSavingCampaign
+                  ? 'Saving...'
+                  : selectedCampaignId
+                    ? 'Update Campaign'
+                    : 'Save Campaign'}
+              </button>
+              <button
+                type="button"
+                onClick={() => onCreateNewCampaign?.()}
+                disabled={isSavingCampaign}
+                className="w-full text-xs rounded-md border border-dashed border-slate-200 bg-white hover:bg-slate-50 py-2 text-slate-700"
+              >
+                Create new campaign
               </button>
             </div>
             <button
@@ -807,6 +872,14 @@ ${htmlContent}
       height: isPortraitBanner ? '100%' : '120%',
       objectFit: isPortraitBanner ? 'contain' as const : 'cover' as const,
     };
+    const trackingBase = (PUBLIC_API_URL || apiBase || '').replace(/\/+$/, '');
+    const rawCtaUrl = (banner.ctaTargetUrl || '').trim();
+    const trackingUrl =
+      selectedCampaignId && trackingBase && rawCtaUrl
+        ? `${trackingBase}/api/campaigns/${selectedCampaignId}/click?u=${encodeURIComponent(
+            rawCtaUrl
+          )}`
+        : rawCtaUrl;
     const handleBannerLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { naturalWidth, naturalHeight } = e.currentTarget;
       if (naturalWidth && naturalHeight) {
@@ -864,7 +937,7 @@ ${htmlContent}
             {banner.ctaText && (
                 <div className="flex-shrink-0">
                      <a 
-                        href={banner.ctaTargetUrl} 
+                        href={trackingUrl || undefined} 
                         target="_blank" 
                         rel="noreferrer"
                         className={`inline-block px-8 py-3 text-sm font-bold uppercase tracking-widest transition-transform hover:-translate-y-1 active:translate-y-0 border border-current print:border-2 ${fonts.accent}`}

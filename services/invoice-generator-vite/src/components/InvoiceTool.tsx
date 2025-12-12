@@ -1,5 +1,5 @@
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InvoicePreview } from './InvoicePreview';
 import { Editor } from './Editor';
 import { InvoiceData, MarketingBannerData } from '../types';
@@ -49,6 +49,7 @@ interface InvoiceToolProps {
 }
 
 export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = true }) => {
+  const CAMPAIGN_STORAGE_KEY = 'tmr-selectedCampaignId';
   const [invoiceData, setInvoiceData] = useState<InvoiceData>(INITIAL_INVOICE);
   const [marketingData, setMarketingData] = useState<MarketingBannerData>(INITIAL_MARKETING);
   const [showTour, setShowTour] = useState(false);
@@ -56,12 +57,23 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   const [campaigns, setCampaigns] = useState<{ id: number; name: string; description?: string }[]>([]);
   const [campaignsLoading, setCampaignsLoading] = useState(false);
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
-  const [isCampaignLoaded, setIsCampaignLoaded] = useState(false);
-  const [loadedCampaignId, setLoadedCampaignId] = useState<number | null>(null);
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | ''>('');
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [activeTabOverride, setActiveTabOverride] = useState<'details' | 'items' | 'marketing' | undefined>();
   const [highlightRect, setHighlightRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const anchorsRef = useRef<Record<string, HTMLElement | null>>({});
+
+  const persistSelectedCampaignId = useCallback(
+    (id: string | null) => {
+      setSelectedCampaignId(id);
+      if (typeof window === 'undefined') return;
+      if (id) {
+        window.localStorage.setItem(CAMPAIGN_STORAGE_KEY, id);
+      } else {
+        window.localStorage.removeItem(CAMPAIGN_STORAGE_KEY);
+      }
+    },
+    [CAMPAIGN_STORAGE_KEY]
+  );
 
   const steps = useMemo(
     () => [
@@ -383,20 +395,22 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       const data = await response.json();
       if (data?.campaign) {
         mapCampaignToState(data.campaign);
-        setIsCampaignLoaded(true);
-        setLoadedCampaignId(id);
+        persistSelectedCampaignId(String(id));
         notify(
           `Campaign "${data.campaign.name || id}" loaded (branding + marketing settings applied).`,
           'success'
         );
+        return true;
       }
+      return false;
     } catch (err) {
       console.error('[Campaigns] Failed to load campaign', err);
       notify('Failed to load campaign', 'error');
+      return false;
     }
   };
 
-  const handleSaveCampaign = async () => {
+  const handleSaveCampaign = async (options?: { forceCreate?: boolean }) => {
     if (!authReady) {
       setAwaitingAuth(true);
       notify('Waiting for authentication to save campaigns...', 'info');
@@ -451,17 +465,26 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
 
     setIsSavingCampaign(true);
     try {
-      const response = await fetch(`${apiBase}/api/campaigns`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...auth,
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) throw new Error('Failed to save campaign');
-      await fetchCampaigns();
-      notify('Campaign saved successfully', 'success');
+    const isUpdating = !!selectedCampaignId && !options?.forceCreate;
+    const targetUrl = isUpdating
+      ? `${apiBase}/api/campaigns/${selectedCampaignId}`
+      : `${apiBase}/api/campaigns`;
+    const response = await fetch(targetUrl, {
+      method: isUpdating ? 'PUT' : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...auth,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Failed to save campaign');
+    const data = await response.json().catch(() => ({}));
+    const savedId = data?.campaign?.id ?? (isUpdating ? selectedCampaignId : null);
+    if (savedId) {
+      persistSelectedCampaignId(String(savedId));
+    }
+    await fetchCampaigns();
+    notify(isUpdating ? 'Campaign updated successfully' : 'Campaign created successfully', 'success');
     } catch (err) {
       console.error('Failed to save campaign', err);
       notify('Failed to save campaign', 'error');
@@ -469,6 +492,25 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       setIsSavingCampaign(false);
     }
   };
+
+  const handleCreateNewCampaign = async () => {
+    persistSelectedCampaignId(null);
+    await handleSaveCampaign({ forceCreate: true });
+  };
+
+  useEffect(() => {
+    if (!authReady || selectedCampaignId) return;
+    if (typeof window === 'undefined') return;
+    const storedId = window.localStorage.getItem(CAMPAIGN_STORAGE_KEY);
+    if (!storedId) return;
+    console.info('[InvoiceTool] Rehydrating selectedCampaignId from storage:', storedId);
+    loadCampaignById(Number(storedId)).then((ok) => {
+      if (!ok && typeof window !== 'undefined') {
+        window.localStorage.removeItem(CAMPAIGN_STORAGE_KEY);
+        persistSelectedCampaignId(null);
+      }
+    });
+  }, [authReady, selectedCampaignId, CAMPAIGN_STORAGE_KEY]);
 
   const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
   const scrollX = typeof window !== 'undefined' ? window.scrollX : 0;
@@ -549,12 +591,13 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
                 banner={marketingData} 
                 registerAnchor={registerAnchor}
                 onSaveCampaign={handleSaveCampaign}
+                onCreateNewCampaign={handleCreateNewCampaign}
                 onOpenCampaigns={fetchCampaigns}
                 onLoadCampaign={loadCampaignById}
                 campaigns={campaigns}
                 campaignsLoading={effectiveCampaignsLoading}
                 selectedCampaignId={selectedCampaignId}
-                setSelectedCampaignId={setSelectedCampaignId}
+                setSelectedCampaignId={persistSelectedCampaignId}
                 isSavingCampaign={isSavingCampaign}
               />
             </div>

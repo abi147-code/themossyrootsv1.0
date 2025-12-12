@@ -444,6 +444,7 @@ router.post('/save-history', async (req, res) => {
     banner,
     logoUrl,
     invoiceBackgroundColor,
+    campaignId,
   } = req.body || {};
 
   const cleanString = (value) => (typeof value === 'string' ? value.trim() : '');
@@ -497,6 +498,13 @@ router.post('/save-history', async (req, res) => {
   summaryPayload.logoUrl = summaryPayload.logoUrl || cleanString(logoUrl);
   summaryPayload.invoiceBackgroundColor =
     summaryPayload.invoiceBackgroundColor || cleanString(invoiceBackgroundColor);
+  const parsedCampaignId =
+    typeof campaignId === 'number' ? campaignId : Number(campaignId);
+  const campaignIdValue =
+    Number.isFinite(parsedCampaignId) && parsedCampaignId > 0 ? parsedCampaignId : null;
+  if (campaignIdValue !== null) {
+    summaryPayload.campaignId = campaignIdValue;
+  }
 
   try {
     const record = await prisma.invoiceHistory.create({
