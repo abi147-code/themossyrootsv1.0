@@ -1,0 +1,21 @@
+# fly.toml app configuration file for tmr-invoice-api
+#
+# See https://fly.io/docs/reference/configuration/
+
+app = "tmr-invoice-api"
+primary_region = "cdg"
+
+[build]
+
+[http_service]
+  internal_port = 5000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1

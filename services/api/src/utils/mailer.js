@@ -416,9 +416,11 @@ const createTransporter = () => {
       return sendgridTransport;
     }
 
-    console.warn(
-      '[Mailer] EMAIL_TRANSPORT=sendgrid configured but SENDGRID_API_KEY is missing. Falling back to default SMTP transport.'
+    const error = new Error(
+      '[Mailer] EMAIL_TRANSPORT=sendgrid configured but SENDGRID_API_KEY is missing.'
     );
+    console.error(error.message);
+    throw error;
   }
 
   const customConfig = buildCustomConfig();
