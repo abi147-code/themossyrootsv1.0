@@ -30,7 +30,9 @@ app.set('trust proxy', 1);
 
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://tmr-web.onrender.com',
+  'https://themossyroots.com',
   'https://www.themossyroots.com',
+  'https://tmr-proxy.fly.dev',
   'http://localhost',
   'http://localhost:3000',
   'http://localhost:5173',

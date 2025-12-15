@@ -158,16 +158,6 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     }
   }, []);
 
-  const decodeUserId = (jwt?: string | null) => {
-    try {
-      if (!jwt) return null;
-      const payload = JSON.parse(atob(jwt.split('.')[1] || ''));
-      return (payload as any)?.userId ?? null;
-    } catch (_e) {
-      return null;
-    }
-  };
-
   const dismissTour = () => {
     setShowTour(false);
     setTourStep(0);
@@ -204,65 +194,40 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     return { Authorization: `Bearer ${token}` };
   };
 
-  // Listen for auth tokens posted by the dashboard iframe and persist them locally.
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Expose a flag for manual checks that the listener mounted.
-    (window as any)._tmrBridgeListener = true;
-
-    const allowedOrigins = [
-      import.meta.env.VITE_TMR_WEB_URL,
-      import.meta.env.VITE_PUBLIC_WEB_URL,
-      import.meta.env.VITE_PUBLIC_APP_URL,
-    ]
-      .filter((origin): origin is string => typeof origin === 'string' && !!origin.trim())
-      .map((origin) => origin.replace(/\/+$/, ''));
-
-    const localhostOrigins = ['http://localhost:3000', 'http://localhost:4000', 'http://localhost']
-      .map((origin) => origin.replace(/\/+$/, ''));
-    localhostOrigins.forEach((origin) => {
-      if (!allowedOrigins.includes(origin)) {
-        allowedOrigins.push(origin);
-      }
-    });
-
-    if (allowedOrigins.length === 0 && typeof window !== 'undefined') {
-      allowedOrigins.push(window.location.origin.replace(/\/+$/, ''));
-    }
-
-    const handler = (event: MessageEvent) => {
-      if (!event.data || event.data.type !== 'TMR_TOKEN_BRIDGE') return;
-      if (allowedOrigins.length && !allowedOrigins.includes(event.origin)) {
-        return;
-      }
-
+    const applyBridgedToken = (token?: string | null) => {
       const incomingToken =
-        typeof event.data.token === 'string' ? event.data.token.trim() : '';
+        (token ??
+          window.localStorage.getItem('tmr-token') ??
+          window.sessionStorage.getItem('tmr-token') ??
+          '').trim();
       if (!incomingToken) return;
 
-      const existingToken =
-        window.localStorage.getItem('tmr-token') || window.sessionStorage.getItem('tmr-token') || '';
-      const newUserId = decodeUserId(incomingToken);
-      const oldUserId = decodeUserId(existingToken);
-
-      window.localStorage.setItem('tmr-token', incomingToken);
-      window.sessionStorage.setItem('tmr-token', incomingToken);
       setBridgedToken(incomingToken);
+      console.log('[TokenBridge] token accepted, bridgedToken set');
       setAuthReady(true);
+      console.log('[TokenBridge] authReady set true');
       setAwaitingAuth(false);
     };
 
-    window.addEventListener('message', handler);
-    window.parent?.postMessage({ type: 'TMR_TOKEN_BRIDGE_READY' }, '*');
+    applyBridgedToken();
+
+    const handler: EventListener = (event) => {
+      const incomingToken = (event as CustomEvent<string | null>).detail ?? null;
+      applyBridgedToken(incomingToken);
+    };
+
+    window.addEventListener('tmr-token-bridged', handler);
     return () => {
-      window.removeEventListener('message', handler);
-      (window as any)._tmrBridgeListener = false;
+      window.removeEventListener('tmr-token-bridged', handler);
     };
   }, []);
 
   useEffect(() => {
     if (authReady) {
+      console.log('[TokenBridge] authReady observed true; awaitingAuth false');
       setAwaitingAuth(false);
     }
   }, [authReady]);
