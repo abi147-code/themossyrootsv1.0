@@ -61,7 +61,36 @@ function toPublicAsset(req, assetPath) {
 }
 
 function toPublicAvatar(req, avatarPath) {
-  return toPublicAsset(req, avatarPath);
+  if (!avatarPath) {
+    return null;
+  }
+
+  const raw = String(avatarPath).trim();
+  if (!raw) {
+    return null;
+  }
+
+  // If an absolute URL was stored, strip to pathname so callers always get a relative path
+  if (ABSOLUTE_URL_PATTERN.test(raw)) {
+    try {
+      const url = new URL(raw);
+      if (url.pathname && url.pathname.startsWith('/')) {
+        return url.pathname;
+      }
+    } catch (_error) {
+      return raw;
+    }
+  }
+
+  if (raw.startsWith('/uploads/')) {
+    return raw;
+  }
+
+  if (raw.startsWith('uploads/')) {
+    return `/${raw}`;
+  }
+
+  return raw.startsWith('/') ? raw : `/${raw}`;
 }
 
 function resolveAssetDiskPath(assetPath) {
