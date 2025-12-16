@@ -9,8 +9,8 @@ primary_region = "cdg"
 [build]
   [build.args]
     NEXT_PUBLIC_API_URL = "https://themossyroots.com"
-    NEXT_PUBLIC_INVOICE_GENERATOR_URL = "https://tmr-proxy.fly.dev/invoice-generator/"
-    NEXT_PUBLIC_PROMO_AI_MARKETING_URL = "https://tmr-proxy.fly.dev/invoice-generator/"
+    NEXT_PUBLIC_INVOICE_GENERATOR_URL = "https://themossyroots.com/invoice-generator"
+    NEXT_PUBLIC_PROMO_AI_MARKETING_URL = "https://themossyroots.com/invoice-generator"
 
 [http_service]
   internal_port = 3000
