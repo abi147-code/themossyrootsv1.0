@@ -47,6 +47,21 @@ const formatSubject = (value?: string | null) => {
   return trimmed || '--';
 };
 
+const getTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+};
+
+const getDisplayNumber = (value: unknown): string | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value.toString();
+  }
+  return getTrimmedString(value);
+};
+
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -54,12 +69,7 @@ const getInvoiceNumberFromSummary = (summary: unknown): string | null => {
   if (!isObjectRecord(summary)) {
     return null;
   }
-  const value = summary.invoiceNumber;
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
+  return getTrimmedString(summary.invoiceNumber);
 };
 
 export default function HistoryPage() {
@@ -73,6 +83,7 @@ export default function HistoryPage() {
   const [dateRange, setDateRange] = useState<'ALL' | 'LAST_7_DAYS' | 'LAST_30_DAYS'>('ALL');
   const [minAmount, setMinAmount] = useState<number | undefined>(undefined);
   const [maxAmount, setMaxAmount] = useState<number | undefined>(undefined);
+  const [showAdvancedMetadata, setShowAdvancedMetadata] = useState(false);
 
   useEffect(() => {
     if (!token || loading) return;
@@ -221,8 +232,65 @@ export default function HistoryPage() {
     () => getInvoiceNumberFromSummary(selectedInvoice?.summary),
     [selectedInvoice],
   );
+  const summaryRecord = useMemo(
+    () =>
+      selectedInvoice && isObjectRecord(selectedInvoice.summary)
+        ? (selectedInvoice.summary as Record<string, unknown>)
+        : null,
+    [selectedInvoice],
+  );
+  const bannerRecord = useMemo(
+    () =>
+      summaryRecord && isObjectRecord(summaryRecord.banner)
+        ? (summaryRecord.banner as Record<string, unknown>)
+        : null,
+    [summaryRecord],
+  );
+  const amountValue = getDisplayNumber(summaryRecord?.amount);
+  const currencyValue = getTrimmedString(summaryRecord?.currency);
+  const amountDisplay = amountValue && currencyValue ? `${currencyValue} ${amountValue}` : null;
+  const senderName = getTrimmedString(summaryRecord?.senderName);
+  const senderEmail = getTrimmedString(summaryRecord?.senderEmail);
+  const senderDisplay =
+    senderName && senderEmail ? `${senderName} (${senderEmail})` : senderName || senderEmail;
+  const campaignEnabled = bannerRecord?.enabled === true;
+  const campaignMessage =
+    getTrimmedString(bannerRecord?.bannerCopyText) ?? getTrimmedString(bannerRecord?.text);
+  const campaignCta = getTrimmedString(bannerRecord?.ctaText);
+  const detailItems = useMemo(() => {
+    const items: Array<{ label: string; value: string }> = [];
+    if (selectedInvoiceNumber) {
+      items.push({ label: 'Invoice number', value: selectedInvoiceNumber });
+    }
+    if (amountDisplay) {
+      items.push({ label: 'Amount', value: amountDisplay });
+    }
+    if (senderDisplay) {
+      items.push({ label: 'Sender', value: senderDisplay });
+    }
+    if (campaignEnabled) {
+      items.push({ label: 'Campaign', value: 'Enabled' });
+    }
+    if (campaignMessage) {
+      items.push({ label: 'Campaign message', value: campaignMessage });
+    }
+    if (campaignCta) {
+      items.push({ label: 'Call to action', value: campaignCta });
+    }
+    return items;
+  }, [
+    amountDisplay,
+    campaignCta,
+    campaignEnabled,
+    campaignMessage,
+    senderDisplay,
+    selectedInvoiceNumber,
+  ]);
 
-  const closeDetails = () => setSelectedInvoice(null);
+  const closeDetails = () => {
+    setSelectedInvoice(null);
+    setShowAdvancedMetadata(false);
+  };
 
   if (loading || !token) {
     return null;
@@ -430,9 +498,6 @@ export default function HistoryPage() {
                 <h3 className="mt-2 text-xl font-semibold text-white">
                   {formatSubject(selectedInvoice.subject)}
                 </h3>
-                {selectedInvoiceNumber ? (
-                  <p className="mt-2 text-sm text-slate-300">Invoice #{selectedInvoiceNumber}</p>
-                ) : null}
                 <p className="text-sm text-slate-300">Sent {formatDateTime(selectedInvoice.sentAt)}</p>
               </div>
               <button
@@ -467,14 +532,34 @@ export default function HistoryPage() {
             </div>
 
             <div className="mt-6 rounded-2xl border border-slate-800/60 bg-slate-900/60 p-4">
-              <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Summary</p>
-              {detailSummaryText ? (
-                <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-xl border border-slate-800/60 bg-slate-950/70 p-3 text-xs text-slate-200">
-                  {detailSummaryText}
-                </pre>
-              ) : (
-                <p className="mt-3 text-sm text-slate-400">No additional summary stored for this invoice.</p>
-              )}
+              <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Invoice details</p>
+              {detailItems.length > 0 ? (
+                <dl className="mt-3 space-y-2 text-sm text-slate-200">
+                  {detailItems.map((item) => (
+                    <div key={item.label} className="flex flex-wrap gap-2">
+                      <dt className="text-slate-400">{item.label}:</dt>
+                      <dd className="font-semibold text-white">{item.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedMetadata((prev) => !prev)}
+                  className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400 transition hover:text-slate-200"
+                  aria-expanded={showAdvancedMetadata}
+                >
+                  <span aria-hidden="true">{showAdvancedMetadata ? '▼' : '▶'}</span>
+                  <span>Advanced metadata</span>
+                </button>
+                <p className="mt-2 text-xs text-slate-500">Technical details for advanced users</p>
+                {showAdvancedMetadata && detailSummaryText ? (
+                  <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-xl border border-slate-800/60 bg-slate-950/70 p-3 text-xs text-slate-200">
+                    {detailSummaryText}
+                  </pre>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
