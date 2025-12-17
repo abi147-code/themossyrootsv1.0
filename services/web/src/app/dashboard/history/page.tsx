@@ -291,6 +291,13 @@ export default function HistoryPage() {
     setSelectedInvoice(null);
     setShowAdvancedMetadata(false);
   };
+  const clearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('ALL');
+    setDateRange('ALL');
+    setMinAmount(undefined);
+    setMaxAmount(undefined);
+  };
 
   if (loading || !token) {
     return null;
@@ -316,11 +323,20 @@ export default function HistoryPage() {
 
       <div className="rounded-3xl border border-slate-800/70 bg-slate-950/60 p-6 shadow-lg shadow-slate-900/40">
         <div className="flex flex-col gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Search and filters</p>
-            <p className="mt-2 text-sm text-slate-300">
-              Find invoices by customer, recipient, or subject and narrow by status, date, or amount.
-            </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Search and filters</p>
+              <p className="mt-2 text-sm text-slate-300">
+                Find invoices by customer, recipient, or subject and narrow by status, date, or amount.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="rounded-full border border-slate-700/70 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-300 transition hover:border-slate-500 hover:text-white"
+            >
+              Clear
+            </button>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="flex flex-col gap-2">
