@@ -56,6 +56,11 @@ export default function HistoryPage() {
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceHistoryEntry | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | string>('ALL');
+  const [dateRange, setDateRange] = useState<'ALL' | 'LAST_7_DAYS' | 'LAST_30_DAYS'>('ALL');
+  const [minAmount, setMinAmount] = useState<number | undefined>(undefined);
+  const [maxAmount, setMaxAmount] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!token || loading) return;
@@ -95,7 +100,6 @@ export default function HistoryPage() {
     return () => controller.abort();
   }, [token, loading]);
 
-  const hasInvoices = useMemo(() => invoices.length > 0, [invoices]);
   const detailSummaryText = useMemo(() => {
     if (!selectedInvoice) return null;
     const summary = selectedInvoice.summary;
@@ -120,6 +124,86 @@ export default function HistoryPage() {
     }
   }, [selectedInvoice]);
 
+  const statusOptions = useMemo(() => {
+    const values = new Set<string>();
+    invoices.forEach((invoice) => {
+      const status = (invoice.status || 'sent').toString().trim();
+      if (status) {
+        values.add(status);
+      }
+    });
+    return Array.from(values).sort((left, right) => left.localeCompare(right));
+  }, [invoices]);
+
+  const filteredInvoices = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const hasQuery = query.length > 0;
+    const hasStatusFilter = statusFilter !== 'ALL';
+    const normalizedStatusFilter = statusFilter.toLowerCase();
+    const hasDateFilter = dateRange !== 'ALL';
+    const now = Date.now();
+    const cutoff =
+      dateRange === 'LAST_7_DAYS'
+        ? now - 7 * 24 * 60 * 60 * 1000
+        : dateRange === 'LAST_30_DAYS'
+          ? now - 30 * 24 * 60 * 60 * 1000
+          : null;
+    const minValue = typeof minAmount === 'number' && Number.isFinite(minAmount) ? minAmount : null;
+    const maxValue = typeof maxAmount === 'number' && Number.isFinite(maxAmount) ? maxAmount : null;
+
+    return invoices.filter((invoice) => {
+      if (hasQuery) {
+        const fields = [
+          invoice.customerName,
+          invoice.customerEmail,
+          invoice.recipient,
+          invoice.subject,
+        ];
+        const matches = fields.some((value) =>
+          (value ?? '').toString().toLowerCase().includes(query),
+        );
+        if (!matches) {
+          return false;
+        }
+      }
+
+      if (hasStatusFilter) {
+        const statusValue = (invoice.status || 'sent').toString().toLowerCase();
+        if (statusValue !== normalizedStatusFilter) {
+          return false;
+        }
+      }
+
+      if (hasDateFilter) {
+        const sentAt = Date.parse(invoice.sentAt);
+        if (Number.isNaN(sentAt)) {
+          return false;
+        }
+        if (cutoff !== null && sentAt < cutoff) {
+          return false;
+        }
+      }
+
+      if (minValue !== null || maxValue !== null) {
+        const amount = Number(invoice.totalAmount);
+        if (!Number.isFinite(amount)) {
+          return false;
+        }
+        if (minValue !== null && amount < minValue) {
+          return false;
+        }
+        if (maxValue !== null && amount > maxValue) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [invoices, searchQuery, statusFilter, dateRange, minAmount, maxAmount]);
+
+  const hasInvoices = useMemo(() => filteredInvoices.length > 0, [filteredInvoices]);
+  const hasBaseInvoices = useMemo(() => invoices.length > 0, [invoices]);
+
   const closeDetails = () => setSelectedInvoice(null);
 
   if (loading || !token) {
@@ -142,6 +226,93 @@ export default function HistoryPage() {
           Review the invoices you&apos;ve dispatched. Entries are captured the moment a notice leaves the platform so
           you always have a paper trail.
         </p>
+      </div>
+
+      <div className="rounded-3xl border border-slate-800/70 bg-slate-950/60 p-6 shadow-lg shadow-slate-900/40">
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Search and filters</p>
+            <p className="mt-2 text-sm text-slate-300">
+              Find invoices by customer, recipient, or subject and narrow by status or amount.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Search</label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Customer, email, recipient, subject"
+                className="w-full rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-sky-400/80"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="w-full rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-sky-400/80"
+              >
+                <option value="ALL">All statuses</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Date range</label>
+              <select
+                value={dateRange}
+                onChange={(event) =>
+                  setDateRange(event.target.value as 'ALL' | 'LAST_7_DAYS' | 'LAST_30_DAYS')
+                }
+                className="w-full rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-sky-400/80"
+              >
+                <option value="ALL">All time</option>
+                <option value="LAST_7_DAYS">Last 7 days</option>
+                <option value="LAST_30_DAYS">Last 30 days</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Amount</label>
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="number"
+                  value={typeof minAmount === 'number' && Number.isFinite(minAmount) ? minAmount : ''}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (value === '') {
+                      setMinAmount(undefined);
+                      return;
+                    }
+                    const numeric = Number(value);
+                    setMinAmount(Number.isFinite(numeric) ? numeric : undefined);
+                  }}
+                  placeholder="Min"
+                  className="w-full rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-sky-400/80"
+                />
+                <input
+                  type="number"
+                  value={typeof maxAmount === 'number' && Number.isFinite(maxAmount) ? maxAmount : ''}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (value === '') {
+                      setMaxAmount(undefined);
+                      return;
+                    }
+                    const numeric = Number(value);
+                    setMaxAmount(Number.isFinite(numeric) ? numeric : undefined);
+                  }}
+                  placeholder="Max"
+                  className="w-full rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-sky-400/80"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {error ? (
@@ -174,7 +345,7 @@ export default function HistoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/40">
-                {invoices.map((invoice) => {
+                {filteredInvoices.map((invoice) => {
                   const contact =
                     invoice.customerEmail && invoice.customerEmail !== invoice.recipient
                       ? `${invoice.customerEmail} · ${invoice.recipient}`
@@ -210,7 +381,9 @@ export default function HistoryPage() {
             <p className="text-sm text-slate-400">
               {fetching
                 ? 'Loading your invoice history…'
-                : 'No invoices sent yet. Generate and send one to populate your log.'}
+                : hasBaseInvoices
+                  ? 'No invoices match your current search or filters.'
+                  : 'No invoices sent yet. Generate and send one to populate your log.'}
             </p>
           )}
         </div>
