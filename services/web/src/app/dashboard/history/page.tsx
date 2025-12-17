@@ -50,6 +50,18 @@ const formatSubject = (value?: string | null) => {
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+const getInvoiceNumberFromSummary = (summary: unknown): string | null => {
+  if (!isObjectRecord(summary)) {
+    return null;
+  }
+  const value = summary.invoiceNumber;
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+};
+
 export default function HistoryPage() {
   const { token, loading } = useAuth();
   const [invoices, setInvoices] = useState<InvoiceHistoryEntry[]>([]);
@@ -153,11 +165,13 @@ export default function HistoryPage() {
 
     return invoices.filter((invoice) => {
       if (hasQuery) {
+        const invoiceNumber = getInvoiceNumberFromSummary(invoice.summary) ?? '';
         const fields = [
           invoice.customerName,
           invoice.customerEmail,
           invoice.recipient,
           invoice.subject,
+          invoiceNumber,
         ];
         const matches = fields.some((value) =>
           (value ?? '').toString().toLowerCase().includes(query),
@@ -203,6 +217,10 @@ export default function HistoryPage() {
 
   const hasInvoices = useMemo(() => filteredInvoices.length > 0, [filteredInvoices]);
   const hasBaseInvoices = useMemo(() => invoices.length > 0, [invoices]);
+  const selectedInvoiceNumber = useMemo(
+    () => getInvoiceNumberFromSummary(selectedInvoice?.summary),
+    [selectedInvoice],
+  );
 
   const closeDetails = () => setSelectedInvoice(null);
 
@@ -233,7 +251,7 @@ export default function HistoryPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Search and filters</p>
             <p className="mt-2 text-sm text-slate-300">
-              Find invoices by customer, recipient, or subject and narrow by status or amount.
+              Find invoices by customer, recipient, or subject and narrow by status, date, or amount.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -243,7 +261,7 @@ export default function HistoryPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Customer, email, recipient, subject"
+                placeholder="Search invoices"
                 className="w-full rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-sky-400/80"
               />
             </div>
@@ -351,13 +369,19 @@ export default function HistoryPage() {
                       ? `${invoice.customerEmail} · ${invoice.recipient}`
                       : invoice.recipient;
                   const subject = formatSubject(invoice.subject);
+                  const invoiceNumber = getInvoiceNumberFromSummary(invoice.summary);
                   return (
                     <tr key={invoice.id} className="text-slate-200">
                       <td className="py-3 pr-4 align-top">
                         <p className="font-semibold text-white">{invoice.customerName}</p>
                         <p className="text-xs text-slate-400">{contact}</p>
                       </td>
-                      <td className="py-3 pr-4 align-top text-slate-300">{subject}</td>
+                      <td className="py-3 pr-4 align-top text-slate-300">
+                        <p>{subject}</p>
+                        {invoiceNumber ? (
+                          <p className="mt-1 text-xs text-slate-500">Invoice #{invoiceNumber}</p>
+                        ) : null}
+                      </td>
                       <td className="py-3 pr-4 align-top">{formatCurrency(invoice.totalAmount)}</td>
                       <td className="py-3 pr-4 align-top capitalize">{invoice.status || 'sent'}</td>
                       <td className="py-3 pr-4 align-top text-slate-300">
@@ -406,6 +430,9 @@ export default function HistoryPage() {
                 <h3 className="mt-2 text-xl font-semibold text-white">
                   {formatSubject(selectedInvoice.subject)}
                 </h3>
+                {selectedInvoiceNumber ? (
+                  <p className="mt-2 text-sm text-slate-300">Invoice #{selectedInvoiceNumber}</p>
+                ) : null}
                 <p className="text-sm text-slate-300">Sent {formatDateTime(selectedInvoice.sentAt)}</p>
               </div>
               <button
