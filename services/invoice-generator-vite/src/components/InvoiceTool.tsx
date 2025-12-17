@@ -4,6 +4,7 @@ import { InvoicePreview } from './InvoicePreview';
 import { Editor } from './Editor';
 import { InvoiceData, MarketingBannerData } from '../types';
 import { ArrowLeft } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const INITIAL_INVOICE: InvoiceData = {
   invoiceNumber: 'INV-001',
@@ -60,6 +61,11 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [activeTabOverride, setActiveTabOverride] = useState<'details' | 'items' | 'marketing' | undefined>();
   const [highlightRect, setHighlightRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [showCampaignDialog, setShowCampaignDialog] = useState(false);
+  const [campaignNameInput, setCampaignNameInput] = useState('');
+  const [campaignDescriptionInput, setCampaignDescriptionInput] = useState('');
+  const [campaignFormError, setCampaignFormError] = useState<string | null>(null);
+  const [pendingCampaignOptions, setPendingCampaignOptions] = useState<{ forceCreate?: boolean } | null>(null);
   const anchorsRef = useRef<Record<string, HTMLElement | null>>({});
 
   const persistSelectedCampaignId = useCallback(
@@ -233,9 +239,40 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   }, [authReady]);
 
   const notify = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
-    if (type === 'error') console.error(message);
-    if (type === 'error' && typeof window !== 'undefined') window.alert(message);
+    if (type === 'error') {
+      console.error(message);
+      toast.error(message);
+      return;
+    }
+    if (type === 'success') {
+      toast.success(message);
+      return;
+    }
+    toast(message);
   };
+
+  const openCampaignDialog = useCallback(
+    (options?: { forceCreate?: boolean }) => {
+      if (!authReady) {
+        setAwaitingAuth(true);
+        notify('Waiting for authentication to save campaigns...', 'info');
+        return;
+      }
+
+      const auth = resolveAuthHeaders();
+      if (!auth) {
+        notify('Please log in to save campaigns.', 'error');
+        return;
+      }
+
+      setPendingCampaignOptions(options || null);
+      setCampaignNameInput(invoiceData.invoiceNumber || 'New Campaign');
+      setCampaignDescriptionInput('');
+      setCampaignFormError(null);
+      setShowCampaignDialog(true);
+    },
+    [authReady, invoiceData.invoiceNumber, notify, resolveAuthHeaders]
+  );
 
   const fetchCampaigns = async (options?: { silent?: boolean }) => {
     const token = bridgedToken || '';
@@ -375,7 +412,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     }
   };
 
-  const handleSaveCampaign = async (options?: { forceCreate?: boolean }) => {
+  const confirmCampaignSave = useCallback(async () => {
     if (!authReady) {
       setAwaitingAuth(true);
       notify('Waiting for authentication to save campaigns...', 'info');
@@ -387,20 +424,23 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       notify('Please log in to save campaigns.', 'error');
       return;
     }
-    const token = bridgedToken || '';
-    const name = window.prompt('Campaign name', invoiceData.invoiceNumber || 'New Campaign');
-    if (!name || !name.trim()) {
+
+    const name = (campaignNameInput || '').trim();
+    if (!name) {
+      setCampaignFormError('Campaign name is required');
       notify('Campaign name is required', 'error');
       return;
     }
-    const description = window.prompt('Campaign description (optional)', '');
+
+    const description = (campaignDescriptionInput || '').trim();
+    const options = pendingCampaignOptions || {};
     const bannerImagePosition = marketingData.imagePosition
       ? `${marketingData.imagePosition.x}% ${marketingData.imagePosition.y}%`
       : null;
 
     const payload = {
-      name: name.trim(),
-      description: description?.trim() || null,
+      name,
+      description: description || null,
       invoicePageColor: invoiceData.invoicePageColor || null,
       invoiceTextColor: invoiceData.invoiceTextColor || null,
       invoiceTypographyKey: invoiceData.invoiceTypographyKey || null,
@@ -430,38 +470,104 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
 
     setIsSavingCampaign(true);
     try {
-    const isUpdating = !!selectedCampaignId && !options?.forceCreate;
-    const targetUrl = isUpdating
-      ? `${apiBase}/api/campaigns/${selectedCampaignId}`
-      : `${apiBase}/api/campaigns`;
-    const response = await fetch(targetUrl, {
-      method: isUpdating ? 'PUT' : 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...auth,
-      },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) throw new Error('Failed to save campaign');
-    const data = await response.json().catch(() => ({}));
-    const savedId = data?.campaign?.id ?? (isUpdating ? selectedCampaignId : null);
-    if (savedId) {
-      persistSelectedCampaignId(String(savedId));
-    }
-    await fetchCampaigns();
-    notify(isUpdating ? 'Campaign updated successfully' : 'Campaign created successfully', 'success');
+      const isUpdating = !!selectedCampaignId && !options.forceCreate;
+      const targetUrl = isUpdating
+        ? `${apiBase}/api/campaigns/${selectedCampaignId}`
+        : `${apiBase}/api/campaigns`;
+      const response = await fetch(targetUrl, {
+        method: isUpdating ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...auth,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to save campaign');
+      const data = await response.json().catch(() => ({}));
+      const savedId = data?.campaign?.id ?? (isUpdating ? selectedCampaignId : null);
+      if (savedId) {
+        persistSelectedCampaignId(String(savedId));
+      }
+      await fetchCampaigns();
+      notify(isUpdating ? 'Campaign updated successfully' : 'Campaign created successfully', 'success');
+      setShowCampaignDialog(false);
+      setPendingCampaignOptions(null);
+      setCampaignFormError(null);
     } catch (err) {
       console.error('Failed to save campaign', err);
       notify('Failed to save campaign', 'error');
     } finally {
       setIsSavingCampaign(false);
     }
+  }, [
+    apiBase,
+    authReady,
+    campaignDescriptionInput,
+    campaignNameInput,
+    invoiceData.fromCompanyAddress,
+    invoiceData.fromCompanyEmail,
+    invoiceData.fromCompanyName,
+    invoiceData.invoicePageColor,
+    invoiceData.invoiceTemplateKey,
+    invoiceData.invoiceTextColor,
+    invoiceData.invoiceTypographyKey,
+    invoiceData.logoUrl,
+    invoiceData.senderAddress,
+    invoiceData.senderEmail,
+    invoiceData.senderName,
+    marketingData.bannerBackgroundColor,
+    marketingData.bannerCopyOpacity,
+    marketingData.bannerCopyText,
+    marketingData.bannerCopyTextColor,
+    marketingData.bannerImageOpacity,
+    marketingData.bannerUrl,
+    marketingData.bannerTextColor,
+    marketingData.ctaBackgroundColor,
+    marketingData.ctaTargetUrl,
+    marketingData.ctaText,
+    marketingData.ctaTextColor,
+    marketingData.imagePosition,
+    notify,
+    pendingCampaignOptions,
+    persistSelectedCampaignId,
+    resolveAuthHeaders,
+    selectedCampaignId,
+    fetchCampaigns,
+    setAwaitingAuth,
+  ]);
+
+  const handleSaveCampaign = async (options?: { forceCreate?: boolean }) => {
+    openCampaignDialog(options);
   };
 
   const handleCreateNewCampaign = async () => {
     persistSelectedCampaignId(null);
     await handleSaveCampaign({ forceCreate: true });
   };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!showCampaignDialog) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setShowCampaignDialog(false);
+        setCampaignFormError(null);
+        return;
+      }
+      if (event.key === 'Enter') {
+        const target = event.target as HTMLElement | null;
+        const isInput =
+          target &&
+          (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.getAttribute('role') === 'textbox');
+        if (isInput) {
+          event.preventDefault();
+          confirmCampaignSave();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [confirmCampaignSave, showCampaignDialog]);
 
   useEffect(() => {
     if (!authReady || selectedCampaignId) return;
@@ -569,6 +675,102 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
           </div>
         </div>
       </main>
+
+      {showCampaignDialog && (
+        <div className="fixed inset-0 z-[1500] flex items-center justify-center px-4">
+          <div
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            onClick={() => {
+              setShowCampaignDialog(false);
+              setPendingCampaignOptions(null);
+              setCampaignFormError(null);
+            }}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.25em] text-emerald-700">Campaign</p>
+                <h3 className="text-lg font-semibold text-slate-900 mt-1">
+                  {pendingCampaignOptions?.forceCreate || !selectedCampaignId ? 'Create campaign' : 'Save campaign'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCampaignDialog(false);
+                  setPendingCampaignOptions(null);
+                  setCampaignFormError(null);
+                }}
+                className="text-slate-500 hover:text-slate-700 text-sm"
+              >
+                Esc
+              </button>
+            </div>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                confirmCampaignSave();
+              }}
+            >
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Campaign name</label>
+                <input
+                  type="text"
+                  value={campaignNameInput}
+                  onChange={(e) => {
+                    setCampaignNameInput(e.target.value);
+                    if (campaignFormError) setCampaignFormError(null);
+                  }}
+                  className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                    campaignFormError ? 'border-red-400 focus:ring-red-300' : 'border-slate-200 focus:ring-emerald-200'
+                  }`}
+                  placeholder="e.g., Spring Promo"
+                  autoFocus
+                />
+                {campaignFormError && (
+                  <p className="text-xs text-red-600">{campaignFormError}</p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Description (optional)</label>
+                <textarea
+                  value={campaignDescriptionInput}
+                  onChange={(e) => setCampaignDescriptionInput(e.target.value)}
+                  rows={3}
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 resize-none"
+                  placeholder="Notes about this campaign"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCampaignDialog(false);
+                    setPendingCampaignOptions(null);
+                    setCampaignFormError(null);
+                  }}
+                  className="text-sm font-semibold text-slate-600 hover:text-slate-800"
+                  disabled={isSavingCampaign}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingCampaign}
+                  className={`px-4 py-2 rounded-md text-sm font-semibold shadow ${
+                    isSavingCampaign
+                      ? 'bg-emerald-200 text-emerald-800 cursor-not-allowed'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                  }`}
+                >
+                  {isSavingCampaign ? 'Saving...' : 'Save campaign'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showTour && (
         <div className="fixed inset-0 z-[2000] pointer-events-none">

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { InvoiceData, MarketingBannerData } from '../types';
 import { Printer, Download, Send } from 'lucide-react';
 import QRCode from 'react-qr-code';
+import toast from 'react-hot-toast';
 
 interface InvoicePreviewProps {
   data: InvoiceData;
@@ -59,8 +60,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const [emailMessage, setEmailMessage] = useState<string>('');
   const [customerName, setCustomerName] = useState<string>(data.clientName || '');
   const [customerEmail, setCustomerEmail] = useState<string>(data.clientEmail || '');
-  const [toastMessage, setToastMessage] = useState('');
-  const [showToast, setShowToast] = useState(false);
+  const [emailErrors, setEmailErrors] = useState<{ to?: string; subject?: string }>({});
   const futuristicRef = useRef<HTMLDivElement | null>(null);
   const [futuristicScale, setFuturisticScale] = useState(1);
   const [futuristicHeight, setFuturisticHeight] = useState<number | null>(null);
@@ -71,11 +71,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const selectDisabled = campaignsLoading && campaigns.length === 0;
 
   const triggerToast = (msg: string) => {
-    setToastMessage(msg);
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 3000);
+    toast.success(msg);
   };
   
   // Dynamic invoice styles based on user selection
@@ -95,6 +91,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     setCustomerName(data.clientName || '');
     setCustomerEmail(data.clientEmail || '');
   }, [data.clientName, data.clientEmail]);
+
+  useEffect(() => {
+    if (!showEmailForm) {
+      setEmailErrors({});
+    }
+  }, [showEmailForm]);
 
   // Auto-scale futuristic template to stay on one page without removing content
   useEffect(() => {
@@ -284,26 +286,6 @@ ${htmlContent}
     return trimmed;
   };
 
-  const toast = showToast ? (
-    <div
-      style={{
-        position: 'fixed',
-        top: '24px',
-        right: '24px',
-        background: '#14532d',
-        color: '#ffffff',
-        padding: '14px 20px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.18)',
-        fontSize: '14px',
-        zIndex: 9999,
-        transition: 'all 0.3s ease',
-      }}
-    >
-      {toastMessage}
-    </div>
-  ) : null;
-
   const handleDownloadPdf = async () => {
     if (isGeneratingPdf) return;
 
@@ -356,14 +338,15 @@ ${htmlContent}
   const handleSendEmail = async () => {
     if (isSendingEmail) return;
 
+    setEmailErrors({});
     const element = document.getElementById('invoice-content');
     if (!element) {
-      alert('Unable to locate invoice content.');
+      toast.error('Unable to locate invoice content.');
       return;
     }
 
     if (!apiBase) {
-      alert('Missing API base URL (VITE_TMR_API_URL).');
+      toast.error('Missing API base URL (VITE_TMR_API_URL).');
       return;
     }
 
@@ -384,12 +367,14 @@ ${htmlContent}
     };
 
     if (!trimmedTo || !trimmedTo.includes('@')) {
-      alert('Please enter a valid recipient email.');
+      setEmailErrors((prev) => ({ ...prev, to: 'Please enter a valid recipient email.' }));
+      toast.error('Please enter a valid recipient email.');
       return;
     }
 
     if (!trimmedSubject) {
-      alert('Subject is required.');
+      setEmailErrors((prev) => ({ ...prev, subject: 'Subject is required.' }));
+      toast.error('Subject is required.');
       return;
     }
 
@@ -534,7 +519,9 @@ ${htmlContent}
       setShowEmailForm(false);
     } catch (err) {
       console.error('Invoice email send failed', err);
-      alert('Failed to send invoice email.');
+      const message =
+        err instanceof Error && err.message ? err.message : 'Failed to send invoice email.';
+      toast.error(message);
     } finally {
       setIsSendingEmail(false);
     }
@@ -677,19 +664,43 @@ ${htmlContent}
                 type="email"
                 ref={emailInputRef}
                 value={emailTo}
-                onChange={(e) => setEmailTo(e.target.value)}
+                onChange={(e) => {
+                  setEmailTo(e.target.value);
+                  if (emailErrors.to) {
+                    setEmailErrors((prev) => ({ ...prev, to: undefined }));
+                  }
+                }}
                 placeholder="customer@example.com"
-                className="w-full text-sm px-2 py-1 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                className={`w-full text-sm px-2 py-1 rounded border focus:outline-none focus:ring-1 ${
+                  emailErrors.to
+                    ? 'border-red-400 focus:ring-red-300'
+                    : 'border-slate-200 focus:ring-slate-400'
+                }`}
               />
+              {emailErrors.to && (
+                <p className="text-[11px] text-red-600">{emailErrors.to}</p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[11px] uppercase tracking-wide text-slate-600">Subject</label>
               <input
                 type="text"
                 value={emailSubject}
-                onChange={(e) => setEmailSubject(e.target.value)}
-                className="w-full text-sm px-2 py-1 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                onChange={(e) => {
+                  setEmailSubject(e.target.value);
+                  if (emailErrors.subject) {
+                    setEmailErrors((prev) => ({ ...prev, subject: undefined }));
+                  }
+                }}
+                className={`w-full text-sm px-2 py-1 rounded border focus:outline-none focus:ring-1 ${
+                  emailErrors.subject
+                    ? 'border-red-400 focus:ring-red-300'
+                    : 'border-slate-200 focus:ring-slate-400'
+                }`}
               />
+              {emailErrors.subject && (
+                <p className="text-[11px] text-red-600">{emailErrors.subject}</p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[11px] uppercase tracking-wide text-slate-600">Customer name</label>
@@ -760,7 +771,7 @@ ${htmlContent}
                   if (selectedCampaignId) onLoadCampaign?.(Number(selectedCampaignId));
                 }}
               >
-                Manual Apply Selected Campaign
+                Reset invoice to campaign settings
               </button>
               <button
                 type="button"
@@ -970,7 +981,6 @@ ${htmlContent}
           <div className="w-full mx-auto shadow-2xl rounded-sm overflow-hidden transform transition-transform hover:scale-[1.01]">
               <MarketingBanner className="rounded-sm" />
           </div>
-          {toast}
         </>
       )
   }
@@ -1028,7 +1038,6 @@ ${htmlContent}
                     </div>
                </div>
           </div>
-          {toast}
         </>
       );
   }
@@ -1188,7 +1197,6 @@ ${htmlContent}
                 <MarketingBanner className="mt-auto w-full rounded-none py-4" />
             </div>
         </div>
-        {toast}
     </>
     );
   }
@@ -1394,7 +1402,6 @@ ${htmlContent}
           <MarketingBanner className="mt-auto w-full rounded-none" />
         </div>
       </div>
-      {toast}
     </>
     );
   }
@@ -1512,7 +1519,6 @@ ${htmlContent}
           </div>
         </div>
       </div>
-      {toast}
       </>
     );
   }
@@ -1636,7 +1642,6 @@ ${htmlContent}
           </div>
         </div>
       </div>
-      {toast}
       </>
     );
   }

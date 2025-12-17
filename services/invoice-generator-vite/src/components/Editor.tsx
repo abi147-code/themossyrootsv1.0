@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { InvoiceData, MarketingBannerData, InvoiceItem } from '../types';
 import { generateMarketingSlogans } from '../services/geminiService';
 import { Plus, Trash2, Wand2, Loader2, Image as ImageIcon, X, Layout, CreditCard, QrCode, Move } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface EditorProps {
   invoiceData: InvoiceData;
@@ -84,7 +85,7 @@ export const Editor: React.FC<EditorProps> = ({
       const results = await generateMarketingSlogans(businessType, prompt);
       setSuggestions(results);
     } catch (e) {
-      alert('Failed to generate suggestions. Check your API Key.');
+      toast.error('Failed to generate suggestions. Check your API Key.');
     } finally {
       setIsGenerating(false);
     }
