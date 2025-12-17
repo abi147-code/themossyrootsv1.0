@@ -90,6 +90,30 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       { id: 'items', title: 'Line Items', body: 'List your services/products and amounts.', tab: 'items' as const },
       { id: 'taxNotes', title: 'Taxes & Notes', body: 'Set tax rate and add notes or payment terms.', tab: 'items' as const },
       { id: 'marketing', title: 'Marketing Banner', body: 'Generate banner copy and add a hero image.', tab: 'marketing' as const },
+      {
+        id: 'campaignSelect',
+        title: 'Use a Saved Campaign',
+        body: 'Select an existing campaign to instantly apply its branding, banner, and marketing settings to your invoice.',
+        tab: undefined,
+      },
+      {
+        id: 'campaignSave',
+        title: 'Save as a Campaign',
+        body: 'Save your current invoice design and marketing setup as a reusable campaign for future invoices.',
+        tab: undefined,
+      },
+      {
+        id: 'campaignCreate',
+        title: 'Create a New Campaign',
+        body: 'Start a fresh campaign to experiment with new branding or promotional ideas without affecting existing ones.',
+        tab: undefined,
+      },
+      {
+        id: 'campaignReset',
+        title: 'Reset to Campaign Defaults',
+        body: "Revert the invoice back to the selected campaign's saved settings if you've made temporary changes.",
+        tab: undefined,
+      },
       { id: 'actions', title: 'Export / Send', body: 'Download PDF, print, or email the invoice.', tab: undefined },
     ],
     []
@@ -661,6 +685,8 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
                 data={invoiceData} 
                 banner={marketingData} 
                 registerAnchor={registerAnchor}
+                showTour={showTour}
+                tourStepId={steps[tourStep]?.id}
                 onSaveCampaign={handleSaveCampaign}
                 onCreateNewCampaign={handleCreateNewCampaign}
                 onOpenCampaigns={fetchCampaigns}

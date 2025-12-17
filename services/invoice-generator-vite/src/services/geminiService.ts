@@ -1,12 +1,25 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+let aiClient: GoogleGenAI | null = null;
+
+const getGeminiClient = () => {
+  if (aiClient) return aiClient;
+
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("Missing Gemini API key");
+  }
+
+  aiClient = new GoogleGenAI({ apiKey });
+  return aiClient;
+};
 
 export const generateMarketingSlogans = async (
   businessType: string,
   promotionGoal: string
 ): Promise<string[]> => {
   try {
+    const ai = getGeminiClient();
     const prompt = `
       You are a marketing expert. Create 3 short, punchy, and professional marketing slogans 
       suitable for placing at the bottom of an invoice.

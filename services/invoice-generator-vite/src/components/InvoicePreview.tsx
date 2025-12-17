@@ -10,6 +10,8 @@ interface InvoicePreviewProps {
   showControls?: boolean;
   viewMode?: 'full' | 'header' | 'banner';
   registerAnchor?: (key: string, el: HTMLElement | null) => void;
+  showTour?: boolean;
+  tourStepId?: string;
   onSaveCampaign?: () => void;
   onCreateNewCampaign?: () => void;
   onOpenCampaigns?: () => void;
@@ -27,6 +29,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   showControls = true,
   viewMode = 'full',
   registerAnchor,
+  showTour = false,
+  tourStepId,
   onSaveCampaign,
   onCreateNewCampaign,
   onOpenCampaigns,
@@ -53,6 +57,10 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const tourOpenedEmailForm = useRef(false);
+  const isTourCampaignStep =
+    showTour &&
+    ['campaignSelect', 'campaignSave', 'campaignCreate', 'campaignReset'].includes(tourStepId ?? '');
   const [emailTo, setEmailTo] = useState<string>('');
   const [emailSubject, setEmailSubject] = useState<string>(
     data.invoiceNumber ? `Invoice ${data.invoiceNumber}` : 'Your invoice'
@@ -86,6 +94,18 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       node.focus({ preventScroll: true });
     }
   }, [showEmailForm]);
+
+  useEffect(() => {
+    if (isTourCampaignStep && !showEmailForm) {
+      setShowEmailForm(true);
+      tourOpenedEmailForm.current = true;
+      return;
+    }
+    if (!isTourCampaignStep && tourOpenedEmailForm.current) {
+      setShowEmailForm(false);
+      tourOpenedEmailForm.current = false;
+    }
+  }, [isTourCampaignStep, showEmailForm]);
 
   useEffect(() => {
     setCustomerName(data.clientName || '');
@@ -744,6 +764,7 @@ ${htmlContent}
                 </button>
               </div>
               <select
+                ref={(el) => registerAnchor?.('campaignSelect', el)}
                 className="w-full text-sm border border-slate-200 rounded-md px-2 py-1 bg-white"
                 value={selectedCampaignId ?? ''}
                 onChange={(e) => {
@@ -766,6 +787,7 @@ ${htmlContent}
               </select>
               <button
                 type="button"
+                ref={(el) => registerAnchor?.('campaignReset', el)}
                 className="w-full text-xs rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 py-2"
                 onClick={() => {
                   if (selectedCampaignId) onLoadCampaign?.(Number(selectedCampaignId));
@@ -777,6 +799,7 @@ ${htmlContent}
                 type="button"
                 onClick={() => onSaveCampaign?.()}
                 disabled={isSavingCampaign}
+                ref={(el) => registerAnchor?.('campaignSave', el)}
                 className={`w-full flex items-center justify-center h-9 rounded-md font-semibold transition-colors ${
                   isSavingCampaign
                     ? 'bg-emerald-200 text-emerald-800 opacity-70'
@@ -793,6 +816,7 @@ ${htmlContent}
                 type="button"
                 onClick={() => onCreateNewCampaign?.()}
                 disabled={isSavingCampaign}
+                ref={(el) => registerAnchor?.('campaignCreate', el)}
                 className="w-full text-xs rounded-md border border-dashed border-slate-200 bg-white hover:bg-slate-50 py-2 text-slate-700"
               >
                 Create new campaign
