@@ -55,7 +55,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   const [marketingData, setMarketingData] = useState<MarketingBannerData>(INITIAL_MARKETING);
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
-  const [campaigns, setCampaigns] = useState<{ id: number; name: string; description?: string }[]>([]);
+  const [campaigns, setCampaigns] = useState<{ id: number; name: string; description?: string; apiBase?: string | null }[]>([]);
   const [campaignsLoading, setCampaignsLoading] = useState(false);
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
@@ -210,7 +210,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
 
   // STRICT: apiBase must be explicitly defined in environment
   const apiBase = import.meta.env.VITE_API_BASE_URL
-    ? import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '')
+    ? import.meta.env.VITE_API_BASE_URL.replace(/^["']|["']$/g, '').replace(/\/+$/, '').trim()
     : (() => {
       throw new Error('VITE_API_BASE_URL must be defined');
     })();
@@ -464,51 +464,84 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       return;
     }
 
-    const name = (campaignNameInput || '').trim();
-    if (!name) {
-      setCampaignFormError('Campaign name is required');
-      notify('Campaign name is required', 'error');
-      return;
-    }
+    const assertInternalApiUrl = (url: string, currentApiBase: string) => {
+      try {
+        const u = new URL(url);
+        const base = new URL(currentApiBase);
 
-    const description = (campaignDescriptionInput || '').trim();
-    const options = pendingCampaignOptions || {};
-    const bannerImagePosition = marketingData.imagePosition
-      ? `${marketingData.imagePosition.x}% ${marketingData.imagePosition.y}%`
-      : null;
+        if (u.host !== base.host) {
+          throw new Error(`Cross-environment URL detected: ${url}`);
+        }
 
-    const payload = {
-      name,
-      description: description || null,
-      invoicePageColor: invoiceData.invoicePageColor || null,
-      invoiceTextColor: invoiceData.invoiceTextColor || null,
-      invoiceTypographyKey: invoiceData.invoiceTypographyKey || null,
-      invoiceTemplateKey: invoiceData.invoiceTemplateKey || null,
-      logoUrl: invoiceData.logoUrl || null,
-      bannerUrl: marketingData.bannerUrl || null,
-      bannerCopyText: marketingData.bannerCopyText || null,
-      bannerCopyTextColor:
-        marketingData.bannerCopyTextColor || marketingData.bannerTextColor || null,
-      bannerCopyOpacity:
-        typeof marketingData.bannerCopyOpacity === 'number' ? marketingData.bannerCopyOpacity : null,
-      bannerBackgroundColor: marketingData.bannerBackgroundColor || null,
-      bannerTextColor: marketingData.bannerTextColor || null,
-      bannerImageOpacity:
-        typeof marketingData.bannerImageOpacity === 'number' ? marketingData.bannerImageOpacity : null,
-      bannerImagePosition,
-      imagePosition: marketingData.imagePosition || null,
-      ctaText: marketingData.ctaText || null,
-      ctaTargetUrl: marketingData.ctaTargetUrl || null,
-      ctaBackgroundColor: marketingData.ctaBackgroundColor || null,
-      ctaTextColor: marketingData.ctaTextColor || null,
-      fromCompanyName: invoiceData.fromCompanyName || invoiceData.senderName || null,
-      fromCompanyAddress: invoiceData.fromCompanyAddress || invoiceData.senderAddress || null,
-      fromCompanyEmail: invoiceData.fromCompanyEmail || invoiceData.senderEmail || null,
-      status: 'draft',
+        return url;
+      } catch {
+        throw new Error(`Invalid or cross-env URL: ${url}`);
+      }
     };
 
-    setIsSavingCampaign(true);
+    const assertExternalCtaUrl = (url: string) => {
+      try {
+        const u = new URL(url);
+        if (u.protocol !== 'https:' && u.protocol !== 'http:') {
+          throw new Error('Unsupported CTA URL protocol');
+        }
+      } catch {
+        throw new Error(`Invalid CTA URL: ${url}`);
+      }
+    };
+
     try {
+      const name = (campaignNameInput || '').trim();
+      if (!name) {
+        setCampaignFormError('Campaign name is required');
+        notify('Campaign name is required', 'error');
+        return;
+      }
+
+      const description = (campaignDescriptionInput || '').trim();
+      const options = pendingCampaignOptions || {};
+      const bannerImagePosition = marketingData.imagePosition
+        ? `${marketingData.imagePosition.x}% ${marketingData.imagePosition.y}%`
+        : null;
+
+      // Sanitize fields before payload construction
+      if (invoiceData.logoUrl) assertInternalApiUrl(invoiceData.logoUrl, apiBase);
+      if (marketingData.bannerUrl) assertInternalApiUrl(marketingData.bannerUrl, apiBase);
+      if (marketingData.ctaTargetUrl) assertExternalCtaUrl(marketingData.ctaTargetUrl);
+
+      const payload = {
+        name,
+        description: description || null,
+        invoicePageColor: invoiceData.invoicePageColor || null,
+        invoiceTextColor: invoiceData.invoiceTextColor || null,
+        invoiceTypographyKey: invoiceData.invoiceTypographyKey || null,
+        invoiceTemplateKey: invoiceData.invoiceTemplateKey || null,
+        logoUrl: invoiceData.logoUrl || null,
+        bannerUrl: marketingData.bannerUrl || null,
+        bannerCopyText: marketingData.bannerCopyText || null,
+        bannerCopyTextColor:
+          marketingData.bannerCopyTextColor || marketingData.bannerTextColor || null,
+        bannerCopyOpacity:
+          typeof marketingData.bannerCopyOpacity === 'number' ? marketingData.bannerCopyOpacity : null,
+        bannerBackgroundColor: marketingData.bannerBackgroundColor || null,
+        bannerTextColor: marketingData.bannerTextColor || null,
+        bannerImageOpacity:
+          typeof marketingData.bannerImageOpacity === 'number' ? marketingData.bannerImageOpacity : null,
+        bannerImagePosition,
+        imagePosition: marketingData.imagePosition || null,
+        ctaText: marketingData.ctaText || null,
+        ctaTargetUrl: marketingData.ctaTargetUrl || null,
+        ctaBackgroundColor: marketingData.ctaBackgroundColor || null,
+        ctaTextColor: marketingData.ctaTextColor || null,
+        fromCompanyName: invoiceData.fromCompanyName || invoiceData.senderName || null,
+        fromCompanyAddress: invoiceData.fromCompanyAddress || invoiceData.senderAddress || null,
+        fromCompanyEmail: invoiceData.fromCompanyEmail || invoiceData.senderEmail || null,
+        apiBase,
+        status: 'draft',
+      };
+
+      setIsSavingCampaign(true);
+
       const isUpdating = !!selectedCampaignId && !options.forceCreate;
       const targetUrl = isUpdating
         ? `${apiBase}/api/campaigns/${selectedCampaignId}`
@@ -532,9 +565,14 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       setShowCampaignDialog(false);
       setPendingCampaignOptions(null);
       setCampaignFormError(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save campaign', err);
-      notify('Failed to save campaign', 'error');
+      // UX Safety: Alert user immediately on validation failure
+      if (err.message && (err.message.includes('URL') || err.message.includes('Cross-environment'))) {
+        alert(err.message);
+      } else {
+        notify('Failed to save campaign', 'error');
+      }
     } finally {
       setIsSavingCampaign(false);
     }

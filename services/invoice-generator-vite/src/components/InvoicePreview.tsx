@@ -16,7 +16,7 @@ interface InvoicePreviewProps {
   onCreateNewCampaign?: () => void;
   onOpenCampaigns?: () => void;
   onLoadCampaign?: (id: number) => void;
-  campaigns?: { id: number; name: string; description?: string }[];
+  campaigns?: { id: number; name: string; description?: string; apiBase?: string | null }[];
   campaignsLoading?: boolean;
   selectedCampaignId?: string | null;
   setSelectedCampaignId?: (id: string | null) => void;
@@ -79,6 +79,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const [futuristicHeight, setFuturisticHeight] = useState<number | null>(null);
   const luxuryTitleRef = useRef<HTMLHeadingElement | null>(null);
   const emailInputRef = useRef<HTMLInputElement | null>(null);
+  const selectedCampaign = selectedCampaignId
+    ? campaigns.find((campaign) => String(campaign.id) === String(selectedCampaignId))
+    : null;
+  const resolveTrackingBase = () => {
+    const base = (selectedCampaign?.apiBase || apiBase || '').trim();
+    return base ? base.replace(/\/+$/, '') : '';
+  };
 
   // Keep dropdown interactive when campaigns are already loaded; only disable during initial empty load
   const selectDisabled = campaignsLoading && campaigns.length === 0;
@@ -382,7 +389,7 @@ ${htmlContent}
       (data.invoiceNumber ? `Invoice ${data.invoiceNumber}` : 'Invoice');
     const resolvedCampaignId = selectedCampaignId ? Number(selectedCampaignId) : null;
     const campaignIdForPayload = Number.isFinite(resolvedCampaignId) ? resolvedCampaignId : null;
-    const trackingBase = (PUBLIC_API_URL || apiBase || (typeof window !== 'undefined' ? window.location.origin : '')).replace(/\/+$/, '');
+    const trackingBase = resolveTrackingBase();
     const buildTrackedUrl = (raw?: string | null) => {
       const trimmed = (raw || '').trim();
       if (!trimmed) return '';
@@ -910,7 +917,7 @@ ${htmlContent}
       height: isPortraitBanner ? '100%' : '120%',
       objectFit: isPortraitBanner ? 'contain' as const : 'cover' as const,
     };
-    const trackingBase = (PUBLIC_API_URL || apiBase || '').replace(/\/+$/, '');
+    const trackingBase = resolveTrackingBase();
     const rawCtaUrl = (banner.ctaTargetUrl || '').trim();
     const trackingUrl =
       selectedCampaignId && trackingBase && rawCtaUrl

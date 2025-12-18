@@ -33,6 +33,7 @@ const campaignSelect = {
   fromCompanyName: true,
   fromCompanyAddress: true,
   fromCompanyEmail: true,
+  apiBase: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -107,10 +108,21 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   const prisma = req.prisma;
   const userId = req.user?.id;
-  const { name, description } = req.body || {};
+  const { name, description, apiBase } = req.body || {};
 
   if (!userId) {
     return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  if (!apiBase || typeof apiBase !== 'string' || !apiBase.trim()) {
+    return res.status(400).json({ message: 'apiBase is required' });
+  }
+
+  const trimmedApiBase = apiBase.trim();
+  try {
+    new URL(trimmedApiBase);
+  } catch (_error) {
+    return res.status(400).json({ message: 'Invalid apiBase URL' });
   }
 
   const trimmedName = typeof name === 'string' ? name.trim() : '';
@@ -153,6 +165,7 @@ router.post('/', async (req, res) => {
         fromCompanyName: normalizeNullable(req.body.fromCompanyName) ?? null,
         fromCompanyAddress: normalizeNullable(req.body.fromCompanyAddress) ?? null,
         fromCompanyEmail: normalizeNullable(req.body.fromCompanyEmail) ?? null,
+        apiBase: trimmedApiBase,
       },
       select: campaignSelect,
     });
