@@ -464,6 +464,17 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       return;
     }
 
+    const assertApiBaseUrl = (currentApiBase: string) => {
+      try {
+        const base = new URL(currentApiBase);
+        if (base.protocol !== 'https:' && base.protocol !== 'http:') {
+          throw new Error('Unsupported apiBase protocol');
+        }
+      } catch {
+        throw new Error(`Invalid apiBase URL: ${currentApiBase}`);
+      }
+    };
+
     const assertInternalApiUrl = (url: string, currentApiBase: string) => {
       try {
         const u = new URL(url);
@@ -490,6 +501,20 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       }
     };
 
+    const assertImageUrl = (url: string) => {
+      const trimmed = url.trim();
+      if (!trimmed) return;
+      if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) return;
+      try {
+        const u = new URL(trimmed);
+        if (u.protocol !== 'https:' && u.protocol !== 'http:') {
+          throw new Error('Unsupported image URL protocol');
+        }
+      } catch {
+        throw new Error(`Invalid image URL: ${url}`);
+      }
+    };
+
     try {
       const name = (campaignNameInput || '').trim();
       if (!name) {
@@ -505,8 +530,9 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
         : null;
 
       // Sanitize fields before payload construction
-      if (invoiceData.logoUrl) assertInternalApiUrl(invoiceData.logoUrl, apiBase);
-      if (marketingData.bannerUrl) assertInternalApiUrl(marketingData.bannerUrl, apiBase);
+      assertApiBaseUrl(apiBase);
+      if (invoiceData.logoUrl) assertImageUrl(invoiceData.logoUrl);
+      if (marketingData.bannerUrl) assertImageUrl(marketingData.bannerUrl);
       if (marketingData.ctaTargetUrl) assertExternalCtaUrl(marketingData.ctaTargetUrl);
 
       const payload = {
