@@ -45,8 +45,8 @@ const INITIAL_MARKETING: MarketingBannerData = {
 };
 
 interface InvoiceToolProps {
-    onBack: () => void;
-    showHeader?: boolean;
+  onBack: () => void;
+  showHeader?: boolean;
 }
 
 export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = true }) => {
@@ -208,15 +208,29 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     setTourStep((s) => Math.max(0, s - 1));
   };
 
-  const apiBase = (
-    import.meta.env.VITE_PUBLIC_API_URL || // prefer explicit public API (typically :4000)
-    import.meta.env.VITE_TMR_API_URL || // fallback to legacy var
-    (typeof window !== 'undefined' ? window.location.origin : '')
-  ).replace(/\/+$/, '');
+  // STRICT: apiBase must be explicitly defined in environment
+  const apiBase = import.meta.env.VITE_API_BASE_URL
+    ? import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '')
+    : (() => {
+      throw new Error('VITE_API_BASE_URL must be defined');
+    })();
 
-  const [bridgedToken, setBridgedToken] = useState<string | null>(null);
-  const [authReady, setAuthReady] = useState(false);
-  const [awaitingAuth, setAwaitingAuth] = useState(true);
+  // Helper to safely read and sanitize token
+  const getSafeToken = () => {
+    if (typeof window === 'undefined') return null;
+    const raw = window.sessionStorage.getItem('tmr-token');
+    if (!raw) return null;
+    return raw.trim().replace(/^["']|["']$/g, '');
+  };
+
+  const [bridgedToken, setBridgedToken] = useState<string | null>(getSafeToken);
+
+  const [authReady, setAuthReady] = useState(() => {
+    // If token exists in storage on mount, we are ready
+    return !!getSafeToken();
+  });
+
+  const [awaitingAuth, setAwaitingAuth] = useState(!authReady);
 
   const resolveAuthHeaders = () => {
     const token = bridgedToken || '';
@@ -227,25 +241,23 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const applyBridgedToken = (token?: string | null) => {
-      const incomingToken =
-        (token ??
-          window.localStorage.getItem('tmr-token') ??
-          window.sessionStorage.getItem('tmr-token') ??
-          '').trim();
-      if (!incomingToken) return;
+    const applyBridgedToken = (token: string | null) => {
+      // STRICT: Only accept non-empty tokens
+      if (!token) return;
 
-      setBridgedToken(incomingToken);
+      setBridgedToken(token);
       console.log('[TokenBridge] token accepted, bridgedToken set');
       setAuthReady(true);
       console.log('[TokenBridge] authReady set true');
       setAwaitingAuth(false);
     };
 
-    applyBridgedToken();
+    // Note: We don't need to poll storage here because initial state handles mount,
+    // and the event listener handles updates.
 
     const handler: EventListener = (event) => {
-      const incomingToken = (event as CustomEvent<string | null>).detail ?? null;
+      const detail = (event as CustomEvent).detail;
+      const incomingToken = detail?.token ?? detail ?? null;
       applyBridgedToken(incomingToken);
     };
 
@@ -298,28 +310,37 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     [authReady, invoiceData.invoiceNumber, notify, resolveAuthHeaders]
   );
 
-  const fetchCampaigns = async (options?: { silent?: boolean }) => {
-    const token = bridgedToken || '';
-
+  const authedFetch = async (url: string, options: RequestInit = {}) => {
     if (!authReady) {
-      setAwaitingAuth(true);
-      return;
+      throw new Error('Authentication not ready');
+    }
+    const token = bridgedToken;
+    if (!token) {
+      throw new Error('No auth token available');
     }
 
-    const auth = resolveAuthHeaders();
-    if (!auth) {
+    const headers = {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`,
+    };
+
+    return fetch(url, { ...options, headers });
+  };
+
+  const fetchCampaigns = async (options?: { silent?: boolean }) => {
+    // STRICT: Fail fast if not ready
+    if (!authReady) {
       if (!options?.silent) {
-        notify('Please log in to load campaigns.', 'error');
+        notify('Waiting for authentication...', 'info');
       }
       return;
     }
 
     setCampaignsLoading(true);
     try {
-      const response = await fetch(`${apiBase}/api/campaigns`, {
+      const response = await authedFetch(`${apiBase}/api/campaigns`, {
         headers: {
           'Content-Type': 'application/json',
-          ...auth,
         },
       });
       if (!response.ok) throw new Error('Failed to load campaigns');
@@ -372,11 +393,11 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       fromCompanyAddress: campaign.fromCompanyAddress || prev.fromCompanyAddress,
     }));
 
-      setMarketingData((prev) => ({
-        ...prev,
-        bannerCopyText: campaign.bannerCopyText ?? prev.bannerCopyText ?? '',
-        bannerCopyTextColor:
-          campaign.bannerCopyTextColor ??
+    setMarketingData((prev) => ({
+      ...prev,
+      bannerCopyText: campaign.bannerCopyText ?? prev.bannerCopyText ?? '',
+      bannerCopyTextColor:
+        campaign.bannerCopyTextColor ??
         campaign.bannerTextColor ??
         prev.bannerCopyTextColor ??
         prev.bannerTextColor,
@@ -405,16 +426,10 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       return;
     }
 
-    const auth = resolveAuthHeaders();
-    if (!auth) {
-      notify('Please log in to load campaigns.', 'error');
-      return;
-    }
     try {
-      const response = await fetch(`${apiBase}/api/campaigns/${id}`, {
+      const response = await authedFetch(`${apiBase}/api/campaigns/${id}`, {
         headers: {
           'Content-Type': 'application/json',
-          ...auth,
         },
       });
       if (!response.ok) throw new Error('Failed to fetch campaign');
@@ -498,11 +513,11 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       const targetUrl = isUpdating
         ? `${apiBase}/api/campaigns/${selectedCampaignId}`
         : `${apiBase}/api/campaigns`;
-      const response = await fetch(targetUrl, {
+
+      const response = await authedFetch(targetUrl, {
         method: isUpdating ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...auth,
         },
         body: JSON.stringify(payload),
       });
@@ -619,7 +634,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
       {showHeader && (
         <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between no-print sticky top-0 z-50">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={onBack}
               className="p-2 hover:bg-emerald-50 rounded-full text-slate-600 transition-colors border border-transparent hover:border-emerald-100"
               title="Back to Website"
@@ -628,8 +643,8 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
             </button>
             <div className="flex items-center gap-3">
               <div>
-                  <h1 className="text-lg font-bold text-slate-900 tracking-tight">Invoice Editor</h1>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider">Editor Mode</p>
+                <h1 className="text-lg font-bold text-slate-900 tracking-tight">Invoice Editor</h1>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider">Editor Mode</p>
               </div>
             </div>
           </div>
@@ -669,8 +684,8 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Editor Column */}
             <div className="lg:col-span-4 xl:col-span-3 no-print h-auto lg:h-[calc(100vh-8rem)] lg:sticky lg:top-24">
-              <Editor 
-                invoiceData={invoiceData} 
+              <Editor
+                invoiceData={invoiceData}
                 setInvoiceData={setInvoiceData}
                 marketingData={marketingData}
                 setMarketingData={setMarketingData}
@@ -681,9 +696,9 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
 
             {/* Preview Column */}
             <div className="lg:col-span-8 xl:col-span-9 flex justify-center overflow-auto pb-20">
-              <InvoicePreview 
-                data={invoiceData} 
-                banner={marketingData} 
+              <InvoicePreview
+                data={invoiceData}
+                banner={marketingData}
                 registerAnchor={registerAnchor}
                 showTour={showTour}
                 tourStepId={steps[tourStep]?.id}
@@ -748,9 +763,8 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
                     setCampaignNameInput(e.target.value);
                     if (campaignFormError) setCampaignFormError(null);
                   }}
-                  className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                    campaignFormError ? 'border-red-400 focus:ring-red-300' : 'border-slate-200 focus:ring-emerald-200'
-                  }`}
+                  className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${campaignFormError ? 'border-red-400 focus:ring-red-300' : 'border-slate-200 focus:ring-emerald-200'
+                    }`}
                   placeholder="e.g., Spring Promo"
                   autoFocus
                 />
@@ -784,11 +798,10 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
                 <button
                   type="submit"
                   disabled={isSavingCampaign}
-                  className={`px-4 py-2 rounded-md text-sm font-semibold shadow ${
-                    isSavingCampaign
-                      ? 'bg-emerald-200 text-emerald-800 cursor-not-allowed'
-                      : 'bg-emerald-600 text-white hover:bg-emerald-500'
-                  }`}
+                  className={`px-4 py-2 rounded-md text-sm font-semibold shadow ${isSavingCampaign
+                    ? 'bg-emerald-200 text-emerald-800 cursor-not-allowed'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                    }`}
                 >
                   {isSavingCampaign ? 'Saving...' : 'Save campaign'}
                 </button>
@@ -828,9 +841,9 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
                 Math.min(
                   highlightRect
                     ? Math.min(
-                        scrollX + (viewportWidth ? viewportWidth - 320 : highlightRect.left),
-                        Math.max(highlightRect.left, scrollX + 16)
-                      )
+                      scrollX + (viewportWidth ? viewportWidth - 320 : highlightRect.left),
+                      Math.max(highlightRect.left, scrollX + 16)
+                    )
                     : scrollX + 24,
                   scrollX + Math.max(24, viewportWidth - 340)
                 )

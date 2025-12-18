@@ -4,63 +4,50 @@ const TokenBridge: React.FC = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    console.log('[TokenBridge] registering message listener');
-
-    (window as any)._tmrBridgeListener = true;
-
-    const allowedOrigins = [
-      'https://themossyroots.com',
-      'https://www.themossyroots.com',
-      import.meta.env.VITE_TMR_WEB_URL,
-      import.meta.env.VITE_PUBLIC_WEB_URL,
-      import.meta.env.VITE_PUBLIC_APP_URL,
-    ]
-      .filter((origin): origin is string => typeof origin === 'string' && !!origin.trim())
-      .map((origin) => origin.replace(/\/+$/, ''));
-
-    const localhostOrigins = ['http://localhost:3000', 'http://localhost:4000', 'http://localhost']
-      .map((origin) => origin.replace(/\/+$/, ''));
-    localhostOrigins.forEach((origin) => {
-      if (!allowedOrigins.includes(origin)) {
-        allowedOrigins.push(origin);
-      }
-    });
-
-    if (allowedOrigins.length === 0) {
-      allowedOrigins.push(window.location.origin.replace(/\/+$/, ''));
-    }
-
     const handler = (event: MessageEvent) => {
-      console.log('[TokenBridge] message received', {
-        origin: event.origin,
-        data: event.data,
-        allowedOrigins,
-      });
-      if (!event.data || event.data.type !== 'TMR_TOKEN_BRIDGE') return;
-      if (allowedOrigins.length && !allowedOrigins.includes(event.origin)) {
-        console.warn('[TokenBridge] rejected token: origin mismatch', {
-          origin: event.origin,
-          allowedOrigins,
-        });
+      // 1. Validate origin (allow localhost:3000 or production dashboard)
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'https://themossyroots.com',
+        'https://www.themossyroots.com',
+      ];
+
+      if (!allowedOrigins.includes(event.origin)) {
+        // Silent ignore for unrelated messages, strict warn if it looks like ours
+        if (event.data?.type === 'TMR_TOKEN_BRIDGE') {
+          console.warn('[TokenBridge] Rejected token from unauthorized origin:', event.origin);
+        }
         return;
       }
 
-      const incomingToken =
-        typeof event.data.token === 'string' ? event.data.token.trim() : '';
-      if (!incomingToken) return;
+      // 2. Validate payload
+      if (!event.data || event.data.type !== 'TMR_TOKEN_BRIDGE' || !event.data.token) {
+        return;
+      }
 
-      window.localStorage.setItem('tmr-token', incomingToken);
-      window.sessionStorage.setItem('tmr-token', incomingToken);
-      console.log('[TokenBridge] token accepted, bridgedToken set');
-      console.log('[TokenBridge] authReady set true');
-      window.dispatchEvent(new CustomEvent<string>('tmr-token-bridged', { detail: incomingToken }));
+      const token = (event.data.token || '').trim().replace(/^["']|["']$/g, '');
+
+      // 3. Store in sessionStorage ONLY
+      try {
+        window.sessionStorage.setItem('tmr-token', token);
+        // Clear any potentially confusing localStorage token (optional, but good for hygiene)
+        window.localStorage.removeItem('tmr-token');
+      } catch (e) {
+        console.error('[TokenBridge] Failed to access storage', e);
+        return;
+      }
+
+      // 4. Emit local event
+      window.dispatchEvent(new CustomEvent('tmr-token-bridged', { detail: { token } }));
+      console.log('[TokenBridge] Token accepted and bridged.');
     };
 
     window.addEventListener('message', handler);
+    // Suggest readiness to parent
     window.parent?.postMessage({ type: 'TMR_TOKEN_BRIDGE_READY' }, '*');
+
     return () => {
       window.removeEventListener('message', handler);
-      (window as any)._tmrBridgeListener = false;
     };
   }, []);
 

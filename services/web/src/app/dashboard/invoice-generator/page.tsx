@@ -31,7 +31,7 @@ export default function InvoiceGeneratorPage() {
       const targetWindow = currentIframe.contentWindow;
       currentIframe.contentWindow?.postMessage(
         { type: 'TMR_TOKEN_BRIDGE', token },
-        '*' // permissive for dev to allow localhost origin mismatches
+        iframeOrigin // strict target origin
       );
     } catch (err) {
       console.error('Failed to post auth token to invoice iframe', err);
