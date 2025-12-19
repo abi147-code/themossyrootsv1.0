@@ -271,7 +271,7 @@ router.post('/send-email', async (req, res) => {
     console.info('[ViteInvoice] SendGrid sendMail result:', info);
     // Record the countable send when user context is available; /save-history remains metadata-only.
     try {
-      if (prisma && userId) {
+      if (prisma) {
         const numericTotal = Number.isFinite(numericAmount) ? numericAmount : 0;
         const summaryPayload = {
           invoiceNumber,
@@ -285,26 +285,36 @@ router.post('/send-email', async (req, res) => {
           invoiceBackgroundColor: invoiceBackgroundColor || null,
         };
 
-        await prisma.invoiceHistory.create({
-          data: {
-            userId,
-            customerName:
-              typeof customerName === 'string' && customerName.trim()
-                ? customerName.trim()
-                : 'Unknown customer',
-            customerEmail:
-              typeof customerEmail === 'string' && customerEmail.trim()
-                ? customerEmail.trim()
-                : null,
-            recipient: toEmail,
-            subject,
-            totalAmount: numericTotal.toFixed(2),
-            status: 'sent',
-            eventType: 'EMAIL_SENT',
-            summary: summaryPayload,
-            sentAt: new Date(),
-          },
-        });
+        let resolvedUserId = userId || null;
+        if (!resolvedUserId) {
+          const fallbackUser = await prisma.user.findFirst({ select: { id: true } });
+          resolvedUserId = fallbackUser?.id || null;
+        }
+
+        if (resolvedUserId) {
+          await prisma.invoiceHistory.create({
+            data: {
+              userId: resolvedUserId,
+              customerName:
+                typeof customerName === 'string' && customerName.trim()
+                  ? customerName.trim()
+                  : 'Unknown customer',
+              customerEmail:
+                typeof customerEmail === 'string' && customerEmail.trim()
+                  ? customerEmail.trim()
+                  : null,
+              recipient: toEmail,
+              subject,
+              totalAmount: numericTotal.toFixed(2),
+              status: 'sent',
+              eventType: 'EMAIL_SENT',
+              summary: summaryPayload,
+              sentAt: new Date(),
+            },
+          });
+        } else {
+          console.warn('[ViteInvoice] Skipping history write: no userId available');
+        }
       }
     } catch (historyErr) {
       console.error('[ViteInvoice] Failed to persist send history', historyErr);
