@@ -411,8 +411,11 @@ ${htmlContent}
       return;
     }
 
-    // Auth is optional for send-email; include token if available but don't block when absent.
-    const authHeaders = resolveAuthHeadersOptional() || {};
+    const authHeaders = resolveAuthHeaders();
+    if (!authHeaders) {
+      toast.error('Missing auth token; please log in again.');
+      return;
+    }
 
     const invoiceNumber = data.invoiceNumber || 'invoice';
     const invoiceBgForEmail = (data.invoicePageColor && data.invoicePageColor.trim()) || '#0f172a';
@@ -484,6 +487,7 @@ ${htmlContent}
           banner: bannerPayload,
           customerName: resolvedCustomerName,
           customerEmail: resolvedCustomerEmail || undefined,
+          campaignId: campaignIdForPayload ?? undefined,
         }),
       });
 
@@ -528,24 +532,6 @@ ${htmlContent}
       // Notify parent dashboard (if embedded) that the invoice was sent so it can persist history.
       if (typeof window !== 'undefined' && window.parent) {
         window.parent.postMessage({ type: 'tmr:vite-invoice:sent', payload: historyPayload }, '*');
-      }
-      // Also attempt to persist history directly when auth is available, so analytics stay in sync.
-      if (apiBase && Object.keys(authHeaders).length > 0) {
-        try {
-          const historyResponse = await fetch(`${apiBase}/api/vite-invoice/save-history`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...authHeaders,
-            },
-            body: JSON.stringify(historyPayload),
-          });
-          if (!historyResponse.ok) {
-            console.warn('[InvoicePreview] Failed to persist invoice history for analytics');
-          }
-        } catch (historyErr) {
-          console.error('[InvoicePreview] Error saving invoice history', historyErr);
-        }
       }
 
       triggerToast('Invoice email sent successfully!');

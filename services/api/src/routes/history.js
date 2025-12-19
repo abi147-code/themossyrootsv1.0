@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 
   try {
     const invoices = await prisma.invoiceHistory.findMany({
-      where: { userId },
+      where: { userId, eventType: 'EMAIL_SENT' },
       orderBy: { sentAt: 'desc' },
     });
 
@@ -39,16 +39,16 @@ router.get('/analytics', async (req, res) => {
   try {
     const [sumResult, lastResult, topResult] = await Promise.all([
       prisma.invoiceHistory.aggregate({
-        where: { userId },
+        where: { userId, eventType: 'EMAIL_SENT' },
         _sum: { totalAmount: true },
       }),
       prisma.invoiceHistory.aggregate({
-        where: { userId },
+        where: { userId, eventType: 'EMAIL_SENT' },
         _max: { sentAt: true },
       }),
       prisma.invoiceHistory.groupBy({
         by: ['customerEmail', 'customerName'],
-        where: { userId },
+        where: { userId, eventType: 'EMAIL_SENT' },
         _sum: { totalAmount: true },
         _count: { _all: true },
         orderBy: { _sum: { totalAmount: 'desc' } },

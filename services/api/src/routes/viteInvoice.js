@@ -9,8 +9,8 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// Public send-email endpoint for the Vite app; keep auth off so the browser can call it cross-origin.
-router.post('/send-email', async (req, res) => {
+// Authenticated send-email endpoint for the Vite app; requires a JWT so history is attributed to the real user.
+router.post('/send-email', auth, async (req, res) => {
   console.info('[ViteInvoice] Incoming payload:', req.body);
   const {
     html,
@@ -28,9 +28,14 @@ router.post('/send-email', async (req, res) => {
     banner,
     customerName,
     customerEmail,
+    campaignId,
   } = req.body || {};
   const prisma = req.prisma;
   const userId = req.user?.id;
+
+  if (!prisma || !userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   if (!html || typeof html !== 'string' || !html.trim()) {
     return res.status(400).json({ error: 'HTML content is required.' });
@@ -269,53 +274,46 @@ router.post('/send-email', async (req, res) => {
     });
 
     console.info('[ViteInvoice] SendGrid sendMail result:', info);
-    // Record the countable send when user context is available; /save-history remains metadata-only.
+    // Record the countable send for the authenticated user; /save-history remains metadata-only.
     try {
-      if (prisma) {
-        const numericTotal = Number.isFinite(numericAmount) ? numericAmount : 0;
-        const summaryPayload = {
-          invoiceNumber,
-          currency: cleanCurrency,
-          senderName: senderName || null,
-          senderEmail: senderEmail || null,
-          senderAddress: senderAddress || null,
-          message: message || null,
-          banner,
-          logoUrl: logoUrl || null,
-          invoiceBackgroundColor: invoiceBackgroundColor || null,
-        };
-
-        let resolvedUserId = userId || null;
-        if (!resolvedUserId) {
-          const fallbackUser = await prisma.user.findFirst({ select: { id: true } });
-          resolvedUserId = fallbackUser?.id || null;
-        }
-
-        if (resolvedUserId) {
-          await prisma.invoiceHistory.create({
-            data: {
-              userId: resolvedUserId,
-              customerName:
-                typeof customerName === 'string' && customerName.trim()
-                  ? customerName.trim()
-                  : 'Unknown customer',
-              customerEmail:
-                typeof customerEmail === 'string' && customerEmail.trim()
-                  ? customerEmail.trim()
-                  : null,
-              recipient: toEmail,
-              subject,
-              totalAmount: numericTotal.toFixed(2),
-              status: 'sent',
-              eventType: 'EMAIL_SENT',
-              summary: summaryPayload,
-              sentAt: new Date(),
-            },
-          });
-        } else {
-          console.warn('[ViteInvoice] Skipping history write: no userId available');
-        }
+      const numericTotal = Number.isFinite(numericAmount) ? numericAmount : 0;
+      const summaryPayload = {
+        invoiceNumber,
+        currency: cleanCurrency,
+        senderName: senderName || null,
+        senderEmail: senderEmail || null,
+        senderAddress: senderAddress || null,
+        message: message || null,
+        banner,
+        logoUrl: logoUrl || null,
+        invoiceBackgroundColor: invoiceBackgroundColor || null,
+      };
+      const parsedCampaignId =
+        typeof campaignId === 'number' ? campaignId : Number(campaignId);
+      if (Number.isFinite(parsedCampaignId) && parsedCampaignId > 0) {
+        summaryPayload.campaignId = parsedCampaignId;
       }
+
+      await prisma.invoiceHistory.create({
+        data: {
+          userId,
+          customerName:
+            typeof customerName === 'string' && customerName.trim()
+              ? customerName.trim()
+              : 'Unknown customer',
+          customerEmail:
+            typeof customerEmail === 'string' && customerEmail.trim()
+              ? customerEmail.trim()
+              : null,
+          recipient: toEmail,
+          subject,
+          totalAmount: numericTotal.toFixed(2),
+          status: 'sent',
+          eventType: 'EMAIL_SENT',
+          summary: summaryPayload,
+          sentAt: new Date(),
+        },
+      });
     } catch (historyErr) {
       console.error('[ViteInvoice] Failed to persist send history', historyErr);
     }
@@ -535,7 +533,28 @@ router.post('/save-history', async (req, res) => {
     summaryPayload.campaignId = campaignIdValue;
   }
 
+  const duplicateWindowStart = new Date(Date.now() - 60 * 1000);
+
   try {
+    const existing = await prisma.invoiceHistory.findFirst({
+      where: {
+        userId,
+        eventType: 'EMAIL_LOGGED',
+        createdAt: { gte: duplicateWindowStart },
+        recipient: recipientValue,
+        subject: subjectValue,
+        summary: {
+          path: ['invoiceNumber'],
+          equals: invoiceNumberValue,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existing) {
+      return res.json({ status: 'skipped', reason: 'duplicate', id: existing.id });
+    }
+
     const record = await prisma.invoiceHistory.create({
       data: {
         userId,

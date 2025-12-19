@@ -290,19 +290,19 @@ router.get('/:id/analytics', async (req, res) => {
       return res.status(404).json({ message: 'Campaign not found.' });
     }
 
-    const [clicksTotal, invoicesUsed, clicksByDayRaw] = await Promise.all([
+    const campaignIdText = String(id);
+
+    const [clicksTotal, invoicesUsedRows, clicksByDayRaw] = await Promise.all([
       prisma.campaignClickEvent.count({ where: { campaignId: id } }),
-      prisma.invoiceHistory.count({
-        where: {
-          userId,
-          status: 'sent',
-          eventType: 'EMAIL_SENT',
-          OR: [
-            { summary: { path: ['campaignId'], equals: id } },
-            { summary: { path: ['campaignId'], equals: String(id) } },
-          ],
-        },
-      }),
+      prisma.$queryRaw`
+        SELECT COUNT(DISTINCT summary->>'invoiceNumber')::int AS count
+        FROM "InvoiceHistory"
+        WHERE "userId" = ${userId}
+          AND "eventType" IN ('EMAIL_SENT', 'EMAIL_LOGGED')
+          AND (
+            summary->>'campaignId' = ${campaignIdText}
+          );
+      `,
       prisma.$queryRaw`
         SELECT
           date_trunc('day', "createdAt") as day,
@@ -325,6 +325,10 @@ router.get('/:id/analytics', async (req, res) => {
           count: Number(row?.count) || 0,
         }))
       : [];
+    const invoicesUsed =
+      Array.isArray(invoicesUsedRows) && invoicesUsedRows[0]
+        ? Number(invoicesUsedRows[0].count) || 0
+        : 0;
     const ctr = invoicesUsed > 0 ? clicksTotal / invoicesUsed : 0;
 
     return res.json({
