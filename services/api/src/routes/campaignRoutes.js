@@ -295,6 +295,8 @@ router.get('/:id/analytics', async (req, res) => {
       prisma.invoiceHistory.count({
         where: {
           userId,
+          status: 'sent',
+          eventType: 'EMAIL_SENT',
           OR: [
             { summary: { path: ['campaignId'], equals: id } },
             { summary: { path: ['campaignId'], equals: String(id) } },

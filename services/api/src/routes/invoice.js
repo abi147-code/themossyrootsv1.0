@@ -370,6 +370,7 @@ router.post('/send', async (req, res) => {
           subject,
           totalAmount: totalAmount.toFixed(2),
           status: 'sent',
+          eventType: 'EMAIL_SENT',
           summary: summaryData || (summaryBasis ? { payload: summaryBasis } : null),
           sentAt: new Date(),
         },

@@ -496,6 +496,7 @@ router.post('/save-history', async (req, res) => {
         subject: subjectValue,
         totalAmount: numericTotal.toFixed(2),
         status: 'sent',
+        eventType: 'EMAIL_LOGGED',
         summary: summaryPayload,
         sentAt: sentAtDate,
       },
