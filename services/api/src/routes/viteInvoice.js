@@ -202,7 +202,6 @@ router.post('/send-email', async (req, res) => {
           <tr>
             <td style="background:${brandColorHeader};color:#ffffff;padding:20px;text-align:left;">
               <div style="display:flex;align-items:center;gap:12px;">
-                ${safeLogoUrl ? `<img src="${safeLogoUrl}" alt="Brand Logo" style="height:40px;width:auto;border-radius:6px;display:block;" />` : ''}
                 <div>
                   <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.8;">Invoice</div>
                   <div style="font-size:20px;font-weight:700;margin-top:4px;">${displaySenderName}</div>
@@ -234,25 +233,6 @@ router.post('/send-email', async (req, res) => {
               </div>
             </td>
           </tr>
-          ${bannerEnabled ? `<tr>
-            <td style="padding:0 20px 20px 20px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${bannerBg};color:${bannerTextColor};border-radius:10px;overflow:hidden;">
-                ${bannerImageUrl ? `<tr>
-                  <td style="padding:0;">
-                    <img src="${bannerImageUrl}" alt="Marketing Banner" style="width:100%;display:block;border:0;outline:none;text-decoration:none;max-height:260px;object-fit:cover;" />
-                  </td>
-                </tr>` : ''}
-                <tr>
-                  <td style="padding:18px;text-align:left;">
-                    ${bannerText ? `<div style="font-size:16px;line-height:1.5;color:${bannerTextColor};font-weight:600;">${bannerText}</div>` : ''}
-                    ${bannerCtaText ? `<div style="margin-top:12px;">
-                      <a href="${bannerCtaLink || '#'}" style="display:inline-block;padding:10px 16px;background:${bannerCtaBg};color:${bannerCtaTextColor};text-decoration:none;font-weight:700;border-radius:6px;">${bannerCtaText}</a>
-                    </div>` : ''}
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>` : ''}
           <tr>
             <td style="padding:16px 20px 24px 20px;background:#f8fafc;text-align:center;color:#94a3b8;font-size:12px;">
               Delivered securely via The Mossy Roots
