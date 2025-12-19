@@ -269,7 +269,46 @@ router.post('/send-email', async (req, res) => {
     });
 
     console.info('[ViteInvoice] SendGrid sendMail result:', info);
-    // History saving is now handled exclusively via /save-history (dashboard → API).
+    // Record the countable send when user context is available; /save-history remains metadata-only.
+    try {
+      if (prisma && userId) {
+        const numericTotal = Number.isFinite(numericAmount) ? numericAmount : 0;
+        const summaryPayload = {
+          invoiceNumber,
+          currency: cleanCurrency,
+          senderName: senderName || null,
+          senderEmail: senderEmail || null,
+          senderAddress: senderAddress || null,
+          message: message || null,
+          banner,
+          logoUrl: logoUrl || null,
+          invoiceBackgroundColor: invoiceBackgroundColor || null,
+        };
+
+        await prisma.invoiceHistory.create({
+          data: {
+            userId,
+            customerName:
+              typeof customerName === 'string' && customerName.trim()
+                ? customerName.trim()
+                : 'Unknown customer',
+            customerEmail:
+              typeof customerEmail === 'string' && customerEmail.trim()
+                ? customerEmail.trim()
+                : null,
+            recipient: toEmail,
+            subject,
+            totalAmount: numericTotal.toFixed(2),
+            status: 'sent',
+            eventType: 'EMAIL_SENT',
+            summary: summaryPayload,
+            sentAt: new Date(),
+          },
+        });
+      }
+    } catch (historyErr) {
+      console.error('[ViteInvoice] Failed to persist send history', historyErr);
+    }
 
     res.json({ status: 'ok', message: 'Invoice email sent.' });
   } catch (err) {
