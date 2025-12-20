@@ -23,22 +23,6 @@ const parseRedirect = (raw) => {
 };
 
 const DEDUP_TTL_MS = 10 * 1000; // 10s window to collapse bursty duplicate requests
-const dedupStore = new Map(); // fingerprint -> lastSeen timestamp
-
-const cleanupDedupStore = (now) => {
-  for (const [key, ts] of dedupStore) {
-    if (now - ts > DEDUP_TTL_MS) {
-      dedupStore.delete(key);
-    }
-  }
-};
-
-const buildFingerprint = ({ campaignId, ipHash, userAgent, redirectUrl }) => {
-  const normalizedUa = (userAgent || 'ua:none').toLowerCase();
-  const normalizedIp = ipHash || 'ip:none';
-  const normalizedRedirect = redirectUrl || 'redirect:none';
-  return `${campaignId}|${normalizedIp}|${normalizedUa}|${normalizedRedirect}`;
-};
 
 router.get('/:id/click', async (req, res) => {
   const prisma = req.prisma;
@@ -66,30 +50,32 @@ router.get('/:id/click', async (req, res) => {
       parseRedirect(req.query?.u) || parseRedirect(campaign.ctaTargetUrl) || null;
     const ref = sanitizeRef(req.query?.ref);
     const userAgent = (req.get('user-agent') || '').slice(0, 500) || null;
+    // Prefer Fly's stable client IP header; fall back to XFF and finally req.ip
+    const flyClientIp = req.headers['fly-client-ip'];
     const forwarded = req.headers['x-forwarded-for'];
-    const ipSourceRaw = Array.isArray(forwarded)
-      ? forwarded[0]
-      : typeof forwarded === 'string'
-        ? forwarded.split(',')[0]
-        : req.ip || '';
+    const ipSourceRaw = flyClientIp
+      ? flyClientIp
+      : Array.isArray(forwarded)
+        ? forwarded[0]
+        : typeof forwarded === 'string'
+          ? forwarded.split(',')[0]
+          : req.ip || '';
     const ipSource = ipSourceRaw ? String(ipSourceRaw).trim() : '';
     const ipHash = ipSource
       ? crypto.createHash('sha256').update(String(ipSource)).digest('hex')
       : null;
 
-    const now = Date.now();
-    cleanupDedupStore(now);
-    const fingerprint = buildFingerprint({
-      campaignId: id,
-      ipHash,
-      userAgent,
-      redirectUrl,
+    const dedupSince = new Date(Date.now() - DEDUP_TTL_MS);
+    const duplicate = await prisma.campaignClickEvent.findFirst({
+      where: {
+        campaignId: id,
+        ipHash,
+        createdAt: { gte: dedupSince },
+      },
+      select: { id: true },
     });
-    const lastSeen = dedupStore.get(fingerprint);
-    const isDuplicate = typeof lastSeen === 'number' && now - lastSeen < DEDUP_TTL_MS;
-    dedupStore.set(fingerprint, now);
 
-    if (!isDuplicate) {
+    if (!duplicate) {
       await prisma.campaignClickEvent.create({
         data: {
           campaignId: id,
