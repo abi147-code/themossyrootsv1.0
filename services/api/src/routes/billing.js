@@ -5,9 +5,22 @@ const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
+const billingEnabled = String(process.env.BILLING_ENABLED || '').toLowerCase() === 'true';
+
+// If billing is disabled, short-circuit all billing routes.
+router.use((req, res, next) => {
+  if (!billingEnabled) {
+    return res.status(404).json({ message: 'Billing is currently disabled.' });
+  }
+  return next();
+});
+
 const stripeKey = process.env.STRIPE_SECRET_KEY || '';
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
-const stripe = stripeKey.startsWith('sk_') ? new Stripe(stripeKey, { apiVersion: '2024-06-20' }) : null;
+const stripe =
+  billingEnabled && stripeKey.startsWith('sk_')
+    ? new Stripe(stripeKey, { apiVersion: '2024-06-20' })
+    : null;
 
 const priceMap = {
   starter: process.env.STRIPE_PRICE_STARTER || 'price_starter_test',

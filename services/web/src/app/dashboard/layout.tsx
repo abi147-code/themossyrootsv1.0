@@ -220,12 +220,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   Show tour
                 </button>
               ) : null}
-              <Link
-                href="https://dashboard.stripe.com/test/subscriptions"
-                className="text-xs font-semibold text-emerald-700 transition hover:text-emerald-600"
-              >
-                Manage Stripe subscription &rarr;
-              </Link>
               <button
                 onClick={logout}
                 className="rounded-lg border border-slate-200 px-3 py-2 text-xs uppercase tracking-[0.3em] text-slate-600 transition hover:border-rose-200 hover:text-rose-500"

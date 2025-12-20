@@ -66,8 +66,7 @@ Render persistent disk: `/app/uploads` (API service)
   - `GET /api/invoice/health`, `GET /api/invoice/test`, `POST /api/invoice/summary`, `POST /api/invoice/send`
   - `POST /api/email/send`
   - `POST /api/social/snippet`
-  - `GET /api/billing/health`, `POST /api/billing/create-checkout-session`, `GET /api/billing/portal-session`, `POST /api/billing/stripe/webhook`
-- Frontend authentication stores the JWT in local storage and hydrates the `/dashboard` view with user + subscription data, trial countdown, stats, and the first three marketing tools.
+- Frontend authentication stores the JWT in local storage and hydrates the `/dashboard` view with user data, trial countdown, stats, and the first three marketing tools. Payments and subscriptions will be introduced in a future release.
 
 ## Extending the platform
 

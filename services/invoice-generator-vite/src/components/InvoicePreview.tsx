@@ -3,6 +3,7 @@ import { InvoiceData, MarketingBannerData } from '../types';
 import { Printer, Download, Send } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import toast from 'react-hot-toast';
+import { getApiBase, getTrackingBase, getPublicTrackingBase } from '@/src/lib/apiBase';
 
 interface InvoicePreviewProps {
   data: InvoiceData;
@@ -48,15 +49,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   // Temporarily disable futuristic template by falling back to professional
   const rawTemplate = data.invoiceTemplateKey || 'luxury';
   const template = rawTemplate === 'futuristic' ? 'professional' : rawTemplate;
-  // STRICT: apiBase must be explicitly defined in environment, match InvoiceTool logic
-  const apiBase = import.meta.env.VITE_API_BASE_URL
-    ? import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '')
-    : (() => {
-      // Don't throw here to avoid crashing the whole component if it's just a preview, 
-      // but warn loudly. InvoiceTool checks this strictly.
-      console.warn('VITE_API_BASE_URL missing in InvoicePreview');
-      return '';
-    })();
+  const apiBase = getApiBase();
 
   const PUBLIC_API_URL = (import.meta.env.VITE_PUBLIC_API_URL || '').replace(/\/+$/, '');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -83,7 +76,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     ? campaigns.find((campaign) => String(campaign.id) === String(selectedCampaignId))
     : null;
   const resolveTrackingBase = () => {
-    const base = (selectedCampaign?.apiBase || apiBase || '').trim();
+    const campaignBase = (selectedCampaign?.apiBase || '').trim();
+    if (campaignBase) return campaignBase.replace(/\/+$/, '');
+
+    // Fallback to global tracking base (same-origin allowed)
+    const base = getTrackingBase();
     return base ? base.replace(/\/+$/, '') : '';
   };
 
@@ -178,6 +175,19 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
 
   const buildInvoiceHtml = (element: HTMLElement) => {
     const clone = element.cloneNode(true) as HTMLElement;
+
+    // Ensure tracking links in exported HTML (PDF/email) are absolute
+    const normalizeTrackingLinksForExport = (root: HTMLElement) => {
+      const publicBase = getPublicTrackingBase().replace(/\/+$/, '');
+      root.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((anchor) => {
+        const rawHref = anchor.getAttribute('href') || '';
+        if (!rawHref) return;
+        if (rawHref.startsWith('/api/campaigns/')) {
+          anchor.setAttribute('href', `${publicBase}${rawHref}`);
+        }
+      });
+    };
+    normalizeTrackingLinksForExport(clone);
 
     const isSelectorUsed = (selector: string) => {
       if (!selector) return false;
@@ -289,6 +299,7 @@ ${htmlContent}
 
     const uploadResponse = await fetch(`${apiBase}/api/vite-invoice/upload-temp-asset`, {
       method: 'POST',
+      credentials: 'include',
       body: formData,
     });
 
@@ -327,17 +338,12 @@ ${htmlContent}
 
     setIsGeneratingPdf(true);
 
-    if (!apiBase) {
-      console.error('Missing VITE_TMR_API_URL');
-      setIsGeneratingPdf(false);
-      return;
-    }
-
     try {
       const finalHtml = buildInvoiceHtml(element);
 
       const response = await fetch(`${apiBase}/api/vite-invoice/generate-pdf`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -378,11 +384,6 @@ ${htmlContent}
       return;
     }
 
-    if (!apiBase) {
-      toast.error('Missing API base URL (VITE_TMR_API_URL).');
-      return;
-    }
-
     const trimmedTo = emailTo.trim();
     const trimmedSubject =
       (emailSubject || '').trim() ||
@@ -393,8 +394,9 @@ ${htmlContent}
     const buildTrackedUrl = (raw?: string | null) => {
       const trimmed = (raw || '').trim();
       if (!trimmed) return '';
-      if (campaignIdForPayload && trackingBase) {
-        return `${trackingBase}/api/campaigns/${campaignIdForPayload}/click?u=${encodeURIComponent(trimmed)}`;
+      if (campaignIdForPayload) {
+        const base = getPublicTrackingBase().replace(/\/+$/, '');
+        return `${base}/api/campaigns/${campaignIdForPayload}/click?u=${encodeURIComponent(trimmed)}`;
       }
       return trimmed;
     };
@@ -467,6 +469,7 @@ ${htmlContent}
 
       const response = await fetch(`${apiBase}/api/vite-invoice/send-email`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           ...authHeaders,
@@ -906,7 +909,7 @@ ${htmlContent}
     const trackingBase = resolveTrackingBase();
     const rawCtaUrl = (banner.ctaTargetUrl || '').trim();
     const trackingUrl =
-      selectedCampaignId && trackingBase && rawCtaUrl
+      selectedCampaignId && rawCtaUrl
         ? `${trackingBase}/api/campaigns/${selectedCampaignId}/click?u=${encodeURIComponent(
           rawCtaUrl
         )}`

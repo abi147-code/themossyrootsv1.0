@@ -137,9 +137,9 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-600">
-          Need an account?{' '}
+          Create an account{' '}
           <Link className="font-semibold text-emerald-700 hover:text-emerald-600" href="/signup">
-            Start the free trial
+            here
           </Link>
         </p>
       </div>

@@ -8,8 +8,6 @@ import { apiFetch } from '@/lib/api';
 import DotGrid from '@/components/DotGrid';
 import VisibilityMount from '@/components/VisibilityMount';
 
-const trialDays = Number(process.env.NEXT_PUBLIC_TRIAL_DAYS ?? '14');
-
 type SignupResponse = {
   token: string;
   user: {
@@ -95,7 +93,6 @@ export default function SignupPage() {
 
       <div className="relative z-10 w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-10 shadow-xl shadow-emerald-100">
         <div className="mb-8 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-emerald-700">{trialDays}-day free trial</p>
           <h1 className="mt-2 text-3xl font-semibold text-slate-900">Create your TMR workspace</h1>
           <p className="mt-2 text-sm text-slate-600">Spin up CRM, billing, and marketing workflows in a single stack.</p>
         </div>
@@ -165,9 +162,6 @@ export default function SignupPage() {
             >
               {loading ? 'Creating account...' : 'Create workspace'}
             </button>
-            <p className="mt-3 text-center text-xs text-slate-500">
-              We start a {trialDays}-day trial immediately. Upgrade inside the dashboard when you are ready.
-            </p>
           </div>
         </form>
 

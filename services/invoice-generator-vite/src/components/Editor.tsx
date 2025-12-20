@@ -433,7 +433,7 @@ export const Editor: React.FC<EditorProps> = ({
                   <div>
                     <label className={labelClass}>Payment Link</label>
                     <input
-                      placeholder="https://stripe.com/pay/..."
+                      placeholder="https://your-payment-link.com"
                       value={invoiceData.paymentLink || ''}
                       onChange={(e) => handleChange('paymentLink', e.target.value)}
                       className={inputClass}

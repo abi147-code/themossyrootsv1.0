@@ -56,20 +56,20 @@ export default function DashboardPage() {
     if (!subscription) {
       return {
         badge: 'Trialing',
-        description: 'Start upgrading via Stripe once you are ready.',
+        description: 'Billing will open in a future release.',
       };
     }
 
     if (subscription.status === 'active') {
       return {
         badge: 'Active',
-        description: `On the ${subscription.plan} plan.`,
+        description: 'Billing will open in a future release.',
       };
     }
 
     return {
       badge: subscription.status,
-      description: 'Keep an eye on billing events in Stripe.',
+      description: 'Billing will reopen in a future release.',
     };
   }, [subscription]);
 
@@ -284,18 +284,10 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex flex-col items-start gap-2 rounded-2xl border border-slate-700/70 bg-slate-900/60 px-6 py-4 text-sm text-slate-200">
-          <span className="text-xs uppercase tracking-[0.3em] text-slate-400">Plan</span>
-          <div className="flex items-center gap-3">
-            <span className="rounded-full border border-sky-400/30 bg-sky-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-sky-200">
-              {planStatus.badge}
-            </span>
-            <span className="text-slate-200">{planStatus.description}</span>
-          </div>
-          <span className="text-xs uppercase tracking-[0.3em] text-slate-400">Trial ends</span>
-          <span className="text-slate-100">{trialEndsAt}</span>
-          <Link className="text-xs font-semibold text-sky-300 transition hover:text-sky-200" href="https://dashboard.stripe.com/test/subscriptions">
-            Manage Stripe subscription &rarr;
-          </Link>
+          <span className="rounded-full border border-sky-400/30 bg-sky-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-sky-200">
+            {planStatus.badge}
+          </span>
+          <span className="text-slate-200">Billing will open in a future release.</span>
         </div>
       </section>
 

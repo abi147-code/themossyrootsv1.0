@@ -15,6 +15,7 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 const app = express();
+const billingEnabled = String(process.env.BILLING_ENABLED || '').toLowerCase() === 'true';
 
 ensureAdminUser(prisma)
   .then((message) => {
@@ -67,22 +68,24 @@ scheduleTempAssetCleanup();
 app.use('/uploads', express.static(uploadsRoot));
 app.use('/temp-assets', express.static(tempAssetRoot));
 
-// Stripe webhook must remain raw before JSON parsing
-app.use('/api/billing/stripe/webhook', express.raw({ type: 'application/json' }));
+// Stripe webhook must remain raw before JSON parsing, but only when billing is enabled
+if (billingEnabled) {
+  app.use('/api/billing/stripe/webhook', express.raw({ type: 'application/json' }));
+}
 
 const BODY_LIMIT = '10mb';
 const jsonParser = express.json({ limit: BODY_LIMIT });
 const urlencodedParser = express.urlencoded({ extended: true, limit: BODY_LIMIT });
 
 app.use((req, res, next) => {
-  if (req.originalUrl === '/api/billing/stripe/webhook') {
+  if (billingEnabled && req.originalUrl === '/api/billing/stripe/webhook') {
     return next();
   }
   return jsonParser(req, res, next);
 });
 
 app.use((req, res, next) => {
-  if (req.originalUrl === '/api/billing/stripe/webhook') {
+  if (billingEnabled && req.originalUrl === '/api/billing/stripe/webhook') {
     return next();
   }
   return urlencodedParser(req, res, next);

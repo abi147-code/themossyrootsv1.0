@@ -5,6 +5,7 @@ import { Editor } from './Editor';
 import { InvoiceData, MarketingBannerData } from '../types';
 import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getApiBase } from '@/src/lib/apiBase';
 
 const INITIAL_INVOICE: InvoiceData = {
   invoiceNumber: 'INV-001',
@@ -208,12 +209,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     setTourStep((s) => Math.max(0, s - 1));
   };
 
-  // STRICT: apiBase must be explicitly defined in environment
-  const apiBase = import.meta.env.VITE_API_BASE_URL
-    ? import.meta.env.VITE_API_BASE_URL.replace(/^["']|["']$/g, '').replace(/\/+$/, '').trim()
-    : (() => {
-      throw new Error('VITE_API_BASE_URL must be defined');
-    })();
+  const apiBase = getApiBase();
 
   // Helper to safely read and sanitize token
   const getSafeToken = () => {
@@ -321,10 +317,14 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
 
     const headers = {
       ...options.headers,
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     };
 
-    return fetch(url, { ...options, headers });
+    return fetch(url, {
+      ...options,
+      credentials: options.credentials ?? 'include',
+      headers,
+    });
   };
 
   const fetchCampaigns = async (options?: { silent?: boolean }) => {
@@ -465,6 +465,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     }
 
     const assertApiBaseUrl = (currentApiBase: string) => {
+      if (!currentApiBase) return; // allow relative / same-origin in production
       try {
         const base = new URL(currentApiBase);
         if (base.protocol !== 'https:' && base.protocol !== 'http:') {
@@ -476,8 +477,14 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     };
 
     const assertInternalApiUrl = (url: string, currentApiBase: string) => {
+      if (!currentApiBase) {
+        if (!url.startsWith('/')) {
+          throw new Error(`Expected relative API url starting with /, got: ${url}`);
+        }
+        return url;
+      }
       try {
-        const u = new URL(url);
+        const u = new URL(url, currentApiBase);
         const base = new URL(currentApiBase);
 
         if (u.host !== base.host) {
