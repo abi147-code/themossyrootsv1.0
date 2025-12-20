@@ -111,7 +111,13 @@ router.post('/send-email', auth, async (req, res) => {
       if (typeof value !== 'string') return '';
       const trimmed = value.trim();
       if (!trimmed) return '';
-      const publicBase = (process.env.PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
+      const publicBase = (
+        process.env.API_PUBLIC_URL ||
+        process.env.PUBLIC_API_URL ||
+        ''
+      )
+        .trim()
+        .replace(/\/+$/, '');
       const isHttp = /^https?:\/\//i.test(trimmed);
       if (publicBase && trimmed.startsWith(publicBase)) {
         return escapeHtml(trimmed);
@@ -120,6 +126,34 @@ router.post('/send-email', auth, async (req, res) => {
         return escapeHtml(trimmed);
       }
       return '';
+    };
+
+    const publicTrackingBase = (
+      process.env.API_PUBLIC_URL ||
+      process.env.PUBLIC_API_URL ||
+      ''
+    )
+      .trim()
+      .replace(/\/+$/, '');
+    const parsedCampaignId =
+      typeof campaignId === 'number' ? campaignId : Number(campaignId);
+    const rawInvoiceNumber =
+      typeof invoiceNumber === 'string' && invoiceNumber.trim() ? invoiceNumber.trim() : 'invoice';
+    const invoiceLabel = escapeHtml(rawInvoiceNumber);
+    const buildTrackedCtaLink = (rawTarget) => {
+      const trimmed = typeof rawTarget === 'string' ? rawTarget.trim() : '';
+      if (!trimmed) return '';
+      if (!Number.isFinite(parsedCampaignId) || parsedCampaignId <= 0) {
+        return '';
+      }
+      if (!publicTrackingBase) {
+        return '';
+      }
+      const search = new URLSearchParams({
+        u: trimmed,
+        invoice: rawInvoiceNumber,
+      }).toString();
+      return `${publicTrackingBase}/api/campaigns/${parsedCampaignId}/click?${search}`;
     };
 
     const displaySenderName =
@@ -134,8 +168,6 @@ router.post('/send-email', auth, async (req, res) => {
       typeof senderAddress === 'string' && senderAddress.trim()
         ? escapeHtml(senderAddress.trim())
         : 'No address provided';
-    const invoiceLabel =
-      typeof invoiceNumber === 'string' && invoiceNumber.trim() ? escapeHtml(invoiceNumber.trim()) : 'Invoice';
     const headerColor =
       typeof invoiceBackgroundColor === 'string' && invoiceBackgroundColor.trim()
         ? escapeHtml(invoiceBackgroundColor.trim())
@@ -161,10 +193,13 @@ router.post('/send-email', auth, async (req, res) => {
       typeof bannerData.ctaText === 'string' && bannerData.ctaText.trim()
         ? escapeHtml(bannerData.ctaText.trim())
         : '';
-    const bannerCtaLink =
+    const rawBannerCta =
       typeof bannerData.ctaLink === 'string' && bannerData.ctaLink.trim()
-        ? escapeHtml(bannerData.ctaLink.trim())
-        : '';
+        ? bannerData.ctaLink.trim()
+        : typeof bannerData.ctaTargetUrl === 'string' && bannerData.ctaTargetUrl.trim()
+          ? bannerData.ctaTargetUrl.trim()
+          : '';
+    const bannerCtaLink = buildTrackedCtaLink(rawBannerCta);
     const bannerCtaBg =
       typeof bannerData.ctaBackgroundColor === 'string' && bannerData.ctaBackgroundColor.trim()
         ? escapeHtml(bannerData.ctaBackgroundColor.trim())
