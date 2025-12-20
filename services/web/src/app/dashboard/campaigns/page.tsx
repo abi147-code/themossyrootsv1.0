@@ -357,8 +357,8 @@ export default function CampaignsPage() {
           <div
             className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
               toast.type === 'success'
-                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
-                : 'border-rose-500/40 bg-rose-500/10 text-rose-100'
+                ? 'border-emerald-600 bg-emerald-700/30 text-emerald-50'
+                : 'border-rose-600 bg-rose-700/30 text-rose-50'
             }`}
           >
             {toast.message}
@@ -419,7 +419,7 @@ export default function CampaignsPage() {
                         type="button"
                         onClick={() => setConfirmingId(campaign.id)}
                         disabled={deleting}
-                        className="flex items-center gap-2 rounded-full border border-rose-500 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-rose-50 transition hover:border-rose-400 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500"
+                        className="flex items-center gap-2 rounded-full border border-rose-600 bg-rose-700/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:border-rose-500 hover:bg-rose-600/80 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900 disabled:text-slate-500"
                       >
                         {deleting ? 'Deleting...' : 'Delete'}
                       </button>
