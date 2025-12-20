@@ -143,6 +143,10 @@ export default function CampaignsPage() {
   const [error, setError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Record<number, boolean>>({});
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(
+    null
+  );
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [analytics, setAnalytics] = useState<Record<number, CampaignAnalytics>>({});
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -252,10 +256,8 @@ export default function CampaignsPage() {
   const handleDelete = useCallback(
     async (campaignId: number) => {
       if (!token) return;
-      const confirmed = window.confirm('Delete this campaign? This cannot be undone.');
-      if (!confirmed) return;
-
       setDeleteError(null);
+      setToast(null);
       setDeletingIds((prev) => ({ ...prev, [campaignId]: true }));
 
       try {
@@ -279,6 +281,8 @@ export default function CampaignsPage() {
           throw new Error(message);
         }
 
+        setConfirmingId(null);
+        setToast({ type: 'success', message: 'Campaign deleted successfully.' });
         setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
         setAnalytics((prev) => {
           const next = { ...prev };
@@ -293,6 +297,10 @@ export default function CampaignsPage() {
       } catch (err) {
         console.error('[Campaigns] Failed to delete campaign', err);
         setDeleteError(err instanceof Error ? err.message : 'Failed to delete campaign.');
+        setToast({
+          type: 'error',
+          message: 'Failed to delete campaign. Please try again.',
+        });
       } finally {
         setDeletingIds((prev) => {
           const next = { ...prev };
@@ -344,6 +352,18 @@ export default function CampaignsPage() {
             <span className="text-xs uppercase tracking-[0.3em] text-slate-500">Loading...</span>
           ) : null}
         </div>
+
+        {toast ? (
+          <div
+            className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
+              toast.type === 'success'
+                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
+                : 'border-rose-500/40 bg-rose-500/10 text-rose-100'
+            }`}
+          >
+            {toast.message}
+          </div>
+        ) : null}
 
         {deleteError ? (
           <div className="mt-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
@@ -397,9 +417,9 @@ export default function CampaignsPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
-                        onClick={() => handleDelete(campaign.id)}
+                        onClick={() => setConfirmingId(campaign.id)}
                         disabled={deleting}
-                        className="flex items-center gap-2 rounded-full border border-rose-500/50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-rose-100 transition hover:border-rose-400 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500"
+                        className="flex items-center gap-2 rounded-full border border-rose-500 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-rose-50 transition hover:border-rose-400 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500"
                       >
                         {deleting ? 'Deleting...' : 'Delete'}
                       </button>
@@ -532,6 +552,35 @@ export default function CampaignsPage() {
           </div>
         )}
       </section>
+
+      {confirmingId !== null ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl shadow-black/60">
+            <h4 className="text-xl font-semibold text-white">Delete campaign?</h4>
+            <p className="mt-3 text-sm text-slate-300">
+              This will permanently delete this campaign and all associated analytics (clicks, CTR,
+              usage data). This cannot be undone.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmingId(null)}
+                className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => (confirmingId ? handleDelete(confirmingId) : undefined)}
+                disabled={confirmingId === null || deletingIds[confirmingId] === true}
+                className="rounded-xl border border-rose-500 bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-900/30 transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:border-slate-700 disabled:bg-slate-800 disabled:text-slate-400"
+              >
+                {confirmingId !== null && deletingIds[confirmingId] ? 'Deleting...' : 'Yes, delete campaign'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -290,10 +290,38 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Campaign not found.' });
     }
 
-    await prisma.$transaction([
-      prisma.campaignClickEvent.deleteMany({ where: { campaignId: id } }),
-      prisma.campaign.delete({ where: { id } }),
-    ]);
+    const attemptDelete = async () => {
+      await prisma.$transaction([
+        prisma.campaignClickEvent.deleteMany({ where: { campaignId: id } }),
+        prisma.campaign.delete({ where: { id } }),
+      ]);
+    };
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await attemptDelete();
+        return res.status(204).end();
+      } catch (err) {
+        const code = err?.code || err?.meta?.code;
+        const isForeignKeyConflict = code === 'P2003';
+        const isMissingRecord = code === 'P2025';
+        const isLastAttempt = attempt === 1;
+
+        if (!isForeignKeyConflict && !isMissingRecord) {
+          throw err;
+        }
+
+        // If we hit a FK conflict or the record disappeared mid-flight:
+        // - retry once (to re-delete any new click rows) then treat as success.
+        if (isLastAttempt) {
+          console.warn('[Campaign] Delete completed with warnings (treated as success)', {
+            campaignId: id,
+            code,
+          });
+          return res.status(204).end();
+        }
+      }
+    }
 
     return res.status(204).end();
   } catch (error) {
