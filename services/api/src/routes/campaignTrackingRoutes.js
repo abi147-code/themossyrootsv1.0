@@ -22,6 +22,24 @@ const parseRedirect = (raw) => {
   }
 };
 
+const DEDUP_TTL_MS = 10 * 1000; // 10s window to collapse bursty duplicate requests
+const dedupStore = new Map(); // fingerprint -> lastSeen timestamp
+
+const cleanupDedupStore = (now) => {
+  for (const [key, ts] of dedupStore) {
+    if (now - ts > DEDUP_TTL_MS) {
+      dedupStore.delete(key);
+    }
+  }
+};
+
+const buildFingerprint = ({ campaignId, ipHash, userAgent, redirectUrl }) => {
+  const normalizedUa = (userAgent || 'ua:none').toLowerCase();
+  const normalizedIp = ipHash || 'ip:none';
+  const normalizedRedirect = redirectUrl || 'redirect:none';
+  return `${campaignId}|${normalizedIp}|${normalizedUa}|${normalizedRedirect}`;
+};
+
 router.get('/:id/click', async (req, res) => {
   const prisma = req.prisma;
   const id = Number(req.params.id);
@@ -59,14 +77,28 @@ router.get('/:id/click', async (req, res) => {
       ? crypto.createHash('sha256').update(String(ipSource)).digest('hex')
       : null;
 
-    await prisma.campaignClickEvent.create({
-      data: {
-        campaignId: id,
-        ref,
-        userAgent,
-        ipHash,
-      },
+    const now = Date.now();
+    cleanupDedupStore(now);
+    const fingerprint = buildFingerprint({
+      campaignId: id,
+      ipHash,
+      userAgent,
+      redirectUrl,
     });
+    const lastSeen = dedupStore.get(fingerprint);
+    const isDuplicate = typeof lastSeen === 'number' && now - lastSeen < DEDUP_TTL_MS;
+    dedupStore.set(fingerprint, now);
+
+    if (!isDuplicate) {
+      await prisma.campaignClickEvent.create({
+        data: {
+          campaignId: id,
+          ref,
+          userAgent,
+          ipHash,
+        },
+      });
+    }
 
     if (redirectUrl) {
       return res.redirect(302, redirectUrl);
