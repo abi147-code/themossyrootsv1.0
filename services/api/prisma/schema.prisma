@@ -215,6 +215,7 @@ model Campaign {
   updatedAt   DateTime @updatedAt
   user        User     @relation(fields: [userId], references: [id])
   clickEvents CampaignClickEvent[]
+  invoiceClicks CampaignInvoiceClick[]
 
   @@index([userId])
 }
@@ -229,4 +230,15 @@ model CampaignClickEvent {
   campaign   Campaign @relation(fields: [campaignId], references: [id])
 
   @@index([campaignId, createdAt])
+}
+
+model CampaignInvoiceClick {
+  id            Int      @id @default(autoincrement())
+  campaignId    Int
+  invoiceNumber String
+  createdAt     DateTime @default(now())
+  campaign      Campaign @relation(fields: [campaignId], references: [id])
+
+  @@unique([campaignId, invoiceNumber])
+  @@index([campaignId])
 }

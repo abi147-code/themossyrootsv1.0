@@ -22,8 +22,6 @@ const parseRedirect = (raw) => {
   }
 };
 
-const DEDUP_TTL_MS = 10 * 1000; // 10s window to collapse bursty duplicate requests
-
 router.get('/:id/click', async (req, res) => {
   const prisma = req.prisma;
   const id = Number(req.params.id);
@@ -50,6 +48,13 @@ router.get('/:id/click', async (req, res) => {
       parseRedirect(req.query?.u) || parseRedirect(campaign.ctaTargetUrl) || null;
     const ref = sanitizeRef(req.query?.ref);
     const userAgent = (req.get('user-agent') || '').slice(0, 500) || null;
+    const invoiceParamRaw =
+      typeof req.query?.invoice === 'string'
+        ? req.query.invoice
+        : typeof req.query?.invoiceNumber === 'string'
+          ? req.query.invoiceNumber
+          : null;
+    const invoiceNumber = invoiceParamRaw ? invoiceParamRaw.trim().slice(0, 128) : null;
     // Prefer Fly's stable client IP header; fall back to XFF and finally req.ip
     const flyClientIp = req.headers['fly-client-ip'];
     const forwarded = req.headers['x-forwarded-for'];
@@ -82,6 +87,7 @@ router.get('/:id/click', async (req, res) => {
         `ts=${new Date().toISOString()}`,
         `campaignId=${id}`,
         `u=${decodedTarget || 'null'}`,
+        `invoice=${invoiceNumber || 'null'}`,
         `flyClientIp=${flyClientIp || 'null'}`,
         `xff=${forwarded || 'null'}`,
         `userAgent=${userAgent || 'null'}`,
@@ -102,25 +108,30 @@ router.get('/:id/click', async (req, res) => {
       ].join(' | ')
     );
 
-    const dedupSince = new Date(Date.now() - DEDUP_TTL_MS);
-    const duplicate = await prisma.campaignClickEvent.findFirst({
-      where: {
+    await prisma.campaignClickEvent.create({
+      data: {
         campaignId: id,
+        ref,
+        userAgent,
         ipHash,
-        createdAt: { gte: dedupSince },
       },
-      select: { id: true },
     });
 
-    if (!duplicate) {
-      await prisma.campaignClickEvent.create({
-        data: {
-          campaignId: id,
-          ref,
-          userAgent,
-          ipHash,
-        },
-      });
+    if (invoiceNumber) {
+      try {
+        await prisma.campaignInvoiceClick.create({
+          data: {
+            campaignId: id,
+            invoiceNumber,
+          },
+        });
+      } catch (err) {
+        const code = err?.code || err?.meta?.code;
+        if (code !== 'P2002') {
+          throw err;
+        }
+        // Duplicate invoice click (already counted) – ignore but still redirect
+      }
     }
 
     if (redirectUrl) {

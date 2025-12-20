@@ -392,11 +392,16 @@ ${htmlContent}
     const campaignIdForPayload = Number.isFinite(resolvedCampaignId) ? resolvedCampaignId : null;
     const trackingBase = resolveTrackingBase();
     const buildTrackedUrl = (raw?: string | null) => {
+      const invoiceNumber = data.invoiceNumber || 'invoice';
       const trimmed = (raw || '').trim();
       if (!trimmed) return '';
       if (campaignIdForPayload) {
         const base = getPublicTrackingBase().replace(/\/+$/, '');
-        return `${base}/api/campaigns/${campaignIdForPayload}/click?u=${encodeURIComponent(trimmed)}`;
+        const search = new URLSearchParams({
+          u: trimmed,
+          invoice: invoiceNumber,
+        }).toString();
+        return `${base}/api/campaigns/${campaignIdForPayload}/click?${search}`;
       }
       return trimmed;
     };
@@ -908,11 +913,12 @@ ${htmlContent}
     };
     const trackingBase = resolveTrackingBase();
     const rawCtaUrl = (banner.ctaTargetUrl || '').trim();
+    const invoiceNumber = data.invoiceNumber || 'invoice';
     const trackingUrl =
       selectedCampaignId && rawCtaUrl
         ? `${trackingBase}/api/campaigns/${selectedCampaignId}/click?u=${encodeURIComponent(
           rawCtaUrl
-        )}`
+        )}&invoice=${encodeURIComponent(invoiceNumber)}`
         : rawCtaUrl;
     const handleBannerLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { naturalWidth, naturalHeight } = e.currentTarget;

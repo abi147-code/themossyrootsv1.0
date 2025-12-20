@@ -41,10 +41,13 @@ type Campaign = {
 };
 
 type CampaignAnalytics = {
-  clicksTotal: number;
-  clicksByDay: { date: string | null; count: number }[];
+  invoicesWithClicks: number;
   invoicesUsed: number;
-  ctr: number;
+  ctr: number | null;
+  rawHits: number;
+  invoiceClicksByDay?: { date: string | null; count: number }[];
+  rawHitsByDay?: { date: string | null; count: number }[];
+  isLegacy?: boolean;
 };
 
 const formatDate = (value: string) => {
@@ -77,7 +80,7 @@ const formatNumber = (value?: number | null) => {
 };
 
 const formatPercent = (value?: number | null) => {
-  if (value === null || value === undefined || Number.isNaN(value)) return '0%';
+  if (value === null || value === undefined || Number.isNaN(value)) return '—';
   return `${(value * 100).toFixed(1)}%`;
 };
 
@@ -383,9 +386,10 @@ export default function CampaignsPage() {
               const bannerCopyPreview =
                 (campaign.bannerCopyText || '').trim() || 'No banner copy';
               const metric = analytics[campaign.id];
-              const clicksTotal = metric?.clicksTotal ?? 0;
+              const invoicesWithClicks = metric?.invoicesWithClicks ?? 0;
               const invoicesUsed = metric?.invoicesUsed ?? 0;
-              const ctr = metric ? formatPercent(metric.ctr) : '0%';
+              const ctr = metric ? formatPercent(metric.ctr) : '—';
+              const isLegacy = metric?.isLegacy === true;
               const deleting = deletingIds[campaign.id] === true;
 
               return (
@@ -435,12 +439,17 @@ export default function CampaignsPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    <StatPill label="Clicks" value={formatNumber(clicksTotal)} />
+                    <StatPill label="Invoices w/ Click" value={formatNumber(invoicesWithClicks)} />
                     <StatPill label="Invoices Used" value={formatNumber(invoicesUsed)} />
                     <StatPill label="CTR" value={ctr} />
                     {analyticsLoading && !metric ? (
                       <span className="text-xs uppercase tracking-[0.2em] text-slate-500">
                         Loading metrics...
+                      </span>
+                    ) : null}
+                    {isLegacy ? (
+                      <span className="text-xs text-amber-300">
+                        Legacy clicks detected (missing invoice ids) — CTR unavailable.
                       </span>
                     ) : null}
                   </div>

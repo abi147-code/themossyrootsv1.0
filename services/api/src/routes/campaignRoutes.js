@@ -355,50 +355,70 @@ router.get('/:id/analytics', async (req, res) => {
 
     const campaignIdText = String(id);
 
-    const [clicksTotal, invoicesUsedRows, clicksByDayRaw] = await Promise.all([
-      prisma.campaignClickEvent.count({ where: { campaignId: id } }),
-      prisma.$queryRaw`
-        SELECT COUNT(DISTINCT summary->>'invoiceNumber')::int AS count
-        FROM "InvoiceHistory"
-        WHERE "userId" = ${userId}
-          AND "eventType" IN ('EMAIL_SENT', 'EMAIL_LOGGED')
-          AND (
-            summary->>'campaignId' = ${campaignIdText}
-          );
-      `,
-      prisma.$queryRaw`
-        SELECT
-          date_trunc('day', "createdAt") as day,
-          COUNT(*)::int as count
-        FROM "CampaignClickEvent"
-        WHERE "campaignId" = ${id} AND "createdAt" >= NOW() - INTERVAL '30 days'
-        GROUP BY 1
-        ORDER BY 1 ASC
-      `,
-    ]);
+    const [rawHits, invoicesWithClicks, invoicesUsedRows, invoiceClicksByDayRaw, rawHitsByDayRaw] =
+      await Promise.all([
+        prisma.campaignClickEvent.count({ where: { campaignId: id } }),
+        prisma.campaignInvoiceClick.count({ where: { campaignId: id } }),
+        prisma.$queryRaw`
+          SELECT COUNT(DISTINCT summary->>'invoiceNumber')::int AS count
+          FROM "InvoiceHistory"
+          WHERE "userId" = ${userId}
+            AND "eventType" IN ('EMAIL_SENT', 'EMAIL_LOGGED')
+            AND (
+              summary->>'campaignId' = ${campaignIdText}
+            );
+        `,
+        prisma.$queryRaw`
+          SELECT
+            date_trunc('day', "createdAt") as day,
+            COUNT(*)::int as count
+          FROM "CampaignInvoiceClick"
+          WHERE "campaignId" = ${id} AND "createdAt" >= NOW() - INTERVAL '30 days'
+          GROUP BY 1
+          ORDER BY 1 ASC
+        `,
+        prisma.$queryRaw`
+          SELECT
+            date_trunc('day', "createdAt") as day,
+            COUNT(*)::int as count
+          FROM "CampaignClickEvent"
+          WHERE "campaignId" = ${id} AND "createdAt" >= NOW() - INTERVAL '30 days'
+          GROUP BY 1
+          ORDER BY 1 ASC
+        `,
+      ]);
 
-    const clicksByDay = Array.isArray(clicksByDayRaw)
-      ? clicksByDayRaw.map((row) => ({
-          date:
-            row?.day instanceof Date
-              ? row.day.toISOString()
-              : typeof row?.day === 'string'
-                ? row.day
-                : null,
-          count: Number(row?.count) || 0,
-        }))
-      : [];
+    const mapDayBuckets = (rows) =>
+      Array.isArray(rows)
+        ? rows.map((row) => ({
+            date:
+              row?.day instanceof Date
+                ? row.day.toISOString()
+                : typeof row?.day === 'string'
+                  ? row.day
+                  : null,
+            count: Number(row?.count) || 0,
+          }))
+        : [];
+
+    const invoiceClicksByDay = mapDayBuckets(invoiceClicksByDayRaw);
+    const rawHitsByDay = mapDayBuckets(rawHitsByDayRaw);
     const invoicesUsed =
       Array.isArray(invoicesUsedRows) && invoicesUsedRows[0]
         ? Number(invoicesUsedRows[0].count) || 0
         : 0;
-    const ctr = invoicesUsed > 0 ? clicksTotal / invoicesUsed : 0;
+    const isLegacy = invoicesWithClicks === 0 && rawHits > 0;
+    const ctr =
+      invoicesUsed > 0 && !isLegacy ? Number((invoicesWithClicks / invoicesUsed).toFixed(4)) : null;
 
     return res.json({
-      clicksTotal,
-      clicksByDay,
+      invoicesWithClicks,
       invoicesUsed,
       ctr,
+      rawHits,
+      invoiceClicksByDay,
+      rawHitsByDay,
+      isLegacy,
     });
   } catch (error) {
     console.error('[Campaign] Failed to load analytics:', error);
