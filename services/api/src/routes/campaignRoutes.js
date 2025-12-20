@@ -267,6 +267,41 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  const prisma = req.prisma;
+  const userId = req.user?.id;
+  const id = Number(req.params.id);
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ message: 'Invalid campaign id.' });
+  }
+
+  try {
+    const campaign = await prisma.campaign.findFirst({
+      where: { id, userId },
+      select: { id: true },
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ message: 'Campaign not found.' });
+    }
+
+    await prisma.$transaction([
+      prisma.campaignClickEvent.deleteMany({ where: { campaignId: id } }),
+      prisma.campaign.delete({ where: { id } }),
+    ]);
+
+    return res.status(204).end();
+  } catch (error) {
+    console.error('[Campaign] Failed to delete campaign:', error);
+    return res.status(500).json({ message: 'Failed to delete campaign.' });
+  }
+});
+
 router.get('/:id/analytics', async (req, res) => {
   const prisma = req.prisma;
   const userId = req.user?.id;

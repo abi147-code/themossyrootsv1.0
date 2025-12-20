@@ -141,6 +141,8 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletingIds, setDeletingIds] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [analytics, setAnalytics] = useState<Record<number, CampaignAnalytics>>({});
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -205,6 +207,7 @@ export default function CampaignsPage() {
     const loadCampaigns = async () => {
       setFetching(true);
       setError(null);
+      setDeleteError(null);
       try {
         const response = await apiFetch('/api/campaigns', {
           headers: {
@@ -245,6 +248,61 @@ export default function CampaignsPage() {
   }, [token, loading, loadAnalytics]);
 
   const hasCampaigns = useMemo(() => campaigns.length > 0, [campaigns]);
+
+  const handleDelete = useCallback(
+    async (campaignId: number) => {
+      if (!token) return;
+      const confirmed = window.confirm('Delete this campaign? This cannot be undone.');
+      if (!confirmed) return;
+
+      setDeleteError(null);
+      setDeletingIds((prev) => ({ ...prev, [campaignId]: true }));
+
+      try {
+        const response = await apiFetch(`/api/campaigns/${campaignId}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          let message = 'Failed to delete campaign.';
+          try {
+            const body = await response.json();
+            if (body?.message) {
+              message = body.message;
+            }
+          } catch (_err) {
+            // ignore parse errors
+          }
+          throw new Error(message);
+        }
+
+        setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
+        setAnalytics((prev) => {
+          const next = { ...prev };
+          delete next[campaignId];
+          return next;
+        });
+        setExpanded((prev) => {
+          const next = { ...prev };
+          delete next[campaignId];
+          return next;
+        });
+      } catch (err) {
+        console.error('[Campaigns] Failed to delete campaign', err);
+        setDeleteError(err instanceof Error ? err.message : 'Failed to delete campaign.');
+      } finally {
+        setDeletingIds((prev) => {
+          const next = { ...prev };
+          delete next[campaignId];
+          return next;
+        });
+      }
+    },
+    [token]
+  );
 
   if (loading || !token) {
     return null;
@@ -287,6 +345,12 @@ export default function CampaignsPage() {
           ) : null}
         </div>
 
+        {deleteError ? (
+          <div className="mt-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+            {deleteError}
+          </div>
+        ) : null}
+
         {hasCampaigns ? (
           <div className="mt-6 flex flex-col gap-6">
             {campaigns.map((campaign) => {
@@ -302,6 +366,7 @@ export default function CampaignsPage() {
               const clicksTotal = metric?.clicksTotal ?? 0;
               const invoicesUsed = metric?.invoicesUsed ?? 0;
               const ctr = metric ? formatPercent(metric.ctr) : '0%';
+              const deleting = deletingIds[campaign.id] === true;
 
               return (
                 <div
@@ -309,7 +374,7 @@ export default function CampaignsPage() {
                   className="flex w-full flex-col gap-4 rounded-2xl border border-slate-800/70 bg-slate-900/50 p-5 shadow-lg shadow-slate-900/30 transition-colors hover:border-slate-700 hover:bg-slate-900/70"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 min-w-0">
+                    <div className="flex min-w-0 items-start gap-3">
                       <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg border border-slate-800 bg-slate-950/70">
                         {logoUrl ? (
                           <img src={logoUrl} alt="logo" className="h-full w-full object-contain" />
@@ -329,14 +394,24 @@ export default function CampaignsPage() {
                         </p>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={toggleExpanded}
-                      className="flex items-center gap-2 shrink-0 rounded-full border border-slate-800 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-200 transition hover:border-slate-600"
-                    >
-                      {isExpanded ? 'Hide details' : 'More details'}
-                      <Chevron open={isExpanded} />
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(campaign.id)}
+                        disabled={deleting}
+                        className="flex items-center gap-2 rounded-full border border-rose-500/50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-rose-100 transition hover:border-rose-400 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500"
+                      >
+                        {deleting ? 'Deleting...' : 'Delete'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={toggleExpanded}
+                        className="flex items-center gap-2 shrink-0 rounded-full border border-slate-800 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-200 transition hover:border-slate-600"
+                      >
+                        {isExpanded ? 'Hide details' : 'More details'}
+                        <Chevron open={isExpanded} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
