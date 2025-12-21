@@ -88,6 +88,7 @@ router.get('/:id/click', async (req, res) => {
         `campaignId=${id}`,
         `u=${decodedTarget || 'null'}`,
         `invoice=${invoiceNumber || 'null'}`,
+        `rawUrl=${req.originalUrl || 'null'}`,
         `flyClientIp=${flyClientIp || 'null'}`,
         `xff=${forwarded || 'null'}`,
         `userAgent=${userAgent || 'null'}`,

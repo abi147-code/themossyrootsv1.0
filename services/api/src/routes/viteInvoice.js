@@ -288,6 +288,23 @@ router.post('/send-email', auth, async (req, res) => {
     const fromAddress = resolveDefaultSender();
     const envelopeFrom = resolveEnvelopeFrom();
 
+    // Temporary observability: capture CTA state and first anchor before sending
+    try {
+      const firstAnchorMatch = emailHtml.match(/href="([^"]+)"/i);
+      console.info('[ViteInvoice][cta-snapshot]', {
+        campaignId: parsedCampaignId || null,
+        invoiceNumber: rawInvoiceNumber || null,
+        banner: {
+          ctaLink: bannerData?.ctaLink || null,
+          ctaTargetUrl: bannerData?.ctaTargetUrl || null,
+          builtCtaLink: bannerCtaLink || null,
+        },
+        firstHref: firstAnchorMatch ? firstAnchorMatch[1] : null,
+      });
+    } catch (logErr) {
+      console.warn('[ViteInvoice][cta-snapshot] failed to log CTA snapshot', logErr);
+    }
+
     console.info('[ViteInvoice] Final emailHtml sample:', emailHtml.slice(0, 400));
 
     const info = await sharedTransporter.sendMail({

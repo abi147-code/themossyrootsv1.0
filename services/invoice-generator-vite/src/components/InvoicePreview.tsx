@@ -80,8 +80,52 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     if (campaignBase) return campaignBase.replace(/\/+$/, '');
 
     // Fallback to global tracking base (same-origin allowed)
+    const publicBase = (getPublicTrackingBase() || '').trim();
+    if (publicBase) return publicBase.replace(/\/+$/, '');
+
     const base = getTrackingBase();
     return base ? base.replace(/\/+$/, '') : '';
+  };
+
+  const buildTrackedCtaUrl = ({
+    campaignId,
+    targetUrl,
+    invoiceNumber,
+    trackingBase,
+  }: {
+    campaignId?: number | string | null;
+    targetUrl?: string | null;
+    invoiceNumber?: string | null;
+    trackingBase: string;
+  }) => {
+    const trimmedTarget = (targetUrl || '').trim();
+    if (!trimmedTarget) return '';
+
+    const hasCampaign = campaignId !== null && campaignId !== undefined;
+    const trimmedInvoice = (invoiceNumber || '').trim();
+    if (hasCampaign && !trimmedInvoice) {
+      throw new Error('Missing invoice number for campaign CTA tracking.');
+    }
+
+    if (!hasCampaign) {
+      return trimmedTarget;
+    }
+
+    const parsedCampaignId = typeof campaignId === 'number' ? campaignId : Number(campaignId);
+    if (!Number.isFinite(parsedCampaignId) || parsedCampaignId <= 0) {
+      throw new Error('Invalid campaign id for CTA tracking.');
+    }
+
+    const normalizedBase = (trackingBase || '').trim().replace(/\/+$/, '');
+    if (!normalizedBase) {
+      throw new Error('Missing tracking base URL for campaign CTA tracking.');
+    }
+
+    const search = new URLSearchParams({
+      u: trimmedTarget,
+      invoice: trimmedInvoice,
+    }).toString();
+    return `${normalizedBase}/api/campaigns/${parsedCampaignId}/click?${search}`;
   };
 
   // Keep dropdown interactive when campaigns are already loaded; only disable during initial empty load
@@ -391,20 +435,6 @@ ${htmlContent}
     const resolvedCampaignId = selectedCampaignId ? Number(selectedCampaignId) : null;
     const campaignIdForPayload = Number.isFinite(resolvedCampaignId) ? resolvedCampaignId : null;
     const trackingBase = resolveTrackingBase();
-    const buildTrackedUrl = (raw?: string | null) => {
-      const invoiceNumber = data.invoiceNumber || 'invoice';
-      const trimmed = (raw || '').trim();
-      if (!trimmed) return '';
-      if (campaignIdForPayload) {
-        const base = getPublicTrackingBase().replace(/\/+$/, '');
-        const search = new URLSearchParams({
-          u: trimmed,
-          invoice: invoiceNumber,
-        }).toString();
-        return `${base}/api/campaigns/${campaignIdForPayload}/click?${search}`;
-      }
-      return trimmed;
-    };
 
     if (!trimmedTo || !trimmedTo.includes('@')) {
       setEmailErrors((prev) => ({ ...prev, to: 'Please enter a valid recipient email.' }));
@@ -424,7 +454,11 @@ ${htmlContent}
       return;
     }
 
-    const invoiceNumber = data.invoiceNumber || 'invoice';
+    const invoiceNumber = (data.invoiceNumber || '').trim();
+    if (!invoiceNumber) {
+      toast.error('Invoice number is required before sending.');
+      return;
+    }
     const invoiceBgForEmail = (data.invoicePageColor && data.invoicePageColor.trim()) || '#0f172a';
 
     setIsSendingEmail(true);
@@ -436,7 +470,24 @@ ${htmlContent}
       const bannerImageUrlForEmail = normalizeAssetUrl(bannerUploadResult.url);
 
       const bannerPayloadBase = banner && typeof banner === 'object' ? banner : { enabled: false, bannerUrl: null };
-      const trackedCtaLink = buildTrackedUrl(bannerPayloadBase.ctaTargetUrl);
+      let trackedCtaLink = '';
+      try {
+        trackedCtaLink = buildTrackedCtaUrl({
+          campaignId: campaignIdForPayload,
+          targetUrl: bannerPayloadBase.ctaTargetUrl,
+          invoiceNumber,
+          trackingBase,
+        });
+      } catch (error) {
+        console.error('Failed to build tracked CTA URL for email payload', error);
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : 'Failed to build tracked CTA URL for this campaign.';
+        toast.error(message);
+        setIsSendingEmail(false);
+        return;
+      }
       const bannerPayload = {
         enabled: !!bannerPayloadBase.enabled,
         text: bannerPayloadBase.bannerCopyText || '',
@@ -913,13 +964,21 @@ ${htmlContent}
     };
     const trackingBase = resolveTrackingBase();
     const rawCtaUrl = (banner.ctaTargetUrl || '').trim();
-    const invoiceNumber = data.invoiceNumber || 'invoice';
-    const trackingUrl =
-      selectedCampaignId && rawCtaUrl
-        ? `${trackingBase}/api/campaigns/${selectedCampaignId}/click?u=${encodeURIComponent(
-          rawCtaUrl
-        )}&invoice=${encodeURIComponent(invoiceNumber)}`
-        : rawCtaUrl;
+    const invoiceNumber = (data.invoiceNumber || '').trim();
+    let trackingUrl = rawCtaUrl;
+    if (selectedCampaignId && rawCtaUrl) {
+      try {
+        trackingUrl = buildTrackedCtaUrl({
+          campaignId: selectedCampaignId,
+          targetUrl: rawCtaUrl,
+          invoiceNumber,
+          trackingBase,
+        });
+      } catch (error) {
+        console.error('Failed to build tracked CTA URL for banner render', error);
+        trackingUrl = '';
+      }
+    }
     const handleBannerLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { naturalWidth, naturalHeight } = e.currentTarget;
       if (naturalWidth && naturalHeight) {
