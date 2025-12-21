@@ -290,42 +290,26 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Campaign not found.' });
     }
 
-    const attemptDelete = async () => {
-      await prisma.$transaction([
-        prisma.campaignClickEvent.deleteMany({ where: { campaignId: id } }),
-        prisma.campaign.delete({ where: { id } }),
-      ]);
-    };
-
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        await attemptDelete();
-        return res.status(204).end();
-      } catch (err) {
-        const code = err?.code || err?.meta?.code;
-        const isForeignKeyConflict = code === 'P2003';
-        const isMissingRecord = code === 'P2025';
-        const isLastAttempt = attempt === 1;
-
-        if (!isForeignKeyConflict && !isMissingRecord) {
-          throw err;
-        }
-
-        // If we hit a FK conflict or the record disappeared mid-flight:
-        // - retry once (to re-delete any new click rows) then treat as success.
-        if (isLastAttempt) {
-          console.warn('[Campaign] Delete completed with warnings (treated as success)', {
-            campaignId: id,
-            code,
-          });
-          return res.status(204).end();
-        }
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.campaignClickEvent.deleteMany({ where: { campaignId: id } });
+        await tx.campaignInvoiceClick.deleteMany({ where: { campaignId: id } });
+        await tx.campaign.delete({ where: { id } });
+      });
+      return res.status(204).end();
+    } catch (error) {
+      const code = error?.code || error?.meta?.code;
+      if (code === 'P2025') {
+        return res.status(404).json({ message: 'Campaign not found.' });
       }
+      if (code === 'P2003') {
+        return res.status(409).json({ message: 'Unable to delete campaign due to related records.' });
+      }
+      console.error('[Campaign] Failed to delete campaign:', error);
+      return res.status(500).json({ message: 'Failed to delete campaign.' });
     }
-
-    return res.status(204).end();
-  } catch (error) {
-    console.error('[Campaign] Failed to delete campaign:', error);
+  } catch (outerError) {
+    console.error('[Campaign] Failed to delete campaign:', outerError);
     return res.status(500).json({ message: 'Failed to delete campaign.' });
   }
 });
