@@ -18,5 +18,5 @@ export function getTrackingBase(): string {
 
 export function getPublicTrackingBase(): string {
   // Public domain for email tracking links (must be absolute for email clients)
-  return 'https://themossyroots.com';
+  return import.meta.env.VITE_PUBLIC_TRACKING_BASE || 'https://themossyroots.com';
 }
