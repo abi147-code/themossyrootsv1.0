@@ -1,10 +1,8 @@
 export function getApiBase() {
-  // Local development only
-  if (import.meta.env.DEV) {
-    return 'http://localhost:4000';
+  // Explicit local override (inlined at build time; absent in production)
+  if (import.meta.env.VITE_LOCAL_API_BASE) {
+    return import.meta.env.VITE_LOCAL_API_BASE;
   }
-
-  // Production & preview: same-origin
   return '';
 }
 
