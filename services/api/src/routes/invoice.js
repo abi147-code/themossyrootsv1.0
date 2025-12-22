@@ -361,11 +361,24 @@ router.post('/send', async (req, res) => {
           }
         : null;
 
+      const normalizedCustomerName =
+        summaryBasis?.customer?.name && summaryBasis.customer.name.trim()
+          ? summaryBasis.customer.name.trim()
+          : summaryBasis?.customer?.email && summaryBasis.customer.email.trim()
+            ? summaryBasis.customer.email.trim()
+            : typeof to === 'string' && to.trim()
+              ? to.trim()
+              : 'Unknown customer';
+      const normalizedCustomerEmail =
+        summaryBasis?.customer?.email && summaryBasis.customer.email.trim()
+          ? summaryBasis.customer.email.trim()
+          : (typeof to === 'string' && to.trim() ? to.trim() : null);
+
       const historyRecord = await prisma.invoiceHistory.create({
         data: {
           userId,
-          customerName: summaryBasis?.customer?.name || 'Unknown customer',
-          customerEmail: summaryBasis?.customer?.email || null,
+          customerName: normalizedCustomerName,
+          customerEmail: normalizedCustomerEmail,
           recipient: to,
           subject,
           totalAmount: totalAmount.toFixed(2),

@@ -346,17 +346,24 @@ router.post('/send-email', auth, async (req, res) => {
         summaryPayload.campaignId = parsedCampaignId;
       }
 
+      const normalizedCustomerName =
+        typeof customerName === 'string' && customerName.trim()
+          ? customerName.trim()
+          : typeof customerEmail === 'string' && customerEmail.trim()
+            ? customerEmail.trim()
+            : typeof toEmail === 'string' && toEmail.trim()
+              ? toEmail.trim()
+              : 'Unknown customer';
+      const normalizedCustomerEmail =
+        typeof customerEmail === 'string' && customerEmail.trim()
+          ? customerEmail.trim()
+          : (typeof toEmail === 'string' && toEmail.trim() ? toEmail.trim() : null);
+
       await prisma.invoiceHistory.create({
         data: {
           userId,
-          customerName:
-            typeof customerName === 'string' && customerName.trim()
-              ? customerName.trim()
-              : 'Unknown customer',
-          customerEmail:
-            typeof customerEmail === 'string' && customerEmail.trim()
-              ? customerEmail.trim()
-              : null,
+          customerName: normalizedCustomerName,
+          customerEmail: normalizedCustomerEmail,
           recipient: toEmail,
           subject,
           totalAmount: numericTotal.toFixed(2),
@@ -607,11 +614,14 @@ router.post('/save-history', async (req, res) => {
       return res.json({ status: 'skipped', reason: 'duplicate', id: existing.id });
     }
 
+    const customerEmailValue =
+      cleanString(customerEmail) || recipientValue;
+
     const record = await prisma.invoiceHistory.create({
       data: {
         userId,
         customerName: nameValue,
-        customerEmail: cleanString(customerEmail) || null,
+        customerEmail: customerEmailValue || null,
         recipient: recipientValue,
         subject: subjectValue,
         totalAmount: numericTotal.toFixed(2),

@@ -30,20 +30,31 @@ router.get('/me', authMiddleware, async (req, res) => {
       }),
       prisma.invoiceHistory.findMany({
         where: { userId: user.id },
-        select: { customerEmail: true, customerName: true },
+        select: { customerEmail: true, customerName: true, recipient: true },
       }),
     ]);
 
+    const normalizeIdentity = (entry) => {
+      // Prioritize client name as the identifier, then email/recipient.
+      const name = entry.customerName && entry.customerName.trim();
+      if (name) {
+        return `name:${name.toLowerCase()}`;
+      }
+      const email = entry.customerEmail && entry.customerEmail.trim();
+      if (email) {
+        return email.toLowerCase();
+      }
+      const recipientEmail = entry.recipient && entry.recipient.trim();
+      if (recipientEmail) {
+        return recipientEmail.toLowerCase();
+      }
+      return null;
+    };
+
     const customerIdentifiers = new Set(
-      customerSnapshots.map((entry) => {
-        if (entry.customerEmail && entry.customerEmail.trim()) {
-          return entry.customerEmail.trim().toLowerCase();
-        }
-        if (entry.customerName && entry.customerName.trim()) {
-          return `name:${entry.customerName.trim().toLowerCase()}`;
-        }
-        return null;
-      }).filter(Boolean)
+      customerSnapshots
+        .map((entry) => normalizeIdentity(entry))
+        .filter(Boolean)
     );
 
     const customerCount = customerIdentifiers.size;
