@@ -281,6 +281,27 @@ router.delete('/:id', async (req, res) => {
   }
 
   try {
+    try {
+      const [clickCount, invoiceClickCount] = await Promise.all([
+        prisma.campaignClickEvent.count({ where: { campaignId: id } }),
+        prisma.campaignInvoiceClick.count({ where: { campaignId: id } }),
+      ]);
+      console.info('[Campaign][delete] context', {
+        campaignId: id,
+        userId,
+        clickCount,
+        invoiceClickCount,
+      });
+    } catch (countErr) {
+      console.error('[Campaign][delete] failed to read related counts', {
+        campaignId: id,
+        userId,
+        code: countErr?.code,
+        message: countErr?.message,
+        meta: countErr?.meta,
+      });
+    }
+
     const campaign = await prisma.campaign.findFirst({
       where: { id, userId },
       select: { id: true },
@@ -305,11 +326,23 @@ router.delete('/:id', async (req, res) => {
       if (code === 'P2003') {
         return res.status(409).json({ message: 'Unable to delete campaign due to related records.' });
       }
-      console.error('[Campaign] Failed to delete campaign:', error);
+      console.error('[Campaign] Failed to delete campaign:', {
+        campaignId: id,
+        userId,
+        code: error?.code,
+        message: error?.message,
+        meta: error?.meta,
+      });
       return res.status(500).json({ message: 'Failed to delete campaign.' });
     }
   } catch (outerError) {
-    console.error('[Campaign] Failed to delete campaign:', outerError);
+    console.error('[Campaign] Failed to delete campaign:', {
+      campaignId: id,
+      userId,
+      code: outerError?.code,
+      message: outerError?.message,
+      meta: outerError?.meta,
+    });
     return res.status(500).json({ message: 'Failed to delete campaign.' });
   }
 });
@@ -326,6 +359,8 @@ router.get('/:id/analytics', async (req, res) => {
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ message: 'Invalid campaign id.' });
   }
+
+  console.info('[Campaign][analytics] entry', { campaignId: id, userId });
 
   try {
     const campaign = await prisma.campaign.findFirst({
@@ -405,7 +440,13 @@ router.get('/:id/analytics', async (req, res) => {
       isLegacy,
     });
   } catch (error) {
-    console.error('[Campaign] Failed to load analytics:', error);
+    console.error('[Campaign] Failed to load analytics:', {
+      campaignId: id,
+      userId,
+      code: error?.code,
+      message: error?.message,
+      meta: error?.meta,
+    });
     return res.status(500).json({ message: 'Failed to load analytics.' });
   }
 });
