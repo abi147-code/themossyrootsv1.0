@@ -5,6 +5,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { chromium } = require('playwright-chromium');
 const { sharedTransporter, resolveDefaultSender, resolveEnvelopeFrom } = require('../utils/mailer');
+const { attemptNormalization } = require('../lib/fx/normalize');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -326,56 +327,8 @@ router.post('/send-email', auth, async (req, res) => {
     });
 
     console.info('[ViteInvoice] SendGrid sendMail result:', info);
-    // Record the countable send for the authenticated user; /save-history remains metadata-only.
-    try {
-      const numericTotal = Number.isFinite(numericAmount) ? numericAmount : 0;
-      const summaryPayload = {
-        invoiceNumber,
-        currency: cleanCurrency,
-        senderName: senderName || null,
-        senderEmail: senderEmail || null,
-        senderAddress: senderAddress || null,
-        message: message || null,
-        banner,
-        logoUrl: logoUrl || null,
-        invoiceBackgroundColor: invoiceBackgroundColor || null,
-      };
-      const parsedCampaignId =
-        typeof campaignId === 'number' ? campaignId : Number(campaignId);
-      if (Number.isFinite(parsedCampaignId) && parsedCampaignId > 0) {
-        summaryPayload.campaignId = parsedCampaignId;
-      }
-
-      const normalizedCustomerName =
-        typeof customerName === 'string' && customerName.trim()
-          ? customerName.trim()
-          : typeof customerEmail === 'string' && customerEmail.trim()
-            ? customerEmail.trim()
-            : typeof toEmail === 'string' && toEmail.trim()
-              ? toEmail.trim()
-              : 'Unknown customer';
-      const normalizedCustomerEmail =
-        typeof customerEmail === 'string' && customerEmail.trim()
-          ? customerEmail.trim()
-          : (typeof toEmail === 'string' && toEmail.trim() ? toEmail.trim() : null);
-
-      await prisma.invoiceHistory.create({
-        data: {
-          userId,
-          customerName: normalizedCustomerName,
-          customerEmail: normalizedCustomerEmail,
-          recipient: toEmail,
-          subject,
-          totalAmount: numericTotal.toFixed(2),
-          status: 'sent',
-          eventType: 'EMAIL_SENT',
-          summary: summaryPayload,
-          sentAt: new Date(),
-        },
-      });
-    } catch (historyErr) {
-      console.error('[ViteInvoice] Failed to persist send history', historyErr);
-    }
+    // NOTE: Do NOT write InvoiceHistory here. Vite invoices are persisted in /save-history only
+    // to avoid duplicate rows and analytics corruption.
 
     res.json({ status: 'ok', message: 'Invoice email sent.' });
   } catch (err) {
@@ -533,6 +486,18 @@ router.post('/save-history', async (req, res) => {
     campaignId,
   } = req.body || {};
 
+  const reqId = `vh_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  console.info('[VITE][SAVE-HISTORY][IN]', {
+    reqId,
+    at: new Date().toISOString(),
+    ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+    ua: req.headers['user-agent'],
+    referer: req.headers['referer'],
+    origin: req.headers['origin'],
+    userId,
+    invoiceNumber: invoiceNumber || (summary && summary.invoiceNumber) || null,
+  });
+
   const cleanString = (value) => (typeof value === 'string' ? value.trim() : '');
   const requiredString = (value) => cleanString(value) || null;
 
@@ -595,6 +560,32 @@ router.post('/save-history', async (req, res) => {
   const duplicateWindowStart = new Date(Date.now() - 60 * 1000);
 
   try {
+    const normalizationResult = await attemptNormalization({
+      currency: currencyValue,
+      amount: numericTotal,
+      atDate: sentAtDate,
+    });
+    const normalizationData =
+      normalizationResult && normalizationResult.writeData ? normalizationResult.writeData : null;
+
+    if (normalizationResult?.status === 'success') {
+    console.info('[FX] Normalization success (vite save-history)', {
+      invoiceId: invoiceNumberValue,
+      currency: normalizationResult.log?.currency,
+      amount: normalizationResult.log?.amount,
+      normalizedAmountEur: normalizationResult.log?.normalizedAmountEur,
+        fxRate: normalizationResult.log?.fxRate,
+        fxRateDate: normalizationResult.log?.fxRateDate,
+      });
+    } else if (normalizationResult && normalizationResult.status !== 'flag_disabled') {
+      console.warn('[FX] Normalization skipped (vite save-history)', {
+        invoiceId: invoiceNumberValue,
+        reason: normalizationResult.log?.reason || 'UNKNOWN',
+        currency: normalizationResult.log?.currency,
+        error: normalizationResult.log?.error,
+      });
+    }
+
     const existing = await prisma.invoiceHistory.findFirst({
       where: {
         userId,
@@ -614,8 +605,18 @@ router.post('/save-history', async (req, res) => {
       return res.json({ status: 'skipped', reason: 'duplicate', id: existing.id });
     }
 
-    const customerEmailValue =
-      cleanString(customerEmail) || recipientValue;
+    const customerEmailValue = cleanString(customerEmail) || recipientValue;
+
+    /**
+     * SINGLE SOURCE OF TRUTH (Vite flow):
+     * InvoiceHistory rows MUST be created ONLY here (/save-history).
+     * Do NOT add InvoiceHistory.create anywhere else in the Vite flow.
+     */
+    console.info('[InvoiceHistory][VITE] creating history row', {
+      invoiceNumber: summaryPayload?.invoiceNumber,
+      userId,
+      reqId,
+    });
 
     const record = await prisma.invoiceHistory.create({
       data: {
@@ -629,7 +630,16 @@ router.post('/save-history', async (req, res) => {
         eventType: 'EMAIL_LOGGED',
         summary: summaryPayload,
         sentAt: sentAtDate,
+        source: 'VITE',
+        ...(normalizationData || {}),
       },
+    });
+
+    console.info('[VITE][SAVE-HISTORY][AFTER-CREATE]', {
+      reqId,
+      createdId: record?.id,
+      userId,
+      invoiceNumber: summaryPayload?.invoiceNumber,
     });
 
     return res.json({ status: 'saved', id: record.id });

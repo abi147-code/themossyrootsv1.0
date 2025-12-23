@@ -7,6 +7,7 @@ const {
   getActiveTransportMeta,
 } = require('../utils/mailer');
 const { buildInvoiceEmail } = require('../email/sendInvoiceEmail');
+const { attemptNormalization } = require('../lib/fx/normalize');
 
 const router = express.Router();
 
@@ -353,6 +354,54 @@ router.post('/send', async (req, res) => {
     try {
       const summaryBasis = summarySource;
       const totalAmount = calculateInvoiceTotal(summaryBasis);
+      const invoiceNumberGuard =
+        summaryBasis?.invoiceNumber ||
+        summaryBasis?.invoice_id ||
+        summaryBasis?.invoiceId ||
+        summaryBasis?.invoiceNumber;
+
+      if (invoiceNumberGuard && typeof invoiceNumberGuard === 'string' && invoiceNumberGuard.startsWith('INV-VITE-')) {
+        console.warn('[InvoiceHistory][DASHBOARD] Skipping Vite invoice', {
+          invoiceNumber: invoiceNumberGuard,
+          userId,
+        });
+        return res.json({
+          status: 'ok',
+          message: 'Invoice email sent.',
+          provider: { messageId: sent?.messageId },
+          auditId,
+          historyId: null,
+          html: emailHtml,
+          summary: summaryResponse?.summary,
+        });
+      }
+
+      const normalizationResult = await attemptNormalization({
+        currency: body.currency || summarySource?.currency || summarySource?.currency_code,
+        amount: totalAmount,
+        atDate: new Date(),
+      });
+      const normalizationData =
+        normalizationResult && normalizationResult.writeData ? normalizationResult.writeData : null;
+
+      if (normalizationResult?.status === 'success') {
+        console.info('[FX] Normalization success', {
+          invoiceId: resolveInvoiceId(pdfSource),
+          currency: normalizationResult.log?.currency,
+          amount: normalizationResult.log?.amount,
+          normalizedAmountEur: normalizationResult.log?.normalizedAmountEur,
+          fxRate: normalizationResult.log?.fxRate,
+          fxRateDate: normalizationResult.log?.fxRateDate,
+        });
+      } else if (normalizationResult && normalizationResult.status !== 'flag_disabled') {
+        console.warn('[FX] Normalization skipped', {
+          invoiceId: resolveInvoiceId(pdfSource),
+          reason: normalizationResult.log?.reason || 'UNKNOWN',
+          currency: normalizationResult.log?.currency,
+          error: normalizationResult.log?.error,
+        });
+      }
+
       const summaryData = summaryResponse
         ? {
             summary: summaryResponse?.summary ?? null,
@@ -384,10 +433,12 @@ router.post('/send', async (req, res) => {
           totalAmount: totalAmount.toFixed(2),
           status: 'sent',
           eventType: 'EMAIL_SENT',
-          summary: summaryData || (summaryBasis ? { payload: summaryBasis } : null),
-          sentAt: new Date(),
-        },
-      });
+        summary: summaryData || (summaryBasis ? { payload: summaryBasis } : null),
+        sentAt: new Date(),
+        source: 'DASHBOARD',
+        ...(normalizationData || {}),
+      },
+    });
       historyId = historyRecord.id;
     } catch (historyError) {
       console.error('[Invoice] Failed to persist invoice history:', historyError);

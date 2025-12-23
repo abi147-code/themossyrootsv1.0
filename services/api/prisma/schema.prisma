@@ -26,6 +26,18 @@ enum InvoiceHistoryEventType {
   EMAIL_LOGGED
 }
 
+enum InvoiceNormalizationStatus {
+  LEGACY
+  NORMALIZED
+  SKIPPED_RATE_UNAVAILABLE
+  FAILED_INVALID_CURRENCY
+}
+
+enum InvoiceSource {
+  DASHBOARD
+  VITE
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -144,6 +156,17 @@ model InvoiceHistory {
   summary       Json?
   eventType     InvoiceHistoryEventType @default(EMAIL_SENT)
   sentAt        DateTime @default(now())
+  // Normalization metadata (additive, nullable)
+  originalAmount       Decimal?                     @db.Decimal(18, 4)
+  originalCurrency     String?
+  originalTotal        Decimal?                     @db.Decimal(18, 4)
+  normalizedAmountEur  Decimal?                     @db.Decimal(18, 4)
+  fxRate               Decimal?                     @db.Decimal(18, 8)
+  fxRateDate           DateTime?
+  fxRateSource         String?
+  isNormalized         Boolean?
+  normalizationStatus  InvoiceNormalizationStatus?
+  source               InvoiceSource?
   createdAt     DateTime @default(now())
   user          User     @relation(fields: [userId], references: [id])
 
