@@ -8,6 +8,7 @@ const {
 } = require('../utils/mailer');
 const { buildInvoiceEmail } = require('../email/sendInvoiceEmail');
 const { attemptNormalization } = require('../lib/fx/normalize');
+const { convertFromEur } = require('../lib/fx/convert');
 
 const router = express.Router();
 
@@ -348,10 +349,15 @@ router.post('/send', async (req, res) => {
           sentAt: new Date(),
         },
       });
-      auditId = rec?.id ?? null;
-    } catch (_) {}
+        auditId = rec?.id ?? null;
+      } catch (_) {}
 
     try {
+      const userRecord = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { preferredCurrency: true },
+      });
+      const targetCurrency = (userRecord?.preferredCurrency || 'USD').toUpperCase();
       const summaryBasis = summarySource;
       const totalAmount = calculateInvoiceTotal(summaryBasis);
       const invoiceNumberGuard =
@@ -401,6 +407,34 @@ router.post('/send', async (req, res) => {
           error: normalizationResult.log?.error,
         });
       }
+      let billedAmount = null;
+      let billedCurrency = null;
+      if (
+        normalizationData &&
+        Number.isFinite(normalizationData.normalizedAmountEur) &&
+        targetCurrency
+      ) {
+        const fxDate =
+          normalizationData.fxRateDate instanceof Date
+            ? normalizationData.fxRateDate
+            : normalizationData.fxRateDate
+              ? new Date(normalizationData.fxRateDate)
+              : new Date();
+        const conversion = await convertFromEur({
+          amountEur: Number(normalizationData.normalizedAmountEur),
+          targetCurrency,
+          fxDate,
+        });
+        billedAmount = conversion.convertedAmount;
+        billedCurrency = targetCurrency;
+        console.info('[FX][SNAPSHOT]', {
+          invoice: resolveInvoiceId(pdfSource),
+          eur: normalizationData.normalizedAmountEur,
+          target: targetCurrency,
+          rate: conversion.fxRate,
+          billed: billedAmount,
+        });
+      }
 
       const summaryData = summaryResponse
         ? {
@@ -433,12 +467,15 @@ router.post('/send', async (req, res) => {
           totalAmount: totalAmount.toFixed(2),
           status: 'sent',
           eventType: 'EMAIL_SENT',
-        summary: summaryData || (summaryBasis ? { payload: summaryBasis } : null),
-        sentAt: new Date(),
-        source: 'DASHBOARD',
-        ...(normalizationData || {}),
-      },
-    });
+          summary: summaryData || (summaryBasis ? { payload: summaryBasis } : null),
+          sentAt: new Date(),
+          source: 'DASHBOARD',
+          ...(normalizationData || {}),
+          ...(billedCurrency && billedAmount !== null
+            ? { billedAmount, billedCurrency }
+            : {}),
+        },
+      });
       historyId = historyRecord.id;
     } catch (historyError) {
       console.error('[Invoice] Failed to persist invoice history:', historyError);

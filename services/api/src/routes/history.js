@@ -1,5 +1,4 @@
 const express = require('express');
-const { convertFromEur } = require('../lib/fx/convert');
 
 const router = express.Router();
 
@@ -49,13 +48,14 @@ router.get('/analytics', async (req, res) => {
     const whereClause = {
       userId,
       eventType: { in: ['EMAIL_SENT', 'EMAIL_LOGGED'] },
-      isNormalized: true,
+      billedCurrency: targetCurrency,
+      billedAmount: { not: null },
     };
 
-    const [sumResult, lastResult, topResult] = await Promise.all([
+    const [sumResult, lastResult, topResult, rowCount] = await Promise.all([
       prisma.invoiceHistory.aggregate({
         where: whereClause,
-        _sum: { normalizedAmountEur: true },
+        _sum: { billedAmount: true },
       }),
       prisma.invoiceHistory.aggregate({
         where: whereClause,
@@ -64,27 +64,22 @@ router.get('/analytics', async (req, res) => {
       prisma.invoiceHistory.groupBy({
         by: ['customerEmail', 'customerName'],
         where: whereClause,
-        _sum: { normalizedAmountEur: true },
+        _sum: { billedAmount: true },
         _count: { _all: true },
-        orderBy: { _sum: { normalizedAmountEur: 'desc' } },
+        orderBy: { _sum: { billedAmount: 'desc' } },
         take: 1,
+      }),
+      prisma.invoiceHistory.count({
+        where: whereClause,
       }),
     ]);
 
-    const totalEur = toNumber(sumResult?._sum?.normalizedAmountEur || 0);
-    const conversion = await convertFromEur({
-      amountEur: totalEur,
-      targetCurrency,
-      fxDate: new Date(),
+    const totalBilled = toNumber(sumResult?._sum?.billedAmount || 0);
+    console.info('[OVERVIEW]', {
+      currency: targetCurrency,
+      rows: rowCount || 0,
+      sum: totalBilled,
     });
-    console.info('[OVERVIEW][FX]', {
-      base: 'EUR',
-      target: targetCurrency,
-      sumEur: totalEur,
-      rate: conversion.fxRate,
-      final: conversion.convertedAmount,
-    });
-    const totalBilled = conversion.convertedAmount;
     const lastInvoiceDate = lastResult?._max?.sentAt || null;
 
     const topEntry = Array.isArray(topResult) && topResult[0] ? topResult[0] : null;
@@ -93,18 +88,13 @@ router.get('/analytics', async (req, res) => {
           name: topEntry.customerName || null,
           email: topEntry.customerEmail || null,
           count: topEntry._count?._all || 0,
-          totalBilled:
-            targetCurrency === 'EUR'
-              ? toNumber(topEntry._sum?.normalizedAmountEur || 0)
-              : toNumber(topEntry._sum?.normalizedAmountEur || 0) * conversion.fxRate,
+          totalBilled: toNumber(topEntry._sum?.billedAmount || 0),
         }
       : null;
 
     return res.json({
       totalBilled,
       currency: targetCurrency,
-      baseCurrency: 'EUR',
-      fxRate: conversion.fxRate,
       topCustomer,
       lastInvoiceDate,
     });

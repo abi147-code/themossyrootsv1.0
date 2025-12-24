@@ -168,6 +168,8 @@ model InvoiceHistory {
   isNormalized         Boolean?
   normalizationStatus  InvoiceNormalizationStatus?
   source               InvoiceSource?
+  billedAmount         Decimal?                     @db.Decimal(18, 4)
+  billedCurrency       String?
   createdAt     DateTime @default(now())
   user          User     @relation(fields: [userId], references: [id])
 

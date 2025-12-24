@@ -6,6 +6,7 @@ const { pathToFileURL } = require('url');
 const { chromium } = require('playwright-chromium');
 const { sharedTransporter, resolveDefaultSender, resolveEnvelopeFrom } = require('../utils/mailer');
 const { attemptNormalization } = require('../lib/fx/normalize');
+const { convertFromEur } = require('../lib/fx/convert');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -558,6 +559,11 @@ router.post('/save-history', async (req, res) => {
   }
 
   try {
+    const userRecord = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { preferredCurrency: true },
+    });
+    const targetCurrency = (userRecord?.preferredCurrency || 'USD').toUpperCase();
     const normalizationResult = await attemptNormalization({
       currency: currencyValue,
       amount: numericTotal,
@@ -581,6 +587,34 @@ router.post('/save-history', async (req, res) => {
         reason: normalizationResult.log?.reason || 'UNKNOWN',
         currency: normalizationResult.log?.currency,
         error: normalizationResult.log?.error,
+      });
+    }
+    let billedAmount = null;
+    let billedCurrency = null;
+    if (
+      normalizationData &&
+      Number.isFinite(normalizationData.normalizedAmountEur) &&
+      targetCurrency
+    ) {
+      const fxDate =
+        normalizationData.fxRateDate instanceof Date
+          ? normalizationData.fxRateDate
+          : normalizationData.fxRateDate
+            ? new Date(normalizationData.fxRateDate)
+            : new Date();
+      const conversion = await convertFromEur({
+        amountEur: Number(normalizationData.normalizedAmountEur),
+        targetCurrency,
+        fxDate,
+      });
+      billedAmount = conversion.convertedAmount;
+      billedCurrency = targetCurrency;
+      console.info('[FX][SNAPSHOT]', {
+        invoice: invoiceNumberValue,
+        eur: normalizationData.normalizedAmountEur,
+        target: targetCurrency,
+        rate: conversion.fxRate,
+        billed: billedAmount,
       });
     }
 
@@ -611,6 +645,9 @@ router.post('/save-history', async (req, res) => {
         sentAt: sentAtDate,
         source: 'VITE',
         ...(normalizationData || {}),
+        ...(billedCurrency && billedAmount !== null
+          ? { billedAmount, billedCurrency }
+          : {}),
       },
     });
 

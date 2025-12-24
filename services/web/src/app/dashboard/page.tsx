@@ -31,8 +31,6 @@ type UserSummary = {
 type HistoryAnalytics = {
   totalBilled: number;
   currency: string;
-  baseCurrency: string;
-  fxRate: number;
   topCustomer: {
     name: string | null;
     email: string | null;
