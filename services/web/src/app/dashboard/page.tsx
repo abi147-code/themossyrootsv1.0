@@ -30,6 +30,9 @@ type UserSummary = {
 
 type HistoryAnalytics = {
   totalBilled: number;
+  currency: string;
+  baseCurrency: string;
+  fxRate: number;
   topCustomer: {
     name: string | null;
     email: string | null;
@@ -192,8 +195,8 @@ export default function DashboardPage() {
     customers: 0,
     invoices: 0,
   };
-  const formatMoney = (value: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+  const formatMoney = (value: number, currency?: string) =>
+    new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD' }).format(
       Number.isFinite(value) ? value : 0
     );
   const lastInvoiceDateText = analytics?.lastInvoiceDate
@@ -207,7 +210,10 @@ export default function DashboardPage() {
     ? analytics.topCustomer.name || analytics.topCustomer.email || 'Top customer'
     : '—';
   const topCustomerStat = analytics?.topCustomer
-    ? `${analytics.topCustomer.count} sent • ${formatMoney(analytics.topCustomer.totalBilled)}`
+    ? `${analytics.topCustomer.count} sent • ${formatMoney(
+        analytics.topCustomer.totalBilled,
+        analytics?.currency
+      )}`
     : 'No data yet';
   const showUserSummarySkeleton = isAdmin && userSummary === null && !summaryError;
   const totalUsersText = userSummary ? userSummary.totalUsers.toLocaleString() : '—';
@@ -297,11 +303,15 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <MetricCard
-          label="Total billed"
-          value={analyticsLoading ? '…' : formatMoney(analytics?.totalBilled ?? 0)}
-          sublabel={analyticsError ? analyticsError : 'All-time from your history'}
-        />
+          <MetricCard
+            label="Total billed"
+            value={
+              analyticsLoading
+                ? '…'
+                : formatMoney(analytics?.totalBilled ?? 0, analytics?.currency ?? 'USD')
+            }
+            sublabel={analyticsError ? analyticsError : 'All-time from your history'}
+          />
         <MetricCard
           label="Top customer"
           value={analyticsLoading ? '…' : topCustomerLabel}

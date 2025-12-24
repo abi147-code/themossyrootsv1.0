@@ -74,6 +74,7 @@ router.get('/me', authMiddleware, async (req, res) => {
       name: user.name,
       role: user.role,
       avatarUrl: toPublicAvatar(req, user.avatarUrl),
+      preferredCurrency: user.preferredCurrency || 'USD',
       organization: user.organization,
       subscription,
       trialEndsAt,
@@ -85,6 +86,39 @@ router.get('/me', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Fetch current user failed', error);
     res.status(500).json({ message: 'Failed to fetch profile.' });
+  }
+});
+
+router.patch('/me', authMiddleware, async (req, res) => {
+  const prisma = req.prisma;
+  const allowed = ['USD', 'EUR', 'INR', 'GBP'];
+  const preferredCurrencyRaw = req.body?.preferredCurrency;
+  const preferredCurrency =
+    typeof preferredCurrencyRaw === 'string' && preferredCurrencyRaw.trim()
+      ? preferredCurrencyRaw.trim().toUpperCase()
+      : null;
+
+  if (!preferredCurrency || !allowed.includes(preferredCurrency)) {
+    return res.status(400).json({ message: 'Invalid currency code.' });
+  }
+
+  try {
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { preferredCurrency },
+    });
+
+    return res.json({
+      id: updated.id,
+      email: updated.email,
+      name: updated.name,
+      role: updated.role,
+      avatarUrl: toPublicAvatar(req, updated.avatarUrl),
+      preferredCurrency: updated.preferredCurrency || 'USD',
+    });
+  } catch (error) {
+    console.error('Update preferred currency failed', error);
+    return res.status(500).json({ message: 'Failed to update profile.' });
   }
 });
 

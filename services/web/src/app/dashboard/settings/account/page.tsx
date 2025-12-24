@@ -19,6 +19,7 @@ type AccountResponse = {
   name: string | null;
   email: string;
   avatarUrl?: string | null;
+  preferredCurrency?: string | null;
 };
 
 type ToastState =
@@ -29,7 +30,7 @@ type ToastState =
   | null;
 
 async function fetchAccountProfile(token: string, signal?: AbortSignal): Promise<AccountResponse> {
-  const response = await apiFetch('/api/account', {
+  const response = await apiFetch('/api/users/me', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -61,6 +62,8 @@ export default function AccountSettingsPage() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [preferredCurrency, setPreferredCurrency] = useState<string>('USD');
+  const [currencySaving, setCurrencySaving] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -89,6 +92,7 @@ export default function AccountSettingsPage() {
     setFormName(payload.name ?? '');
     setEmail(payload.email);
     setAvatarUrl(resolveAssetUrl(payload.avatarUrl) ?? null);
+    setPreferredCurrency((payload.preferredCurrency || 'USD').toUpperCase());
   }, []);
 
   useEffect(() => {
@@ -324,6 +328,33 @@ export default function AccountSettingsPage() {
   const isPasswordButtonDisabled =
     passwordSaving || !currentPassword || !newPassword || !confirmPassword;
 
+  const handleCurrencyChange = async (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value;
+    setPreferredCurrency(value);
+    if (!token) return;
+    try {
+      setCurrencySaving(true);
+      const response = await apiFetch('/api/users/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ preferredCurrency: value }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body?.message || 'Failed to update currency.');
+      }
+      setToast({ type: 'success', message: 'Currency preference updated' });
+    } catch (error) {
+      console.error('Failed to update preferred currency', error);
+      setToast({ type: 'error', message: 'Failed to update currency.' });
+    } finally {
+      setCurrencySaving(false);
+    }
+  };
+
   if (loading || !token) {
     return null;
   }
@@ -470,6 +501,36 @@ export default function AccountSettingsPage() {
             </div>
           </form>
         )}
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg shadow-emerald-50">
+        <header className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.3em] text-emerald-700/80">Currency</p>
+          <h2 className="text-lg font-semibold text-slate-900">Preferred currency</h2>
+          <p className="text-sm text-slate-600">
+            Choose the currency used for dashboard totals and overviews.
+          </p>
+        </header>
+        <div className="mt-6">
+          <label className="block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500" htmlFor="preferredCurrency">
+            Preferred currency
+          </label>
+          <select
+            id="preferredCurrency"
+            className="mt-3 w-full max-w-sm rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
+            value={preferredCurrency}
+            onChange={handleCurrencyChange}
+            disabled={currencySaving}
+          >
+            <option value="USD">USD — US Dollar</option>
+            <option value="EUR">EUR — Euro</option>
+            <option value="INR">INR — Indian Rupee</option>
+            <option value="GBP">GBP — British Pound</option>
+          </select>
+          <p className="mt-2 text-xs text-slate-500">
+            Applies to overview totals; invoices remain in their original currency.
+          </p>
+        </div>
       </section>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg shadow-emerald-50">

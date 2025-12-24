@@ -52,6 +52,7 @@ model User {
   avatarUrl      String?
   organizationId Int?
   organization   Organization?    @relation(fields: [organizationId], references: [id])
+  preferredCurrency String? @default("USD")
   subscriptions  Subscription[]
   customers      Customer[]
   invoices       Invoice[]
