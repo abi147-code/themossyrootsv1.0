@@ -6,7 +6,7 @@ const { pathToFileURL } = require('url');
 const { chromium } = require('playwright-chromium');
 const { sharedTransporter, resolveDefaultSender, resolveEnvelopeFrom } = require('../utils/mailer');
 const { attemptNormalization } = require('../lib/fx/normalize');
-const { convertFromEur } = require('../lib/fx/convert');
+const { buildBilledSnapshot } = require('../lib/fx/snapshot');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -591,6 +591,7 @@ router.post('/save-history', async (req, res) => {
     }
     let billedAmount = null;
     let billedCurrency = null;
+    let billedSnapshot = null;
     if (
       normalizationData &&
       Number.isFinite(normalizationData.normalizedAmountEur) &&
@@ -602,20 +603,26 @@ router.post('/save-history', async (req, res) => {
           : normalizationData.fxRateDate
             ? new Date(normalizationData.fxRateDate)
             : new Date();
-      const conversion = await convertFromEur({
-        amountEur: Number(normalizationData.normalizedAmountEur),
-        targetCurrency,
-        fxDate,
-      });
-      billedAmount = conversion.convertedAmount;
-      billedCurrency = targetCurrency;
-      console.info('[FX][SNAPSHOT]', {
-        invoice: invoiceNumberValue,
-        eur: normalizationData.normalizedAmountEur,
-        target: targetCurrency,
-        rate: conversion.fxRate,
-        billed: billedAmount,
-      });
+      try {
+        billedSnapshot = await buildBilledSnapshot({
+          amountEur: Number(normalizationData.normalizedAmountEur),
+          fxDate,
+        });
+        const preferredAmount = billedSnapshot?.[targetCurrency];
+        if (Number.isFinite(preferredAmount)) {
+          billedAmount = preferredAmount;
+          billedCurrency = targetCurrency;
+        }
+        console.info('[FX][SNAPSHOT]', {
+          invoice: invoiceNumberValue,
+          eur: normalizationData.normalizedAmountEur,
+          target: targetCurrency,
+          billed: billedAmount,
+          fxDate: fxDate?.toISOString?.().slice(0, 10),
+        });
+      } catch (snapshotError) {
+        console.error('[FX][SNAPSHOT] Failed to build billed snapshot', snapshotError?.message || snapshotError);
+      }
     }
 
     const customerEmailValue = cleanString(customerEmail) || recipientValue;
@@ -645,6 +652,7 @@ router.post('/save-history', async (req, res) => {
         sentAt: sentAtDate,
         source: 'VITE',
         ...(normalizationData || {}),
+        ...(billedSnapshot ? { billedSnapshot } : {}),
         ...(billedCurrency && billedAmount !== null
           ? { billedAmount, billedCurrency }
           : {}),

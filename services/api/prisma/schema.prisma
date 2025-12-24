@@ -170,6 +170,8 @@ model InvoiceHistory {
   source               InvoiceSource?
   billedAmount         Decimal?                     @db.Decimal(18, 4)
   billedCurrency       String?
+  // Multi-currency snapshot captured at send time; includes EUR base and supported targets (USD, EUR, INR, GBP)
+  billedSnapshot       Json?
   createdAt     DateTime @default(now())
   user          User     @relation(fields: [userId], references: [id])
 

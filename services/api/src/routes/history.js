@@ -45,55 +45,67 @@ router.get('/analytics', async (req, res) => {
       select: { preferredCurrency: true },
     });
     const targetCurrency = (userRecord?.preferredCurrency || 'USD').toUpperCase();
-    const whereClause = {
-      userId,
-      eventType: { in: ['EMAIL_SENT', 'EMAIL_LOGGED'] },
-      billedCurrency: targetCurrency,
-      billedAmount: { not: null },
-    };
-
-    const [sumResult, lastResult, topResult, rowCount] = await Promise.all([
-      prisma.invoiceHistory.aggregate({
-        where: whereClause,
-        _sum: { billedAmount: true },
-      }),
-      prisma.invoiceHistory.aggregate({
-        where: whereClause,
-        _max: { sentAt: true },
-      }),
-      prisma.invoiceHistory.groupBy({
-        by: ['customerEmail', 'customerName'],
-        where: whereClause,
-        _sum: { billedAmount: true },
-        _count: { _all: true },
-        orderBy: { _sum: { billedAmount: 'desc' } },
-        take: 1,
-      }),
-      prisma.invoiceHistory.count({
-        where: whereClause,
-      }),
-    ]);
-
-    const totalBilled = toNumber(sumResult?._sum?.billedAmount || 0);
-    console.info('[OVERVIEW]', {
-      currency: targetCurrency,
-      rows: rowCount || 0,
-      sum: totalBilled,
+    const invoices = await prisma.invoiceHistory.findMany({
+      where: {
+        userId,
+        eventType: { in: ['EMAIL_SENT', 'EMAIL_LOGGED'] },
+        billedSnapshot: { not: null },
+      },
+      select: {
+        billedSnapshot: true,
+        customerName: true,
+        customerEmail: true,
+        sentAt: true,
+      },
+      orderBy: { sentAt: 'desc' },
     });
-    const lastInvoiceDate = lastResult?._max?.sentAt || null;
 
-    const topEntry = Array.isArray(topResult) && topResult[0] ? topResult[0] : null;
-    const topCustomer = topEntry
-      ? {
-          name: topEntry.customerName || null,
-          email: topEntry.customerEmail || null,
-          count: topEntry._count?._all || 0,
-          totalBilled: toNumber(topEntry._sum?.billedAmount || 0),
-        }
-      : null;
+    let totalBilled = 0;
+    let lastInvoiceDate = null;
+    const customerTotals = new Map();
+
+    for (const inv of invoices) {
+      const snapshot = inv?.billedSnapshot || {};
+      const amount = snapshot?.[targetCurrency];
+      if (!Number.isFinite(Number(amount))) {
+        continue;
+      }
+      const numericAmount = Number(amount);
+      totalBilled += numericAmount;
+
+      if (!lastInvoiceDate && inv?.sentAt) {
+        lastInvoiceDate = inv.sentAt;
+      }
+
+      const customerKey = (inv.customerEmail || inv.customerName || '').toLowerCase() || 'unknown';
+      const existing = customerTotals.get(customerKey) || { name: inv.customerName || null, email: inv.customerEmail || null, count: 0, total: 0 };
+      existing.count += 1;
+      existing.total += numericAmount;
+      if (!existing.name) existing.name = inv.customerName || null;
+      if (!existing.email) existing.email = inv.customerEmail || null;
+      customerTotals.set(customerKey, existing);
+    }
+
+    let topCustomer = null;
+    for (const value of customerTotals.values()) {
+      if (!topCustomer || value.total > topCustomer.total) {
+        topCustomer = {
+          name: value.name,
+          email: value.email,
+          count: value.count,
+          totalBilled: toNumber(value.total),
+        };
+      }
+    }
+
+    console.info('[OVERVIEW][SNAPSHOT]', {
+      currency: targetCurrency,
+      rows: invoices.length,
+      sum: toNumber(totalBilled),
+    });
 
     return res.json({
-      totalBilled,
+      totalBilled: toNumber(totalBilled),
       currency: targetCurrency,
       topCustomer,
       lastInvoiceDate,
