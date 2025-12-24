@@ -557,8 +557,6 @@ router.post('/save-history', async (req, res) => {
     summaryPayload.campaignId = campaignIdValue;
   }
 
-  const duplicateWindowStart = new Date(Date.now() - 60 * 1000);
-
   try {
     const normalizationResult = await attemptNormalization({
       currency: currencyValue,
@@ -584,25 +582,6 @@ router.post('/save-history', async (req, res) => {
         currency: normalizationResult.log?.currency,
         error: normalizationResult.log?.error,
       });
-    }
-
-    const existing = await prisma.invoiceHistory.findFirst({
-      where: {
-        userId,
-        eventType: 'EMAIL_LOGGED',
-        createdAt: { gte: duplicateWindowStart },
-        recipient: recipientValue,
-        subject: subjectValue,
-        summary: {
-          path: ['invoiceNumber'],
-          equals: invoiceNumberValue,
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (existing) {
-      return res.json({ status: 'skipped', reason: 'duplicate', id: existing.id });
     }
 
     const customerEmailValue = cleanString(customerEmail) || recipientValue;

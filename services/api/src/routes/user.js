@@ -26,7 +26,11 @@ router.get('/me', authMiddleware, async (req, res) => {
 
     const [invoiceCount, customerSnapshots] = await Promise.all([
       prisma.invoiceHistory.count({
-        where: { userId: user.id, status: 'sent', eventType: 'EMAIL_SENT' },
+        where: {
+          userId: user.id,
+          status: 'sent',
+          eventType: { in: ['EMAIL_SENT', 'EMAIL_LOGGED'] },
+        },
       }),
       prisma.invoiceHistory.findMany({
         where: { userId: user.id },

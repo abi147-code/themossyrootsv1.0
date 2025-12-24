@@ -16,8 +16,11 @@ router.get('/', async (req, res) => {
   }
 
   try {
+    // EMAIL_SENT   → Dashboard invoice sent
+    // EMAIL_LOGGED → Vite invoice sent
+    // Both represent successfully sent invoices and must be included in history/analytics
     const invoices = await prisma.invoiceHistory.findMany({
-      where: { userId, eventType: 'EMAIL_SENT' },
+      where: { userId, eventType: { in: ['EMAIL_SENT', 'EMAIL_LOGGED'] } },
       orderBy: { sentAt: 'desc' },
     });
 
@@ -39,16 +42,16 @@ router.get('/analytics', async (req, res) => {
   try {
     const [sumResult, lastResult, topResult] = await Promise.all([
       prisma.invoiceHistory.aggregate({
-        where: { userId, eventType: 'EMAIL_SENT' },
+        where: { userId, eventType: { in: ['EMAIL_SENT', 'EMAIL_LOGGED'] } },
         _sum: { totalAmount: true },
       }),
       prisma.invoiceHistory.aggregate({
-        where: { userId, eventType: 'EMAIL_SENT' },
+        where: { userId, eventType: { in: ['EMAIL_SENT', 'EMAIL_LOGGED'] } },
         _max: { sentAt: true },
       }),
       prisma.invoiceHistory.groupBy({
         by: ['customerEmail', 'customerName'],
-        where: { userId, eventType: 'EMAIL_SENT' },
+        where: { userId, eventType: { in: ['EMAIL_SENT', 'EMAIL_LOGGED'] } },
         _sum: { totalAmount: true },
         _count: { _all: true },
         orderBy: { _sum: { totalAmount: 'desc' } },
