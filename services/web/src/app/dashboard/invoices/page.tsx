@@ -116,6 +116,7 @@ type DraftShape = {
   paymentTerm?: string;
   poNumber?: string;
   invoiceSequence: number;
+  invoiceNumberSuffix?: string;
   companyLogoData?: string;
   companyLogoName?: string;
   companyLogoUrl?: string;
@@ -494,6 +495,7 @@ export default function InvoicesPage() {
   const [showRestorePrompt, setShowRestorePrompt] = useState(false);
   const [allowAutosave, setAllowAutosave] = useState(false);
   const [invoiceSequence, setInvoiceSequence] = useState(1);
+  const [invoiceNumberSuffix, setInvoiceNumberSuffix] = useState('');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const trimmedValues = useMemo(
@@ -605,10 +607,15 @@ export default function InvoicesPage() {
     ]
   );
 
-  const invoiceNumber = useMemo(() => {
-    const year = new Date().getFullYear();
-    return `INV-${year}-${String(invoiceSequence).padStart(3, '0')}`;
+  const baseInvoiceNumber = useMemo(() => {
+    return `TMRINV${String(invoiceSequence).padStart(2, '0')}`;
   }, [invoiceSequence]);
+
+  const invoiceNumber = useMemo(() => {
+    const suffix = invoiceNumberSuffix.trim();
+    if (!suffix) return baseInvoiceNumber;
+    return `${baseInvoiceNumber}-${suffix}`;
+  }, [baseInvoiceNumber, invoiceNumberSuffix]);
 
   const shouldDeferRender = loading || !token;
 
@@ -662,6 +669,7 @@ export default function InvoicesPage() {
       paymentTerm: formValues.paymentTerm,
       poNumber: formValues.poNumber,
       invoiceSequence,
+      invoiceNumberSuffix,
       companyLogoData: companyLogo || undefined,
       companyLogoName: companyLogoName || undefined,
       companyLogoUrl: companyLogoUrl || undefined,
@@ -692,6 +700,7 @@ export default function InvoicesPage() {
     invoiceTo,
     currency,
     invoiceSequence,
+    invoiceNumberSuffix,
     companyLogo,
     companyLogoName,
     companyLogoUrl,
@@ -831,6 +840,7 @@ export default function InvoicesPage() {
     if (pendingDraft.invoiceSequence) {
       setInvoiceSequence(pendingDraft.invoiceSequence);
     }
+    setInvoiceNumberSuffix(pendingDraft.invoiceNumberSuffix ?? '');
     setPendingDraft(null);
     setShowRestorePrompt(false);
     setAllowAutosave(true);
@@ -889,6 +899,7 @@ export default function InvoicesPage() {
     setMarketingBackgroundImageName('');
     setMarketingBackgroundImageUrl('');
     setMarketingBackgroundImageOpacity(DEFAULT_MARKETING_IMAGE_OPACITY);
+    setInvoiceNumberSuffix('');
     setFieldErrors({});
     setItemErrors({});
     setInvoiceItemsError(null);
@@ -1366,6 +1377,7 @@ export default function InvoicesPage() {
       setMarketingBackgroundImageName('');
       setMarketingBackgroundImageUrl('');
       setMarketingBackgroundImageOpacity(DEFAULT_MARKETING_IMAGE_OPACITY);
+      setInvoiceNumberSuffix('');
 
       const nextSequence = invoiceSequence + 1;
       setInvoiceSequence(nextSequence);
@@ -1827,6 +1839,38 @@ export default function InvoicesPage() {
                     setShowValidationBanner(false);
                   }}
                 />
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                  Invoice #
+                </label>
+                <div className="mt-3 rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Auto-generated</p>
+                  <p className="mt-1 text-sm font-semibold text-white">{invoiceNumber}</p>
+                  <p className="mt-1 text-xs text-slate-400">Format: TMRINV##, increments after each send.</p>
+                </div>
+              </div>
+              <div>
+                <label
+                  className="block text-xs font-semibold uppercase tracking-[0.3em] text-slate-400"
+                  htmlFor="invoiceNumberSuffix"
+                >
+                  Extra invoice tag (optional)
+                </label>
+                <input
+                  className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/40"
+                  id="invoiceNumberSuffix"
+                  name="invoiceNumberSuffix"
+                  type="text"
+                  autoComplete="off"
+                  placeholder="e.g., 02 or ACME-PO"
+                  value={invoiceNumberSuffix}
+                  onChange={(event) => setInvoiceNumberSuffix(event.target.value)}
+                />
+                <p className="mt-2 text-xs text-slate-400">Appends to the auto number for internal reference.</p>
               </div>
             </div>
 

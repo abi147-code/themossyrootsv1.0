@@ -13,6 +13,7 @@ interface InvoicePreviewProps {
   registerAnchor?: (key: string, el: HTMLElement | null) => void;
   showTour?: boolean;
   tourStepId?: string;
+  onEnsureInvoiceNumber?: () => string | null;
   onSaveCampaign?: () => void;
   onCreateNewCampaign?: () => void;
   onOpenCampaigns?: () => void;
@@ -32,6 +33,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   registerAnchor,
   showTour = false,
   tourStepId,
+  onEnsureInvoiceNumber,
   onSaveCampaign,
   onCreateNewCampaign,
   onOpenCampaigns,
@@ -429,9 +431,6 @@ ${htmlContent}
     }
 
     const trimmedTo = emailTo.trim();
-    const trimmedSubject =
-      (emailSubject || '').trim() ||
-      (data.invoiceNumber ? `Invoice ${data.invoiceNumber}` : 'Invoice');
     const resolvedCampaignId = selectedCampaignId ? Number(selectedCampaignId) : null;
     const campaignIdForPayload = Number.isFinite(resolvedCampaignId) ? resolvedCampaignId : null;
     const trackingBase = resolveTrackingBase();
@@ -442,19 +441,34 @@ ${htmlContent}
       return;
     }
 
-    if (!trimmedSubject) {
-      setEmailErrors((prev) => ({ ...prev, subject: 'Subject is required.' }));
-      toast.error('Subject is required.');
-      return;
-    }
-
     const authHeaders = resolveAuthHeaders();
     if (!authHeaders) {
       toast.error('Missing auth token; please log in again.');
       return;
     }
 
-    const invoiceNumber = (data.invoiceNumber || '').trim();
+    const ensuredInvoiceNumber = onEnsureInvoiceNumber
+      ? onEnsureInvoiceNumber()
+      : data.invoiceNumber;
+    const invoiceNumber = (ensuredInvoiceNumber || data.invoiceNumber || '').trim();
+    const defaultSubject = invoiceNumber ? `Invoice ${invoiceNumber}` : 'Invoice';
+    const currentEmailSubject = (emailSubject || '').trim();
+    const previousInvoiceSubject = (data.invoiceNumber || '').trim();
+    const shouldUseDefaultSubject =
+      !currentEmailSubject ||
+      (previousInvoiceSubject &&
+        currentEmailSubject.toLowerCase() === `invoice ${previousInvoiceSubject}`.toLowerCase());
+    const trimmedSubject = shouldUseDefaultSubject ? defaultSubject : currentEmailSubject;
+    if (shouldUseDefaultSubject && defaultSubject && currentEmailSubject !== defaultSubject) {
+      setEmailSubject(defaultSubject);
+    }
+
+    if (!trimmedSubject) {
+      setEmailErrors((prev) => ({ ...prev, subject: 'Subject is required.' }));
+      toast.error('Subject is required.');
+      return;
+    }
+
     if (!invoiceNumber) {
       toast.error('Invoice number is required before sending.');
       return;

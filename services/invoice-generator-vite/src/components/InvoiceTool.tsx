@@ -7,6 +7,27 @@ import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getApiBase } from '@/src/lib/apiBase';
 
+const INVOICE_SEQUENCE_STORAGE_PREFIX = 'tmr-vite-invoice-seq';
+const INVOICE_PREFIX = 'TMRINV';
+const PLACEHOLDER_INVOICE_NUMBERS = ['INV-001', '0042', 'TMRINV01'];
+const MIN_SEQUENCE_DIGITS = 2;
+
+const applyInvoiceSuffix = (base: string, suffix: string) => {
+  const trimmed = suffix.trim();
+  return trimmed ? `${base}-${trimmed}` : base;
+};
+
+const hashToken = (value: string) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(16);
+};
+
+const formatInvoiceNumber = (sequence: number) =>
+  `${INVOICE_PREFIX}${String(sequence).padStart(MIN_SEQUENCE_DIGITS, '0')}`;
+
 const INITIAL_INVOICE: InvoiceData = {
   invoiceNumber: 'INV-001',
   date: new Date().toISOString().split('T')[0],
@@ -68,6 +89,8 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   const [campaignFormError, setCampaignFormError] = useState<string | null>(null);
   const [pendingCampaignOptions, setPendingCampaignOptions] = useState<{ forceCreate?: boolean } | null>(null);
   const anchorsRef = useRef<Record<string, HTMLElement | null>>({});
+  const [invoiceSuffix, setInvoiceSuffix] = useState('');
+  const [baseInvoiceNumber, setBaseInvoiceNumber] = useState<string | null>(null);
 
   const persistSelectedCampaignId = useCallback(
     (id: string | null) => {
@@ -214,7 +237,9 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
   // Helper to safely read and sanitize token
   const getSafeToken = () => {
     if (typeof window === 'undefined') return null;
-    const raw = window.sessionStorage.getItem('tmr-token');
+    const raw =
+      window.sessionStorage.getItem('tmr-token') ||
+      window.localStorage.getItem('tmr-token');
     if (!raw) return null;
     return raw.trim().replace(/^["']|["']$/g, '');
   };
@@ -233,6 +258,100 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
     if (!token) return null;
     return { Authorization: `Bearer ${token}` };
   };
+
+  const resolveSequenceStorageKey = () => {
+    if (typeof window === 'undefined') return null;
+    const tokenCandidate = (bridgedToken || getSafeToken() || '').trim();
+    const tokenHash = tokenCandidate ? hashToken(tokenCandidate) : 'anon';
+    return `${INVOICE_SEQUENCE_STORAGE_PREFIX}-${tokenHash}`;
+  };
+
+  const generateSequentialInvoiceNumber = () => {
+    if (typeof window === 'undefined') return null;
+    const storageKey = resolveSequenceStorageKey();
+    if (!storageKey) return null;
+
+    let nextSequence = 1;
+
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const storedSeq = Number(parsed?.sequence);
+        if (Number.isFinite(storedSeq) && storedSeq > 0) {
+          nextSequence = storedSeq + 1;
+        }
+      }
+    } catch (err) {
+      console.warn('[InvoiceNumber] Failed to read stored sequence', err);
+    }
+
+    try {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify({ sequence: nextSequence })
+      );
+    } catch (err) {
+      console.warn('[InvoiceNumber] Failed to persist sequence', err);
+    }
+
+    return formatInvoiceNumber(nextSequence);
+  };
+
+  const isPlaceholderNumber = (value: string) => {
+    const normalized = value.toUpperCase();
+    return (
+      !normalized ||
+      PLACEHOLDER_INVOICE_NUMBERS.some(
+        (placeholder) => placeholder.toUpperCase() === normalized
+      )
+    );
+  };
+
+  const ensureInvoiceNumber = () => {
+    const existing = (invoiceData.invoiceNumber || '').trim();
+    if (!isPlaceholderNumber(existing)) return existing;
+
+    const nextInvoiceNumber = generateSequentialInvoiceNumber();
+    if (!nextInvoiceNumber) return existing;
+
+    setBaseInvoiceNumber(nextInvoiceNumber);
+
+    setInvoiceData((prev) => ({
+      ...prev,
+      invoiceNumber: applyInvoiceSuffix(nextInvoiceNumber, invoiceSuffix),
+    }));
+    return nextInvoiceNumber;
+  };
+
+  // Prefill a real invoice number as soon as possible so users see it before sending.
+  useEffect(() => {
+    ensureInvoiceNumber();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Re-run when auth token is bridged in (ensures anon vs authed scopes both work)
+  useEffect(() => {
+    ensureInvoiceNumber();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bridgedToken]);
+
+  // If the invoice number somehow becomes empty (user clears), regenerate.
+  useEffect(() => {
+    if (isPlaceholderNumber(invoiceData.invoiceNumber || '')) {
+      ensureInvoiceNumber();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoiceData.invoiceNumber]);
+
+  // When suffix changes, re-apply it to the current base invoice number.
+  useEffect(() => {
+    if (!baseInvoiceNumber) return;
+    setInvoiceData((prev) => ({
+      ...prev,
+      invoiceNumber: applyInvoiceSuffix(baseInvoiceNumber, invoiceSuffix),
+    }));
+  }, [baseInvoiceNumber, invoiceSuffix]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -758,6 +877,8 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
               <Editor
                 invoiceData={invoiceData}
                 setInvoiceData={setInvoiceData}
+                invoiceSuffix={invoiceSuffix}
+                setInvoiceSuffix={setInvoiceSuffix}
                 marketingData={marketingData}
                 setMarketingData={setMarketingData}
                 registerAnchor={registerAnchor}
@@ -773,6 +894,7 @@ export const InvoiceTool: React.FC<InvoiceToolProps> = ({ onBack, showHeader = t
                 registerAnchor={registerAnchor}
                 showTour={showTour}
                 tourStepId={steps[tourStep]?.id}
+                onEnsureInvoiceNumber={ensureInvoiceNumber}
                 onSaveCampaign={handleSaveCampaign}
                 onCreateNewCampaign={handleCreateNewCampaign}
                 onOpenCampaigns={fetchCampaigns}

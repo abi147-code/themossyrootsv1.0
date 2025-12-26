@@ -11,6 +11,9 @@ type InvoiceHistoryEntry = {
   customerEmail?: string | null;
   recipient: string;
   totalAmount: string;
+  billedAmount?: string | number | null;
+  billedCurrency?: string | null;
+  originalCurrency?: string | null;
   status: string;
   sentAt: string;
   subject?: string | null;
@@ -21,14 +24,18 @@ type HistoryResponse = {
   invoices: InvoiceHistoryEntry[];
 };
 
-const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
-
-const formatCurrency = (value: string | number | null | undefined) => {
+const formatCurrency = (
+  value: string | number | null | undefined,
+  currency: string | null | undefined = 'USD',
+) => {
   const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
-    return currencyFormatter.format(0);
+  const code = (currency || 'USD').toString().trim().toUpperCase() || 'USD';
+  const safeNumber = Number.isFinite(numeric) ? numeric : 0;
+  try {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).format(safeNumber);
+  } catch (_err) {
+    return `${code} ${safeNumber.toFixed(2)}`;
   }
-  return currencyFormatter.format(numeric);
 };
 
 const formatDateTime = (input: string) => {
@@ -55,13 +62,6 @@ const getTrimmedString = (value: unknown): string | null => {
   return trimmed ? trimmed : null;
 };
 
-const getDisplayNumber = (value: unknown): string | null => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value.toString();
-  }
-  return getTrimmedString(value);
-};
-
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -70,6 +70,30 @@ const getInvoiceNumberFromSummary = (summary: unknown): string | null => {
     return null;
   }
   return getTrimmedString(summary.invoiceNumber);
+};
+
+const getInvoiceCurrency = (invoice: InvoiceHistoryEntry): string => {
+  const summaryCurrency =
+    isObjectRecord(invoice.summary) && 'currency' in invoice.summary
+      ? getTrimmedString((invoice.summary as Record<string, unknown>).currency)
+      : null;
+  const originalCurrency = getTrimmedString(invoice.originalCurrency);
+  const resolved = summaryCurrency || originalCurrency || 'USD';
+  return resolved.toUpperCase();
+};
+
+const getInvoiceAmountDisplay = (invoice: InvoiceHistoryEntry) => {
+  const currencyCode = getInvoiceCurrency(invoice);
+  const summaryAmount =
+    isObjectRecord(invoice.summary) && 'totalAmount' in invoice.summary
+      ? (invoice.summary as Record<string, unknown>).totalAmount
+      : null;
+  const amountValue = summaryAmount ?? invoice.totalAmount ?? '0.00';
+  return {
+    currencyCode,
+    amountValue,
+    formatted: formatCurrency(amountValue, currencyCode),
+  };
 };
 
 export default function HistoryPage() {
@@ -81,6 +105,7 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | string>('ALL');
   const [dateRange, setDateRange] = useState<'ALL' | 'LAST_7_DAYS' | 'LAST_30_DAYS'>('ALL');
+  const [currencyFilter, setCurrencyFilter] = useState<'ALL' | string>('ALL');
   const [minAmount, setMinAmount] = useState<number | undefined>(undefined);
   const [maxAmount, setMaxAmount] = useState<number | undefined>(undefined);
   const [showAdvancedMetadata, setShowAdvancedMetadata] = useState(false);
@@ -158,10 +183,19 @@ export default function HistoryPage() {
     return Array.from(values).sort((left, right) => left.localeCompare(right));
   }, [invoices]);
 
+  const currencyOptions = useMemo(() => {
+    const values = new Set<string>();
+    invoices.forEach((invoice) => {
+      values.add(getInvoiceCurrency(invoice));
+    });
+    return Array.from(values).sort((left, right) => left.localeCompare(right));
+  }, [invoices]);
+
   const filteredInvoices = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const hasQuery = query.length > 0;
     const hasStatusFilter = statusFilter !== 'ALL';
+    const hasCurrencyFilter = currencyFilter !== 'ALL';
     const normalizedStatusFilter = statusFilter.toLowerCase();
     const hasDateFilter = dateRange !== 'ALL';
     const now = Date.now();
@@ -209,6 +243,13 @@ export default function HistoryPage() {
         }
       }
 
+      if (hasCurrencyFilter) {
+        const currencyValue = getInvoiceCurrency(invoice);
+        if (currencyValue !== currencyFilter) {
+          return false;
+        }
+      }
+
       if (minValue !== null || maxValue !== null) {
         const amount = Number(invoice.totalAmount);
         if (!Number.isFinite(amount)) {
@@ -224,7 +265,7 @@ export default function HistoryPage() {
 
       return true;
     });
-  }, [invoices, searchQuery, statusFilter, dateRange, minAmount, maxAmount]);
+  }, [invoices, searchQuery, statusFilter, dateRange, currencyFilter, minAmount, maxAmount]);
 
   const hasInvoices = useMemo(() => filteredInvoices.length > 0, [filteredInvoices]);
   const hasBaseInvoices = useMemo(() => invoices.length > 0, [invoices]);
@@ -246,9 +287,7 @@ export default function HistoryPage() {
         : null,
     [summaryRecord],
   );
-  const amountValue = getDisplayNumber(summaryRecord?.amount);
-  const currencyValue = getTrimmedString(summaryRecord?.currency);
-  const amountDisplay = amountValue && currencyValue ? `${currencyValue} ${amountValue}` : null;
+  const amountDisplay = selectedInvoice ? getInvoiceAmountDisplay(selectedInvoice).formatted : null;
   const senderName = getTrimmedString(summaryRecord?.senderName);
   const senderEmail = getTrimmedString(summaryRecord?.senderEmail);
   const senderDisplay =
@@ -295,6 +334,7 @@ export default function HistoryPage() {
     setSearchQuery('');
     setStatusFilter('ALL');
     setDateRange('ALL');
+    setCurrencyFilter('ALL');
     setMinAmount(undefined);
     setMaxAmount(undefined);
   };
@@ -338,7 +378,7 @@ export default function HistoryPage() {
               Clear
             </button>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <div className="flex flex-col gap-2">
               <label className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Search</label>
               <input
@@ -376,6 +416,21 @@ export default function HistoryPage() {
                 <option value="ALL">All time</option>
                 <option value="LAST_7_DAYS">Last 7 days</option>
                 <option value="LAST_30_DAYS">Last 30 days</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Currency</label>
+              <select
+                value={currencyFilter}
+                onChange={(event) => setCurrencyFilter(event.target.value)}
+                className="w-full rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-sky-400/80"
+              >
+                <option value="ALL">All currencies</option>
+                {currencyOptions.map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="flex flex-col gap-2">
@@ -466,7 +521,7 @@ export default function HistoryPage() {
                           <p className="mt-1 text-xs text-slate-500">Invoice #{invoiceNumber}</p>
                         ) : null}
                       </td>
-                      <td className="py-3 pr-4 align-top">{formatCurrency(invoice.totalAmount)}</td>
+                      <td className="py-3 pr-4 align-top">{getInvoiceAmountDisplay(invoice).formatted}</td>
                       <td className="py-3 pr-4 align-top capitalize">{invoice.status || 'sent'}</td>
                       <td className="py-3 pr-4 align-top text-slate-300">
                         {formatDateTime(invoice.sentAt)}
@@ -538,7 +593,7 @@ export default function HistoryPage() {
               <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 p-4">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Amount</p>
                 <p className="mt-2 text-sm font-semibold text-white">
-                  {formatCurrency(selectedInvoice.totalAmount)}
+                  {getInvoiceAmountDisplay(selectedInvoice).formatted}
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 p-4">

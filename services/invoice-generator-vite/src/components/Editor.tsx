@@ -8,6 +8,8 @@ import toast from 'react-hot-toast';
 interface EditorProps {
   invoiceData: InvoiceData;
   setInvoiceData: React.Dispatch<React.SetStateAction<InvoiceData>>;
+  invoiceSuffix: string;
+  setInvoiceSuffix: React.Dispatch<React.SetStateAction<string>>;
   marketingData: MarketingBannerData;
   setMarketingData: React.Dispatch<React.SetStateAction<MarketingBannerData>>;
   registerAnchor?: (key: string, el: HTMLElement | null) => void;
@@ -17,6 +19,8 @@ interface EditorProps {
 export const Editor: React.FC<EditorProps> = ({
   invoiceData,
   setInvoiceData,
+  invoiceSuffix,
+  setInvoiceSuffix,
   marketingData,
   setMarketingData,
   registerAnchor,
@@ -300,17 +304,28 @@ export const Editor: React.FC<EditorProps> = ({
                     </div>
                  </div>
                </div>
-             </div>
+            </div>
 
             <div className="space-y-4">
-              <div className="space-y-1">
-                <label className={labelClass}>Invoice #</label>
-                <input
-                  type="text"
-                  value={invoiceData.invoiceNumber}
-                  onChange={(e) => handleChange('invoiceNumber', e.target.value)}
-                  className={inputClass}
-                />
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className={labelClass}>Invoice # (auto)</label>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900">
+                    {invoiceData.invoiceNumber || 'Generating...'}
+                  </div>
+                  <p className="text-xs text-slate-500">Format: TMRINV##, increments automatically.</p>
+                </div>
+                <div className="space-y-1">
+                  <label className={labelClass}>Extra invoice tag (optional)</label>
+                  <input
+                    type="text"
+                    value={invoiceSuffix}
+                    onChange={(e) => setInvoiceSuffix(e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g., 02 or ACME-PO"
+                  />
+                  <p className="text-[11px] text-slate-500">Appends to the auto number for your own reference.</p>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
