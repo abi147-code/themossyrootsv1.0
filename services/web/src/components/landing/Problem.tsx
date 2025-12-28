@@ -22,13 +22,15 @@ export default function Problem() {
 
   return (
     <Section className="bg-sand border-t border-slate-200">
+      <div className="mb-10 text-center">
+        <h2 className="text-3xl md:text-5xl font-bold text-ink">
+          The problem with <br />
+          <span className="text-ink-sec opacity-60">traditional invoices</span>
+        </h2>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-12 items-center">
         <div>
-          <h2 className="text-3xl md:text-5xl font-bold text-ink mb-8 text-center">
-            The problem with <br />
-            <span className="text-ink-sec opacity-60">traditional invoices</span>
-          </h2>
-
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -44,7 +46,7 @@ export default function Problem() {
                     src="/invoice landing page/normal-invoice.jpg"
                     alt=""
                     aria-hidden="true"
-                    className="w-full h-auto object-contain md:max-h-[90vh]"
+                    className="w-full h-auto object-contain md:max-h-[80vh]"
                   />
                 </div>
               </div>
@@ -61,7 +63,7 @@ export default function Problem() {
                     src="/invoice landing page/tem.jpg"
                     alt=""
                     aria-hidden="true"
-                    className="w-full h-auto object-contain md:max-h-[90vh]"
+                    className="w-full h-auto object-contain md:max-h-[80vh]"
                   />
                 </div>
               </div>
