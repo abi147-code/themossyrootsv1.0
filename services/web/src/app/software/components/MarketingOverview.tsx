@@ -14,9 +14,7 @@ interface MarketingOverviewProps {
 export default function MarketingOverview({ title, description, children }: MarketingOverviewProps) {
   const router = useRouter();
   const { token, loading } = useAuth();
-  const learnMoreHref =
-    process.env.NEXT_PUBLIC_PROMO_AI_MARKETING_URL ?? 'http://localhost:5173/';
-  console.log('LEARN MORE URL:', learnMoreHref);
+  const learnMoreHref = '/software/invoice-generator';
 
   const getUseToolTarget = () => {
     if (loading) return null;

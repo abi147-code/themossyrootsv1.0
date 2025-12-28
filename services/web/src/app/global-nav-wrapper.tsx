@@ -3,7 +3,7 @@
 import Navbar from '@/components/Navbar';
 import { usePathname } from 'next/navigation';
 
-const HIDE_NAV_PREFIXES = ['/dashboard'];
+const HIDE_NAV_PREFIXES = ['/dashboard', '/software/invoice-generator'];
 
 export default function GlobalNavWrapper() {
   const pathname = usePathname();

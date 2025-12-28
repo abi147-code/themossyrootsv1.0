@@ -26,6 +26,7 @@ pdfs/
 *.pdf
 services/api/uploads/
 services/web/src/app/portfolio/components/pictures/
+invoice landing page 201/
 
 # OS/editor
 .DS_Store

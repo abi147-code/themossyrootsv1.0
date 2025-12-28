@@ -13,6 +13,44 @@
   --color-sand: #f4f0e8;
 }
 
+@theme {
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-moss: #1f7a4d;
+  --color-moss-hover: #2f9c66;
+  --color-moss-light: #e8f5e9;
+  --color-gold: #d9a441;
+  --color-gold-soft: #f2d48c;
+  --color-gold-light: #fff8e1;
+  --color-ink: #0f172a;
+  --color-ink-sec: #475569;
+  --color-porcelain: #f7f9fc;
+  --color-cloud: #eef1f7;
+  --color-sand: #f4f0e8;
+  --animate-gradient-x: gradient-x 3s ease infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
+}
+
+@keyframes gradient-x {
+  0%,
+  100% {
+    background-size: 200% 200%;
+    background-position: left center;
+  }
+  50% {
+    background-size: 200% 200%;
+    background-position: right center;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 body {
   min-height: 100vh;
   font-family: var(--font-body), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
