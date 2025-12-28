@@ -44,7 +44,7 @@ export default function Problem() {
                     src="/invoice landing page/normal-invoice.jpg"
                     alt=""
                     aria-hidden="true"
-                    className="w-full h-auto object-contain md:max-h-[80vh]"
+                    className="w-full h-auto object-contain md:max-h-[90vh]"
                   />
                 </div>
               </div>
@@ -61,7 +61,7 @@ export default function Problem() {
                     src="/invoice landing page/tem.jpg"
                     alt=""
                     aria-hidden="true"
-                    className="w-full h-auto object-contain md:max-h-[80vh]"
+                    className="w-full h-auto object-contain md:max-h-[90vh]"
                   />
                 </div>
               </div>
