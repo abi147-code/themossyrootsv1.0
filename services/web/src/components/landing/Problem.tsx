@@ -39,12 +39,12 @@ export default function Problem() {
             <div className="flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-6">
               <div className="space-y-3 md:space-y-4">
                 <div className="text-sm font-semibold uppercase tracking-[0.2em] text-ink-sec/70">Traditional</div>
-                <div className="relative h-[60vh] md:h-[90vh] w-full overflow-hidden rounded-xl border border-slate-200 shadow-xl md:shadow-2xl">
+                <div className="relative overflow-hidden rounded-xl border border-slate-200 shadow-xl md:shadow-2xl">
                   <img
                     src="/invoice landing page/normal-invoice.jpg"
                     alt=""
                     aria-hidden="true"
-                    className="absolute inset-0 w-full h-full object-contain"
+                    className="w-full h-auto object-contain md:max-h-[90vh]"
                   />
                 </div>
               </div>
@@ -56,12 +56,12 @@ export default function Problem() {
 
               <div className="space-y-3 md:space-y-4">
                 <div className="text-sm font-semibold uppercase tracking-[0.2em] text-ink-sec/70">Invoice created using the TMR invoice tool</div>
-                <div className="relative h-[60vh] md:h-[90vh] w-full overflow-hidden rounded-xl border border-slate-200 shadow-xl md:shadow-2xl">
+                <div className="relative overflow-hidden rounded-xl border border-slate-200 shadow-xl md:shadow-2xl">
                   <img
                     src="/invoice landing page/tem.jpg"
                     alt=""
                     aria-hidden="true"
-                    className="absolute inset-0 w-full h-full object-contain"
+                    className="w-full h-auto object-contain md:max-h-[90vh]"
                   />
                 </div>
               </div>
