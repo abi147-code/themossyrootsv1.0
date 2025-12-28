@@ -24,7 +24,7 @@ export default function Problem() {
     <Section className="bg-sand border-t border-slate-200">
       <div className="grid md:grid-cols-2 gap-12 items-center">
         <div>
-          <h2 className="text-3xl md:text-5xl font-bold text-ink mb-8">
+          <h2 className="text-3xl md:text-5xl font-bold text-ink mb-8 text-center">
             The problem with <br />
             <span className="text-ink-sec opacity-60">traditional invoices</span>
           </h2>
