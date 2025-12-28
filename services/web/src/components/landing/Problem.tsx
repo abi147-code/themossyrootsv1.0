@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Frown, X, XCircle } from "lucide-react";
+import { ArrowDown, ArrowRight, Frown, X, XCircle } from "lucide-react";
 import Section from "./Section";
 
 export default function Problem() {
@@ -28,6 +28,45 @@ export default function Problem() {
             The problem with <br />
             <span className="text-ink-sec opacity-60">traditional invoices</span>
           </h2>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="mb-10 rounded-2xl border border-slate-200 bg-white/80 shadow-md p-4 md:p-6 backdrop-blur-sm"
+          >
+            <div className="flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-4 lg:gap-6">
+              <div className="space-y-3">
+                <div className="text-sm font-semibold uppercase tracking-[0.2em] text-ink-sec/70">Traditional</div>
+                <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-porcelain shadow-sm">
+                  <img
+                    src="/invoice landing page/normal-invoice.jpg"
+                    alt=""
+                    aria-hidden="true"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+
+              <div className="my-4 flex items-center justify-center md:my-0">
+                <ArrowRight className="hidden h-10 w-10 text-moss md:block" aria-hidden="true" />
+                <ArrowDown className="h-10 w-10 text-moss md:hidden" aria-hidden="true" />
+              </div>
+
+              <div className="space-y-3">
+                <div className="text-sm font-semibold uppercase tracking-[0.2em] text-ink-sec/70">TEM</div>
+                <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-porcelain shadow-sm">
+                  <img
+                    src="/invoice landing page/tem.jpg"
+                    alt=""
+                    aria-hidden="true"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.div>
 
           <motion.div className="space-y-6" variants={container} initial="hidden" whileInView="show" viewport={{ once: true }}>
             <motion.div variants={item} className="flex items-start gap-4 group cursor-default">
