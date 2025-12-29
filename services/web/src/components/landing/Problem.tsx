@@ -122,7 +122,32 @@ export default function Problem() {
           <div className="absolute inset-0 bg-gradient-to-r from-moss/10 to-gold/10 rounded-2xl blur-2xl animate-pulse" />
           <motion.div className="relative bg-white border border-slate-200 p-8 rounded-2xl text-center shadow-lg" whileHover={{ y: -5 }}>
             <blockquote className="text-2xl md:text-3xl font-medium text-ink italic leading-relaxed">
-              &ldquo;Invoices should work like landing pages.&rdquo;
+              <motion.span
+                initial={{ backgroundPosition: "0% 50%", opacity: 0.92 }}
+                whileInView={{ backgroundPosition: "100% 50%", opacity: 1 }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+                viewport={{ once: true, amount: 0.7 }}
+                className="relative inline-block bg-clip-text text-transparent"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(120deg, #0f172a 0%, #0f172a 40%, #3b5d42 60%, #b28b2f 75%, #0f172a 100%)",
+                  backgroundSize: "220% 100%",
+                }}
+              >
+                &ldquo;Invoices should work like landing pages.&rdquo;
+                <motion.span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-0 -bottom-2 h-[3px] w-full rounded-full"
+                  initial={{ scaleX: 0, opacity: 0 }}
+                  whileInView={{ scaleX: 1, opacity: 0.85 }}
+                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.15 }}
+                  viewport={{ once: true }}
+                  style={{
+                    transformOrigin: "left center",
+                    background: "linear-gradient(90deg, #3b5d42 0%, #b28b2f 100%)",
+                  }}
+                />
+              </motion.span>
             </blockquote>
           </motion.div>
         </motion.div>

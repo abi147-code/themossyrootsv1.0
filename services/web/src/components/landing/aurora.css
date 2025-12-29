@@ -1,0 +1,9 @@
+.aurora-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 120%;
+  height: 120%;
+  transform: translate(-10%, -10%);
+  pointer-events: none;
+}

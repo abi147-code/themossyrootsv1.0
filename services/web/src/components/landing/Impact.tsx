@@ -1,16 +1,71 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, CheckCircle2, TrendingUp } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 export default function Impact() {
+  const invoices = [
+    { src: "/invoice landing page/Freelance.jpg", alt: "Freelance invoice preview" },
+    { src: "/invoice landing page/tem.jpg", alt: "TEM invoice preview" },
+    { src: "/invoice landing page/ZOHO.jpg", alt: "Zoho invoice preview" },
+  ];
+
+  const [focused, setFocused] = useState<number | null>(null);
+  const [hovered, setHovered] = useState<number | null>(null);
+  const stackRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setFocused(null);
+        return;
+      }
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocused(prev => {
+          if (prev === null) return 0;
+          return (prev + 1) % invoices.length;
+        });
+      }
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocused(prev => {
+          if (prev === null) return invoices.length - 1;
+          return (prev - 1 + invoices.length) % invoices.length;
+        });
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [invoices.length]);
+
+  useEffect(() => {
+    if (focused === null) return;
+    const handleClickAway = (e: MouseEvent) => {
+      if (stackRef.current && !stackRef.current.contains(e.target as Node)) {
+        setFocused(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickAway);
+    return () => document.removeEventListener("mousedown", handleClickAway);
+  }, [focused]);
+
+  const stackConfig = [
+    { top: "lg:top-0", rotation: "lg:-rotate-7", z: "lg:z-30" },
+    { top: "lg:top-28", rotation: "lg:rotate-3", z: "lg:z-20" },
+    { top: "lg:top-56", rotation: "lg:-rotate-3", z: "lg:z-10" },
+  ];
+
   return (
     <section className="bg-sand border-t border-slate-200 relative overflow-hidden py-24 md:py-32">
       <div className="absolute top-0 right-0 w-3/4 h-full bg-gradient-to-l from-white/50 via-white/20 to-transparent pointer-events-none" />
 
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-16 lg:gap-32 items-center">
-          <div className="space-y-10 order-2 lg:order-1 max-w-2xl">
+      <div className="max-w-[1200px] mx-auto px-6 md:px-12 relative z-10">
+        {focused !== null && <div className="pointer-events-none fixed inset-0 bg-ink/60 backdrop-blur-sm z-20" />}
+        <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+          <div className="space-y-10 max-w-3xl">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
               <h2 className="text-4xl md:text-6xl font-bold text-ink mb-8">The business impact</h2>
               <div className="space-y-6 text-lg md:text-xl text-ink-sec leading-relaxed font-light">
@@ -42,73 +97,113 @@ export default function Impact() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.7 }}
-              className="p-8 bg-gradient-to-br from-moss to-moss-hover rounded-2xl shadow-xl text-white relative overflow-hidden group"
+              className="p-8 rounded-2xl shadow-xl text-ink relative overflow-hidden group border border-white/30 bg-white/15 backdrop-blur-lg"
             >
-              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity duration-500 transform group-hover:scale-110">
-                <TrendingUp size={120} />
-              </div>
-              <p className="text-xl md:text-2xl font-medium italic relative z-10 leading-relaxed">
+              <motion.div
+                aria-hidden="true"
+                className="absolute inset-[-30%] bg-gradient-to-r from-moss/30 via-gold/25 to-ink/20 blur-3xl opacity-70"
+                animate={{ x: ["-10%", "10%", "-10%"] }}
+                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div
+                aria-hidden="true"
+                className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-white/10"
+                animate={{ opacity: [0.5, 0.8, 0.5] }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+              />
+              <p className="text-xl md:text-2xl font-medium italic relative z-10 leading-relaxed text-ink">
                 &ldquo;Every invoice does more than request money — it builds momentum.&rdquo;
               </p>
             </motion.div>
           </div>
 
-          <div className="order-1 lg:order-2 relative lg:-mr-24 xl:-mr-32">
-            <motion.div
-              animate={{ y: [0, -30, 0], scale: [1, 1.05, 1] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-20 -right-20 w-[500px] h-[500px] bg-gold/20 rounded-full blur-[80px] z-0 mix-blend-multiply"
-            />
-            <motion.div
-              animate={{ y: [0, 30, 0], scale: [1, 1.1, 1] }}
-              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute -bottom-20 -left-20 w-[400px] h-[400px] bg-moss/10 rounded-full blur-[80px] z-0 mix-blend-multiply"
-            />
+          <div
+            className="order-2 lg:order-2 relative lg:h-[760px]"
+            ref={stackRef}
+            onTouchStart={e => {
+              const t = e.touches[0];
+              touchStartRef.current = { x: t.clientX, y: t.clientY };
+            }}
+            onTouchEnd={e => {
+              if (!touchStartRef.current) return;
+              const t = e.changedTouches[0];
+              const dx = t.clientX - touchStartRef.current.x;
+              const dy = t.clientY - touchStartRef.current.y;
+              touchStartRef.current = null;
+              if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+              setFocused(prev => {
+                if (dx < 0) {
+                  if (prev === null) return 0;
+                  return (prev + 1) % invoices.length;
+                } else {
+                  if (prev === null) return invoices.length - 1;
+                  return (prev - 1 + invoices.length) % invoices.length;
+                }
+              });
+            }}
+          >
+            <div className="flex flex-col gap-6 lg:block lg:h-full">
+              {invoices.map((image, idx) => {
+                const isFocused = focused === idx;
+                const isHovered = hovered === idx;
+                const slot = ((idx - (focused ?? 0)) + invoices.length) % invoices.length;
+                const stack = stackConfig[slot] ?? stackConfig[stackConfig.length - 1];
+                const isDisabled = focused !== null && !isFocused;
+                const baseClasses = [
+                  "relative w-full",
+                  "rounded-2xl overflow-hidden",
+                  "transition-transform transition-opacity ease-out",
+                  isFocused ? "duration-500" : "duration-300",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-moss focus-visible:ring-offset-2 focus-visible:ring-offset-sand",
+                  "bg-transparent",
+                  "lg:absolute lg:left-1/2 lg:-translate-x-1/2",
+                  stack.top,
+                  stack.z,
+                  isFocused ? "z-50" : "",
+                  isDisabled ? "cursor-not-allowed" : "cursor-pointer",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
 
-            <motion.div
-              initial={{ opacity: 0, x: 100, rotate: -2 }}
-              whileInView={{ opacity: 1, x: 0, rotate: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border-4 border-white transform transition-transform duration-500 group"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop"
-                alt="Business team analyzing results"
-                className="w-full h-auto object-cover scale-105 group-hover:scale-110 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-transparent to-transparent" />
+                const rotationClass = isFocused ? "lg:rotate-0" : stack.rotation;
+                const focusTransform = isFocused ? "scale-105 lg:scale-110 -translate-y-4 lg:-translate-y-6" : "";
+                const hoverTransform = !isFocused && !isDisabled ? "hover:-translate-y-2 hover:scale-[1.03] lg:hover:scale-[1.05]" : "";
+                const liftTransform = !isFocused && !isDisabled && isHovered ? "-translate-y-2 scale-[1.03] lg:scale-[1.05] lg:rotate-0" : "";
+                const stackedScale = !isFocused ? "lg:scale-[0.96]" : "";
+                const nonFocusedState = isDisabled ? "opacity-50" : "opacity-100";
 
-              <motion.div
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.6 }}
-                className="absolute bottom-8 left-8 right-8 p-6 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20"
-              >
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-sm font-semibold text-ink-sec mb-1 uppercase tracking-wider">Net Revenue</p>
-                    <h4 className="text-3xl md:text-5xl font-bold text-ink">$124,500</h4>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-1 text-moss font-bold bg-moss/10 px-3 py-1 rounded-full text-sm mb-1">
-                      <TrendingUp size={16} />
-                      <span>+18.4%</span>
-                    </div>
-                    <span className="text-xs text-ink-sec">vs last month</span>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.9, type: "spring" }}
-              className="absolute -top-10 -left-10 z-20 bg-white p-5 rounded-2xl shadow-xl border border-slate-100 hidden lg:block"
-            >
-              <ArrowUpRight className="w-10 h-10 text-moss" />
-            </motion.div>
+                return (
+                  <button
+                    key={image.src}
+                    type="button"
+                    className={`${baseClasses} ${rotationClass} ${stackedScale} ${nonFocusedState} ${focusTransform} ${hoverTransform} ${liftTransform}`}
+                    aria-disabled={isDisabled}
+                    tabIndex={isDisabled ? -1 : 0}
+                    style={{ touchAction: "pan-y" }}
+                  onMouseEnter={() => {
+                    if (focused !== null) return;
+                    setHovered(idx);
+                  }}
+                  onMouseLeave={() => {
+                      if (focused !== null) return;
+                      setHovered(null);
+                    }}
+                    onClick={() => {
+                      if (isDisabled) return;
+                      setFocused(isFocused ? null : idx);
+                    }}
+                  >
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className={`w-full ${isFocused ? "lg:w-[520px]" : "lg:w-[480px]"} h-full object-contain rounded-2xl`}
+                      loading="lazy"
+                      style={{ cursor: isFocused ? "zoom-out" : isDisabled ? "default" : "inherit" }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
