@@ -79,7 +79,7 @@ export default function Hero() {
             transition={{ delay: 0.5, duration: 0.8, type: "spring", bounce: 0.4 }}
           >
             <h2 className="text-xl md:text-3xl lg:text-4xl font-medium text-ink-sec leading-snug flex flex-col md:block items-center justify-center gap-2">
-              <span className="opacity-70">Traditional invoices ask for payment.</span>
+              <span className="opacity-70">Traditional invoices ask for payment</span>
               <span className="hidden md:inline mx-3 opacity-40">—</span>
               <span className="font-black text-ink drop-shadow-sm md:inline-block">
                 This one <span className="text-transparent bg-clip-text bg-gradient-to-r from-moss to-gold">drives action.</span>
@@ -112,7 +112,7 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2 }}
         >
-          <Button href="/dashboard/invoice-generator" size="lg" className="w-full sm:w-auto">
+          <Button href="/dashboard/invoice-generator" size="lg" className="w-full sm:w-auto !text-white">
             Early access to the editor
           </Button>
         </motion.div>

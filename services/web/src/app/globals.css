@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --font-heading: var(--font-sora);
-  --font-body: var(--font-inter);
+  --font-heading: var(--font-manrope);
+  --font-body: var(--font-manrope);
   --font-mono: var(--font-geist-mono);
 
   --color-moss: #1f7a4d;
@@ -14,7 +14,7 @@
 }
 
 @theme {
-  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: var(--font-manrope), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --color-moss: #1f7a4d;
   --color-moss-hover: #2f9c66;
   --color-moss-light: #e8f5e9;
