@@ -34,6 +34,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://themossyroots.com',
   'https://www.themossyroots.com',
   'https://tmr-proxy.fly.dev',
+  'https://tmr-invoice-generator.fly.dev',
   'http://localhost',
   'http://localhost:3000',
   'http://localhost:5173',

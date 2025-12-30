@@ -1,9 +1,6 @@
 export function getApiBase() {
-  // Explicit local override (inlined at build time; absent in production)
-  if (import.meta.env.VITE_LOCAL_API_BASE) {
-    return import.meta.env.VITE_LOCAL_API_BASE;
-  }
-  return '';
+  // Prefer explicit base for production; allow local override during dev
+  return import.meta.env.VITE_LOCAL_API_BASE || import.meta.env.VITE_API_BASE || '';
 }
 
 export function getTrackingBase(): string {

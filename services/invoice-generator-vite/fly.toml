@@ -1,0 +1,25 @@
+# fly.toml app configuration file for tmr-invoice-generator
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+
+app = "tmr-invoice-generator"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "Dockerfile"
+  [build.args]
+    VITE_API_BASE = "https://tmr-proxy.fly.dev"
+    VITE_GEMINI_API_KEY = "AIzaSyDtayuv326HHS9imkKO4B0tR4HaEz3XMHE"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
