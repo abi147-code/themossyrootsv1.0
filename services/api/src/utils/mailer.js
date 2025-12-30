@@ -425,6 +425,14 @@ const createTransporter = () => {
 
   const customConfig = buildCustomConfig();
 
+  if (process.env.NODE_ENV === 'production' && service === 'mailpit' && !customConfig) {
+    const error = new Error(
+      '[Mailer] Mailpit is not allowed in production. Configure SMTP/SendGrid and set EMAIL_TRANSPORT accordingly.'
+    );
+    console.error(error.message);
+    throw error;
+  }
+
   let transportConfig;
   let modeLabel = 'MAILPIT';
 

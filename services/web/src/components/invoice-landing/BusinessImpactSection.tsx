@@ -16,9 +16,9 @@ export const BusinessImpactSection: React.FC = () => {
   // Placeholder images - easily replaceable by uploading new assets to public/
   // and changing these paths.
   const stackImages = [
-    '/invoice landing page/Freelance.jpg',
-    '/invoice landing page/tem.jpg',
-    '/invoice landing page/ZOHO.jpg',
+    { src: '/invoice landing page/Freelance.jpg', alt: 'Freelancer invoice with branded CTA' },
+    { src: '/invoice landing page/tem.jpg', alt: 'Branded invoice marketing template preview' },
+    { src: '/invoice landing page/ZOHO.jpg', alt: 'Invoice dashboard showing click tracking' },
   ];
 
   return (

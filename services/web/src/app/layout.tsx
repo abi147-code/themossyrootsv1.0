@@ -16,9 +16,39 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const metadataBase = new URL('https://www.themossyroots.com');
+const defaultOgImage = 'https://www.themossyroots.com/og/invoice-generator.png';
+const defaultDescription =
+  'Turn invoices into a marketing channel. Add CTAs, track clicks, and upsell directly from branded invoices to drive revenue and loyalty for modern teams.';
+
 export const metadata: Metadata = {
-  title: 'TMR CRM',
-  description: 'The Mossy Roots CRM for modern agencies',
+  metadataBase,
+  title: {
+    default: 'Invoices That Convert | Invoice Marketing Generator',
+    template: '%s | TMR CRM',
+  },
+  description: defaultDescription,
+  openGraph: {
+    type: 'website',
+    url: metadataBase,
+    siteName: 'Invoice Marketing Generator by TMR CRM',
+    title: 'Invoice Marketing Generator',
+    description: defaultDescription,
+    images: [
+      {
+        url: defaultOgImage,
+        width: 1200,
+        height: 630,
+        alt: 'Invoice marketing generator preview',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Invoice Marketing Generator by TMR CRM',
+    description: defaultDescription,
+    images: [defaultOgImage],
+  },
 };
 
 export default function RootLayout({

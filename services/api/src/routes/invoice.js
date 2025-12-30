@@ -12,8 +12,19 @@ const { buildBilledSnapshot } = require('../lib/fx/snapshot');
 
 const router = express.Router();
 
-const DEFAULT_INVOICE_API_URL = 'https://themossyrootsv1-0-3.onrender.com';
-const INVOICE_API_URL = process.env.INVOICE_API_URL || DEFAULT_INVOICE_API_URL;
+const resolveInvoiceApiBase = () => {
+  const explicit = typeof process.env.INVOICE_API_URL === 'string' ? process.env.INVOICE_API_URL.trim() : '';
+  if (explicit) {
+    return explicit;
+  }
+  // Prefer local compose default during development to avoid accidental legacy calls.
+  if (process.env.NODE_ENV !== 'production') {
+    return 'http://invoice-api:5000';
+  }
+  throw new Error('[Invoice API] INVOICE_API_URL is not configured for production.');
+};
+
+const INVOICE_API_URL = resolveInvoiceApiBase();
 const AXIOS_JSON_CONFIG = {
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' },

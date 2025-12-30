@@ -397,22 +397,20 @@ export const HeroInvoiceBreak: React.FC = () => {
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-6">
             {isBroken ? (
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 animate-pulse">
-                Unlock hidden revenue.
+                Invoices That Convert — unlock hidden revenue.
               </span>
             ) : (
               <span>
-                Your invoices are <span className="text-slate-500">boring documents.</span>
+                Invoices That Convert — turn every invoice into revenue.
               </span>
             )}
           </h1>
 
           <p className="text-lg md:text-xl text-slate-400 mb-8 max-w-lg mx-auto md:mx-0 leading-relaxed whitespace-pre-line">
             {isBroken
-              ? `Turn every invoice into a revenue-generating touchpoint with built-in marketing, smart CTAs, and click tracking.
-Invoices that convert.`
+              ? `Invoice marketing is here: embed branded CTAs, track clicks, and upsell directly from every invoice. Build a branded invoice generator that converts.`
               : `Most businesses treat invoices as receipts.
-We treat them as a marketing channel.
-break the status quo`}
+We treat them as a branded invoice generator, with CTAs and click tracking that keep clients moving forward.`}
           </p>
 
           <div className={`transition-all duration-1000 ${isBroken ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
