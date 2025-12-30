@@ -1,0 +1,177 @@
+/* Invoice landing global styles ported from AI Studio build */
+
+body.invoice-landing-page {
+  font-family: 'Inter', sans-serif;
+  background: #0f172a;
+  color: white;
+  color-scheme: dark;
+}
+
+.invoice-landing-root {
+  font-family: 'Inter', sans-serif;
+}
+
+.invoice-landing-page .font-serif {
+  font-family: 'Playfair Display', serif;
+}
+
+.invoice-landing-page h1,
+.invoice-landing-page h2,
+.invoice-landing-page h3,
+.invoice-landing-page h4,
+.invoice-landing-page h5,
+.invoice-landing-page h6 {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Override global text color reset on this page */
+.invoice-landing-page [class*='text-white'] {
+  color: #fff !important;
+}
+
+/* 3D Perspective Container */
+.perspective-container {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+
+/* Custom Shake Animation */
+@keyframes shake-hard {
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+  10% {
+    transform: translate(-1px, -2px) rotate(-1deg);
+  }
+  20% {
+    transform: translate(-3px, 0px) rotate(1deg);
+  }
+  30% {
+    transform: translate(3px, 2px) rotate(0deg);
+  }
+  40% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+  50% {
+    transform: translate(-1px, 2px) rotate(-1deg);
+  }
+  60% {
+    transform: translate(-3px, 1px) rotate(0deg);
+  }
+  70% {
+    transform: translate(3px, 1px) rotate(-1deg);
+  }
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+  90% {
+    transform: translate(1px, 2px) rotate(0deg);
+  }
+  100% {
+    transform: translate(1px, -2px) rotate(-1deg);
+  }
+}
+
+.animate-shake {
+  animation: shake-hard 0.4s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+/* Particle Fade */
+@keyframes particle-fade {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(0);
+    opacity: 0;
+  }
+}
+
+.particle {
+  position: absolute;
+  pointer-events: none;
+  animation: particle-fade 0.8s ease-out forwards;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+/* Shard Explosion Animation */
+@keyframes shard-fly-1 {
+  to {
+    transform: translate(-150px, -150px) rotate(-25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shard-fly-2 {
+  to {
+    transform: translate(150px, -150px) rotate(25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shard-fly-3 {
+  to {
+    transform: translate(150px, 150px) rotate(-15deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shard-fly-4 {
+  to {
+    transform: translate(-150px, 150px) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+.shard-1 {
+  animation: shard-fly-1 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.shard-2 {
+  animation: shard-fly-2 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.shard-3 {
+  animation: shard-fly-3 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.shard-4 {
+  animation: shard-fly-4 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Shimmer Effect for revealed card */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+/* CTA Section keyframes */
+@keyframes grid-move {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 40px;
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.5), 0 0 60px rgba(168, 85, 247, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.8), 0 0 80px rgba(168, 85, 247, 0.4);
+  }
+}

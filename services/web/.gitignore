@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local exported landing artifacts (not part of web app source)
+# Up-one level exports
+../invoice Landing Page 301/
+../../invoice Landing Page 301/

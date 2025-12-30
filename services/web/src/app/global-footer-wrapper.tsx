@@ -1,9 +1,9 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import Footer from '@/components/Footer';
+import { usePathname } from 'next/navigation';
 
-const HIDE_FOOTER_PREFIXES = ['/dashboard'];
+const HIDE_FOOTER_PREFIXES = ['/dashboard', '/software/invoice-generator'];
 
 export default function GlobalFooterWrapper() {
   const pathname = usePathname();
