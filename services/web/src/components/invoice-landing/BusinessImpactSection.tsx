@@ -16,10 +16,9 @@ export const BusinessImpactSection: React.FC = () => {
   // Placeholder images - easily replaceable by uploading new assets to public/
   // and changing these paths.
   const stackImages = [
-    'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=1000&auto=format&fit=crop', // Finance/Graph
-    'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1000&auto=format&fit=crop', // Analytics
-    'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=1000&auto=format&fit=crop', // Money/Success
-    'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop', // Dashboard
+    '/invoice landing page/Freelance.jpg',
+    '/invoice landing page/tem.jpg',
+    '/invoice landing page/ZOHO.jpg',
   ];
 
   return (
@@ -27,9 +26,6 @@ export const BusinessImpactSection: React.FC = () => {
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 md:gap-24 items-center">
         {/* Left Column: Animation */}
         <div className="relative order-2 md:order-1">
-          {/* Background decoration for the stack */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-purple-500/5 blur-[80px] rounded-full pointer-events-none" />
-
           <CardStack images={stackImages} interval={3500} />
 
           <div className="text-center mt-8 md:mt-12 opacity-60">
@@ -60,8 +56,8 @@ export const BusinessImpactSection: React.FC = () => {
 
           {/* Blockquote */}
           <div className="relative border-l-4 border-purple-500/30 pl-6 py-2">
-            <p className="text-xl md:text-2xl font-serif italic text-white/90 leading-normal">
-              &quot;Every invoice does more than request money ƒ?&quot; it builds momentum.&quot;
+           <p className="text-xl md:text-2xl font-serif italic text-white/90 leading-normal">
+              "Every invoice does more than request money - it builds momentum."
             </p>
           </div>
         </div>

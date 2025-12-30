@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+﻿import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CrackOverlay } from './CrackOverlay';
 
@@ -89,8 +89,8 @@ const InvoiceContent: React.FC = () => (
       <div className="flex py-1 border-b border-slate-50 text-[0.6rem] md:text-xs">
         <div className="flex-grow font-bold text-slate-900 pl-1">Temerario</div>
         <div className="w-[10%] text-right text-slate-600">1</div>
-        <div className="w-[20%] text-right text-slate-600">ƒ,ª180,000.00</div>
-        <div className="w-[20%] text-right font-medium text-slate-900 pr-1">ƒ,ª180,000.00</div>
+        <div className="w-[20%] text-right text-slate-600">€180,000.00</div>
+        <div className="w-[20%] text-right font-medium text-slate-900 pr-1">€180,000.00</div>
       </div>
     </div>
 
@@ -98,15 +98,15 @@ const InvoiceContent: React.FC = () => (
     <div className="w-full max-w-[200px] self-end space-y-2 text-[0.6rem] md:text-xs mt-4">
       <div className="flex justify-between text-slate-600">
         <span>Subtotal</span>
-        <span>ƒ,ª180,000.00</span>
+        <span>€180,000.00</span>
       </div>
       <div className="flex justify-between text-slate-600">
         <span>Tax (10%)</span>
-        <span>ƒ,ª18,000.00</span>
+        <span>€18,000.00</span>
       </div>
       <div className="flex justify-between border-t-2 border-slate-900 pt-2 text-sm md:text-base font-bold text-slate-900">
         <span>Total</span>
-        <span>ƒ,ª198,000.00</span>
+        <span>€198,000.00</span>
       </div>
     </div>
 
@@ -208,26 +208,26 @@ const PremiumInvoiceContent: React.FC = () => (
         <div className="flex border-b border-white/5 pb-1">
           <div className="w-3/5 truncate pr-2">Design-led communication</div>
           <div className="w-1/6 text-center opacity-50">1</div>
-          <div className="w-1/6 text-right opacity-50">ƒ,ª100</div>
-          <div className="w-1/6 text-right">ƒ,ª100</div>
+          <div className="w-1/6 text-right opacity-50">€100</div>
+          <div className="w-1/6 text-right">€100</div>
         </div>
         <div className="flex border-b border-white/5 pb-1">
           <div className="w-3/5 truncate pr-2">Professional perception upgrade</div>
           <div className="w-1/6 text-center opacity-50">1</div>
-          <div className="w-1/6 text-right opacity-50">ƒ,ª200</div>
-          <div className="w-1/6 text-right">ƒ,ª200</div>
+          <div className="w-1/6 text-right opacity-50">€200</div>
+          <div className="w-1/6 text-right">€200</div>
         </div>
         <div className="flex border-b border-white/5 pb-1">
           <div className="w-3/5 truncate pr-2">Psychology, but tasteful</div>
           <div className="w-1/6 text-center opacity-50">1</div>
-          <div className="w-1/6 text-right opacity-50">ƒ,ª96</div>
-          <div className="w-1/6 text-right">ƒ,ª96</div>
+          <div className="w-1/6 text-right opacity-50">€96</div>
+          <div className="w-1/6 text-right">€96</div>
         </div>
         <div className="flex border-b border-white/5 pb-1">
           <div className="w-3/5 truncate pr-2">Reducing awkward emails</div>
           <div className="w-1/6 text-center opacity-50">1</div>
-          <div className="w-1/6 text-right opacity-50">ƒ,ª200</div>
-          <div className="w-1/6 text-right">ƒ,ª200</div>
+          <div className="w-1/6 text-right opacity-50">€200</div>
+          <div className="w-1/6 text-right">€200</div>
         </div>
       </div>
     </div>
@@ -241,15 +241,15 @@ const PremiumInvoiceContent: React.FC = () => (
       <div className="w-1/2 flex flex-col items-end">
         <div className="flex justify-between w-full text-[0.5rem] md:text-[0.6rem] mb-0.5">
           <span className="uppercase tracking-widest opacity-40">Subtotal</span>
-          <span className="text-white/80">ƒ,ª596.00</span>
+          <span className="text-white/80">€596.00</span>
         </div>
         <div className="flex justify-between w-full text-[0.5rem] md:text-[0.6rem] border-b border-white/20 pb-1 mb-1">
           <span className="uppercase tracking-widest opacity-40">Tax (3%)</span>
-          <span className="text-white/80">ƒ,ª17.88</span>
+          <span className="text-white/80">€17.88</span>
         </div>
         <div className="text-right">
           <p className="font-serif italic text-[0.5rem] md:text-[0.6rem] opacity-60 mb-0">Total Due</p>
-          <p className="font-serif text-2xl md:text-3xl text-white">ƒ,ª613.88</p>
+          <p className="font-serif text-2xl md:text-3xl text-white">€613.88</p>
         </div>
       </div>
     </div>

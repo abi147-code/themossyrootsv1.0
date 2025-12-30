@@ -84,19 +84,16 @@ export const CardStack: React.FC<CardStackProps> = ({ images, interval = 4000 })
   };
 
   return (
-    <div className="relative w-full aspect-[4/5] md:aspect-square max-w-md mx-auto perspective-1000">
+    <div className="relative w-full aspect-[4/5] md:aspect-square max-w-4xl mx-auto perspective-1000">
       {/* Container for the cards */}
       <div className="relative w-full h-full">
         {images.map((src, i) => (
           <div
             key={i}
-            className="absolute inset-0 w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-800"
+            className="absolute inset-0 w-full h-full rounded-2xl overflow-hidden"
             style={getCardStyle(i)}
           >
-            <img src={src} alt={`Gallery image ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
-
-            {/* Gloss Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none mix-blend-overlay"></div>
+            <img src={src} alt={`Gallery image ${i + 1}`} className="w-full h-full object-contain" loading="lazy" />
           </div>
         ))}
       </div>

@@ -44,7 +44,7 @@ export const InteractiveBackground: React.FC = () => {
     const colors = ['rgba(168, 85, 247, 0.25)', 'rgba(245, 158, 11, 0.25)', 'rgba(255, 255, 255, 0.1)'];
 
     // Symbols: Currency, Numbers, Email related
-    const symbols = ['$', 'ƒ,ª', 'Aœ', 'A', '%', '@', 'ƒo%', '0', '1', '7'];
+    const symbols = ['ECB', 'invoice', 'Currency', 'Email', '$1459.65', '$5000', '€200', '€295.98'];
 
     // REDUCED COUNT: Lowered from 50 to 30 to increase perceived spacing
     const particleCount = 30;
@@ -52,10 +52,10 @@ export const InteractiveBackground: React.FC = () => {
     // Initialize Particles
     for (let i = 0; i < particleCount; i++) {
       particles.push({
-        // INCREASED SPACING: Increased range from 2000 to 3000 to spread them out more
-        x: (Math.random() - 0.5) * 3000,
-        y: (Math.random() - 0.5) * 3000,
-        z: Math.random() * 3000,
+            // INCREASED SPACING
+            x: (Math.random() - 0.5) * 4000,
+            y: (Math.random() - 0.5) * 4000,
+            z: Math.random() * 4000,
         rotationX: Math.random() * Math.PI,
         rotationY: Math.random() * Math.PI,
         rotationZ: Math.random() * Math.PI,
@@ -95,8 +95,8 @@ export const InteractiveBackground: React.FC = () => {
       const focalLength = 800;
 
       particles.forEach((p) => {
-        // Move particle towards camera (speed constant)
-        p.z -= 1.0;
+            // Move particle towards camera (slower speed)
+            p.z -= 0.6;
 
         // Reset particle if it passes the camera or gets too close
         if (p.z < -focalLength + 50) {

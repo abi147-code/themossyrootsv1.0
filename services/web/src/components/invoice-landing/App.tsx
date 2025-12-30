@@ -3,9 +3,9 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { HeroInvoiceBreak } from './HeroInvoiceBreak';
-import { ComparisonSection } from './ComparisonSection';
 import { FeaturesSection } from './FeaturesSection';
 import { BusinessImpactSection } from './BusinessImpactSection';
+import { InvoiceEvolutionSection } from './InvoiceEvolutionSection';
 import { WhoThisIsForSection } from './WhoThisIsForSection';
 import { TrustSection } from './TrustSection';
 import { FooterCTASection } from './FooterCTASection';
@@ -58,8 +58,8 @@ const App: React.FC = () => {
           <HeroInvoiceBreak />
         </div>
 
-        {/* Comparison Section */}
-        <ComparisonSection />
+        {/* Invoice Evolution Section */}
+        <InvoiceEvolutionSection />
 
         {/* Features Scroll Section */}
         <FeaturesSection />
