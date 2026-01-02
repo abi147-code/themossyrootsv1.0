@@ -124,8 +124,8 @@ h6 {
   letter-spacing: -0.02em;
 }
 
-[class*="text-white"] {
-  color: var(--color-ink) !important;
+.text-brand-ink {
+  color: var(--color-ink);
 }
 
 .glass-panel {

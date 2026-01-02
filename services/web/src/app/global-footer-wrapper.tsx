@@ -3,7 +3,7 @@
 import Footer from '@/components/Footer';
 import { usePathname } from 'next/navigation';
 
-const HIDE_FOOTER_PREFIXES = ['/dashboard', '/software/invoice-generator'];
+const HIDE_FOOTER_PREFIXES = ['/dashboard', '/software/invoice-generator', '/portfolio'];
 
 export default function GlobalFooterWrapper() {
   const pathname = usePathname();
