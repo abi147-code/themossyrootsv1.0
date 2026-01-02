@@ -37,6 +37,10 @@ const nextConfig: NextConfig = {
         hostname: 'tmr-proxy.fly.dev',
         pathname: '/uploads/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
     ],
   },
 };

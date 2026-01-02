@@ -1,177 +1,28 @@
-'use client';
+import type { Metadata } from 'next';
+import { Inter, Playfair_Display } from 'next/font/google';
+import SignupClient from './SignupClient';
 
-import Link from 'next/link';
-import { FormEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/api';
-import DotGrid from '@/components/DotGrid';
-import VisibilityMount from '@/components/VisibilityMount';
-
-type SignupResponse = {
-  token: string;
-  user: {
-    id: number;
-    email: string;
-    name?: string;
-    role?: 'ADMIN' | 'USER';
-  };
-  subscription?: {
-    status: string;
-    plan: string;
-    trialEndsAt?: string;
-  } | null;
-  message?: string;
+export const metadata: Metadata = {
+  title: 'Sign up | The Mossy Roots',
+  description: 'Create your TMR workspace with the serene Mossy Roots experience.',
+  alternates: { canonical: 'https://themossyroots.com/signup' },
 };
 
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['200', '300', '400', '500'],
+  variable: '--signup-font-inter',
+  display: 'swap',
+});
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  style: ['normal', 'italic'],
+  variable: '--signup-font-playfair',
+  display: 'swap',
+});
+
 export default function SignupPage() {
-  const router = useRouter();
-  const { login, refresh } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const formData = new FormData(event.currentTarget);
-    const payload = {
-      email: (formData.get('email') ?? '').toString(),
-      password: (formData.get('password') ?? '').toString(),
-      name: (formData.get('name') ?? '').toString(),
-      organizationName: (formData.get('organizationName') ?? '').toString(),
-    };
-
-    try {
-      const response = await apiFetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorBody = (await response.json()) as { message?: string };
-        setError(errorBody.message || 'Unable to sign up.');
-        setLoading(false);
-        return;
-      }
-
-      const data = (await response.json()) as SignupResponse;
-      await login(data);
-      await refresh(data.token);
-      router.replace('/dashboard');
-    } catch (err) {
-      console.error(err);
-      setError('Unexpected error. Please try again.');
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-16 bg-[#f7f9fc]">
-      <div className="pointer-events-none absolute inset-0">
-        <VisibilityMount className="absolute inset-0" rootMargin="0px 0px -10% 0px" threshold={0.05}>
-          <DotGrid
-            className="pointer-events-none absolute inset-0"
-            dotSize={12}
-            gap={26}
-            baseColor="#e5eef8"
-            activeColor="#1f7a4d"
-            proximity={160}
-            speedTrigger={110}
-            shockRadius={220}
-            shockStrength={5}
-            resistance={520}
-            returnDuration={1.5}
-          />
-        </VisibilityMount>
-        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/78 to-white/90" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-10 shadow-xl shadow-emerald-100">
-        <div className="mb-8 text-center">
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900">Create your TMR workspace</h1>
-          <p className="mt-2 text-sm text-slate-600">Spin up CRM, billing, and marketing workflows in a single stack.</p>
-        </div>
-        <form className="grid gap-6 sm:grid-cols-2" onSubmit={handleSubmit}>
-          <div className="sm:col-span-1">
-            <label htmlFor="name" className="block text-sm font-medium text-slate-700">
-              Full name
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              required
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-300/60"
-              placeholder="Jordan Moss"
-            />
-          </div>
-          <div className="sm:col-span-1">
-            <label htmlFor="organizationName" className="block text-sm font-medium text-slate-700">
-              Organization
-            </label>
-            <input
-              id="organizationName"
-              name="organizationName"
-              type="text"
-              required
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-300/60"
-              placeholder="Mossy Roots Agency"
-            />
-          </div>
-          <div className="sm:col-span-1">
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-300/60"
-              placeholder="you@company.com"
-            />
-          </div>
-          <div className="sm:col-span-1">
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-300/60"
-              placeholder="********"
-            />
-          </div>
-
-          {error ? (
-            <p className="sm:col-span-2 rounded-xl border border-rose-500/30 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
-          ) : null}
-
-          <div className="sm:col-span-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {loading ? 'Creating account...' : 'Create workspace'}
-            </button>
-          </div>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-slate-500">
-          Already have an account?{' '}
-          <Link className="font-semibold text-emerald-700 hover:text-emerald-600" href="/login">
-            Log in
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
+  return <SignupClient fontClassName={`${inter.variable} ${playfair.variable}`} />;
 }

@@ -1,0 +1,60 @@
+.serene-root {
+  background-color: #050807;
+  color: #e6efea;
+  min-height: 100vh;
+  font-family: var(--serene-font-inter), 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.serene-root h1,
+.serene-root h2,
+.serene-root h3,
+.serene-root h4 {
+  font-family: var(--serene-font-playfair), 'Playfair Display', serif;
+  font-weight: 400;
+}
+
+.serene-root .font-serif {
+  font-family: var(--serene-font-playfair), 'Playfair Display', serif;
+}
+
+.serene-root ::selection {
+  background: rgba(16, 185, 129, 0.2);
+  color: #ffffff;
+}
+
+.serene-root ::-webkit-scrollbar {
+  width: 3px;
+}
+
+.serene-root ::-webkit-scrollbar-track {
+  background: #050807;
+}
+
+.serene-root ::-webkit-scrollbar-thumb {
+  background: #1a2e26;
+  border-radius: 10px;
+}
+
+.serene-root ::-webkit-scrollbar-thumb:hover {
+  background: #10b981;
+}
+
+.serene-root .backface-hidden {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Counteracts global text color overrides from bright theme */
+.serene-root [class*="text-white"] {
+  color: #ffffff !important;
+}
+
+.serene-root [class*="text-emerald-50"],
+.serene-root [class*="text-emerald-100"],
+.serene-root [class*="text-emerald-200"],
+.serene-root [class*="text-emerald-300"],
+.serene-root [class*="text-emerald-400"],
+.serene-root [class*="text-emerald-500"] {
+  color: #a7f3d0 !important;
+}

@@ -1,0 +1,36 @@
+.serene-nav-wrapper {
+  position: fixed;
+  inset: 0 0 auto 0;
+  display: flex;
+  justify-content: center;
+  padding-top: 1.5rem;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.serene-nav-glass {
+  position: relative;
+  pointer-events: auto;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.serene-nav-glass-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.12));
+  border-radius: inherit;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.serene-nav-glass > * {
+  position: relative;
+  z-index: 1;
+}

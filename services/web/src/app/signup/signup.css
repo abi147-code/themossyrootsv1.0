@@ -1,0 +1,167 @@
+.signup-serene-root {
+  min-height: 100vh;
+  background: #050807;
+  color: #e6efea;
+  font-family: var(--signup-font-inter), 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+.signup-serene-root h1 {
+  font-family: var(--signup-font-playfair), 'Playfair Display', serif;
+  font-weight: 400;
+}
+
+.signup-noise-overlay {
+  position: fixed;
+  inset: 0;
+  background-image: url('https://grainy-gradients.vercel.app/noise.svg');
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.signup-main {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1.5rem;
+}
+
+.signup-card {
+  width: 100%;
+  max-width: 680px;
+  padding: 2.25rem;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 14px 48px rgba(0, 0, 0, 0.28);
+  display: grid;
+  gap: 1.5rem;
+}
+
+.signup-kicker {
+  font-size: 0.75rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(52, 211, 153, 0.78);
+  font-weight: 500;
+}
+
+.signup-h1 {
+  font-size: 2rem;
+  color: #e6efea;
+}
+
+.signup-lede {
+  color: #cbd5e1;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.signup-form {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.signup-field {
+  display: grid;
+  gap: 0.4rem;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+.signup-field input {
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e6efea;
+  padding: 0.85rem 1rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.signup-field input:focus {
+  border-color: rgba(52, 211, 153, 0.7);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.signup-error {
+  grid-column: 1 / -1;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(248, 113, 113, 0.6);
+  background: rgba(248, 113, 113, 0.14);
+  color: #fecdd3;
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+}
+
+.signup-button {
+  grid-column: 1 / -1;
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.6);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.12));
+  color: #e6efea;
+  padding: 0.95rem 1rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+}
+
+.signup-button:hover {
+  border-color: rgba(16, 185, 129, 0.9);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.18));
+}
+
+.signup-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.signup-footer-text {
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.signup-link {
+  color: #34d399;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.signup-link:hover {
+  color: #6ee7b7;
+}
+
+.signup-serene-root ::selection {
+  background: rgba(16, 185, 129, 0.22);
+  color: #ffffff;
+}
+
+.signup-serene-root ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.signup-serene-root ::-webkit-scrollbar-track {
+  background: #050807;
+}
+
+.signup-serene-root ::-webkit-scrollbar-thumb {
+  background: #1a2e26;
+  border-radius: 10px;
+}
+
+.signup-serene-root ::-webkit-scrollbar-thumb:hover {
+  background: #10b981;
+}
