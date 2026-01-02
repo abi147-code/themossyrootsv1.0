@@ -2,12 +2,14 @@
 
 import { usePathname } from 'next/navigation';
 import SereneNav from '@/components/SereneNav';
+import { stripLocaleFromPathname } from '@/lib/locale-shared';
 
-const HIDE_NAV_PREFIXES = ['/dashboard', '/software/invoice-generator'];
+const HIDE_NAV_PREFIXES = ['/dashboard'];
 
 export default function GlobalNavWrapper() {
   const pathname = usePathname();
-  const hideNav = HIDE_NAV_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const { pathname: strippedPath } = stripLocaleFromPathname(pathname);
+  const hideNav = HIDE_NAV_PREFIXES.some((prefix) => strippedPath.startsWith(prefix));
 
   if (hideNav) return null;
   return <SereneNav />;

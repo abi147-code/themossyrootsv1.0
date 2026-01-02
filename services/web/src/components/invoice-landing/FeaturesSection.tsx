@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import type { Dictionary } from '@/i18n/get-dictionary';
 
 // Hook to detect when element enters viewport
 const useElementOnScreen = (options: IntersectionObserverInit) => {
@@ -23,17 +24,10 @@ const useElementOnScreen = (options: IntersectionObserverInit) => {
   return [containerRef, isVisible] as const;
 };
 
-const FeatureCard = ({
-  number,
-  title,
-  description,
-  listItems,
-}: {
-  number: string;
-  title: string;
-  description?: string;
-  listItems?: string[];
-}) => {
+type FeaturesCopy = Dictionary['invoice']['features'];
+type FeatureCopy = FeaturesCopy['items'][number];
+
+const FeatureCard = ({ number, title, description, listItems }: FeatureCopy) => {
   const [ref, isVisible] = useElementOnScreen({
     threshold: 0.3, // Trigger when 30% visible
     rootMargin: '0px 0px -10% 0px',
@@ -86,7 +80,7 @@ const FeatureCard = ({
   );
 };
 
-export const FeaturesSection: React.FC = () => {
+export const FeaturesSection: React.FC<{ copy: FeaturesCopy }> = ({ copy }) => {
   return (
     <section className="relative w-full py-24 px-6 overflow-hidden bg-transparent">
       {/* Scroll timeline line for desktop */}
@@ -97,22 +91,22 @@ export const FeaturesSection: React.FC = () => {
         <div className="relative z-10">
           <div className="md:sticky md:top-32 md:min-h-[50vh] flex flex-col justify-center mb-16 md:mb-0">
             <h2 className="text-4xl md:text-6xl font-serif text-white leading-[1.1] drop-shadow-lg">
-              What makes <br />
-              <span className="text-slate-500 italic">this different</span>
+              {copy.headingLead}{' '}
+              <br />
+              <span className="text-slate-500 italic">{copy.headingEmphasis}</span>
             </h2>
             <p className="text-sm md:text-base text-amber-500 font-bold tracking-[0.2em] uppercase mt-6 pl-1 flex items-center gap-3">
               <span className="w-8 h-px bg-amber-500/50"></span>
-              (and world-first)
+              {copy.kicker}
             </p>
           </div>
         </div>
 
         {/* Scrolling Features Column */}
         <div className="flex flex-col gap-0 md:pl-24 z-10 pb-24">
-          <FeatureCard number="01" title="First Invoice System" description="The first invoice system designed primarily for conversion, not just collection." />
-          <FeatureCard number="02" title="Inside the Invoice" description="Marketing capabilities embedded inside the invoice itself." />
-          <FeatureCard number="03" title="No Plugins Needed" description="Works without pixels, plugins, or external landing pages." />
-          <FeatureCard number="04" title="Your invoice transforms into:" listItems={['A Professional Portfolio', 'A Dynamic Upsell Page', 'A Secure Client Portal']} />
+          {copy.items.map((item) => (
+            <FeatureCard key={item.number} {...item} />
+          ))}
         </div>
       </div>
 

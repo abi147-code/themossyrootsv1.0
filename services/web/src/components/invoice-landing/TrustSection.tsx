@@ -1,6 +1,10 @@
 import React from 'react';
+import type { Dictionary } from '@/i18n/get-dictionary';
 
-const TrustItem = ({ title, description, icon }: { title: string; description: string; icon: React.ReactNode }) => {
+type TrustCopy = Dictionary['invoice']['trust'];
+type TrustItemCopy = TrustCopy['items'][number];
+
+const TrustItem = ({ title, description, icon }: TrustItemCopy & { icon: React.ReactNode }) => {
   return (
     <div className="group relative p-8 rounded-sm border border-slate-800 bg-slate-900/40 hover:bg-slate-900 transition-all duration-500 overflow-hidden hover:shadow-[0_0_30px_rgba(16,185,129,0.1)]">
       {/* Hover Gradient Background */}
@@ -25,7 +29,7 @@ const TrustItem = ({ title, description, icon }: { title: string; description: s
   );
 };
 
-export const TrustSection: React.FC = () => {
+export const TrustSection: React.FC<{ copy: TrustCopy }> = ({ copy }) => {
   return (
     <section className="relative w-full py-24 px-6 border-t border-slate-800/50 bg-slate-950 overflow-hidden">
       {/* Background Grid Pattern */}
@@ -49,17 +53,17 @@ export const TrustSection: React.FC = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-emerald-500">Security First</span>
+            <span className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-emerald-500">{copy.badge}</span>
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-serif text-white mb-6">Built for trust and privacy</h2>
+          <h2 className="text-4xl md:text-5xl font-serif text-white mb-6">{copy.title}</h2>
         </div>
 
         {/* Grid */}
         <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-4">
           <TrustItem
-            title="Secure by Design"
-            description="Industry standard encryption for all data. AES-256 bit encryption ensures your financial records are unreadable to anyone but you."
+            title={copy.items[0].title}
+            description={copy.items[0].description}
             icon={
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -67,8 +71,8 @@ export const TrustSection: React.FC = () => {
             }
           />
           <TrustItem
-            title="GDPR Compliant"
-            description="Your data rights and privacy fully respected. We strictly adhere to EU regulations regarding data processing and storage."
+            title={copy.items[1].title}
+            description={copy.items[1].description}
             icon={
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -81,8 +85,8 @@ export const TrustSection: React.FC = () => {
             }
           />
           <TrustItem
-            title="Private"
-            description="We do not sell your data. Ever. Your client list, pricing strategies, and revenue data are strictly yours."
+            title={copy.items[2].title}
+            description={copy.items[2].description}
             icon={
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -95,8 +99,8 @@ export const TrustSection: React.FC = () => {
             }
           />
           <TrustItem
-            title="Reliable"
-            description="99.9% Uptime SLA for enterprise reliability. Our global edge network ensures your invoices load instantly, anywhere."
+            title={copy.items[3].title}
+            description={copy.items[3].description}
             icon={
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -114,7 +118,7 @@ export const TrustSection: React.FC = () => {
         <div className="mt-20 pt-12 text-center relative">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
           <p className="text-xl md:text-2xl font-serif italic text-slate-300 max-w-3xl mx-auto leading-relaxed opacity-80 hover:opacity-100 transition-opacity duration-500">
-            &quot;We believe in transparency. Your financial data is yours alone.&quot;
+            {copy.footer}
           </p>
         </div>
       </div>

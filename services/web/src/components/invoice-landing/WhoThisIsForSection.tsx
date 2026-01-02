@@ -1,11 +1,8 @@
 import React from 'react';
+import type { Dictionary } from '@/i18n/get-dictionary';
 
-interface AudienceCardProps {
-  label: string;
-  title: string;
-  description: string;
-  image: string;
-}
+type AudienceCopy = Dictionary['invoice']['audience'];
+type AudienceCardProps = AudienceCopy['cards'][number];
 
 const AudienceCard: React.FC<AudienceCardProps> = ({ label, title, description, image }) => {
   return (
@@ -61,7 +58,7 @@ const AudienceCard: React.FC<AudienceCardProps> = ({ label, title, description, 
   );
 };
 
-export const WhoThisIsForSection: React.FC = () => {
+export const WhoThisIsForSection: React.FC<{ copy: AudienceCopy }> = ({ copy }) => {
   return (
     <section className="relative w-full py-24 md:py-32 px-6 bg-slate-900 border-t border-slate-800/50">
       {/* Background noise texture */}
@@ -78,36 +75,21 @@ export const WhoThisIsForSection: React.FC = () => {
           <div className="max-w-2xl">
             <h2 className="text-amber-500 font-bold tracking-[0.2em] text-xs md:text-sm uppercase mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              Target Audience
+              {copy.kicker}
             </h2>
-            <h3 className="text-4xl md:text-6xl font-serif text-white leading-tight">Who this is for</h3>
+            <h3 className="text-4xl md:text-6xl font-serif text-white leading-tight">{copy.title}</h3>
           </div>
           <p className="text-slate-400 text-lg md:text-xl font-light md:text-right max-w-sm">
-            If you send invoices, <br />
-            <span className="text-white font-medium border-b border-amber-500/30 pb-0.5">this works for you.</span>
+            {copy.sublineLead} <br />
+            <span className="text-white font-medium border-b border-amber-500/30 pb-0.5">{copy.sublineEmphasis}</span>
           </p>
         </div>
 
         {/* Grid */}
         <div className="grid md:grid-cols-3 gap-6">
-          <AudienceCard
-            label="Freelancers"
-            title="Freelancers"
-            description="Who need to upsell their next project automatically."
-            image="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1000&auto=format&fit=crop"
-          />
-          <AudienceCard
-            label="Agencies"
-            title="Agencies"
-            description="Who want to showcase their portfolio with every bill."
-            image="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=1000&auto=format&fit=crop"
-          />
-          <AudienceCard
-            label="Enterprises"
-            title="Modern Businesses"
-            description="Who value brand consistency and customer experience."
-            image="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1000&auto=format&fit=crop"
-          />
+          {copy.cards.map((card) => (
+            <AudienceCard key={card.title} {...card} />
+          ))}
         </div>
       </div>
     </section>

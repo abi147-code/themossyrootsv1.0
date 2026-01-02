@@ -1,51 +1,38 @@
 import React from 'react';
+import type { Dictionary } from '@/i18n/get-dictionary';
 
-const bulletsLeft = [
-  'Static, boring layout',
-  'Hard to pay (manual entry)',
-  'Zero brand personality',
-  'Ends the customer journey',
-];
+type EvolutionCopy = Dictionary['invoice']['evolution'];
 
-const bulletsRight = [
-  'Dynamic, interactive UI',
-  '1-Click Payment embedded',
-  'Upsell & Marketing cards',
-  'Real-time analytics & tracking',
-  'Campaign creation and Management',
-];
-
-export const InvoiceEvolutionSection: React.FC = () => {
+export const InvoiceEvolutionSection: React.FC<{ copy: EvolutionCopy }> = ({ copy }) => {
   return (
     <section className="relative w-full py-24 md:py-32 px-6 overflow-hidden">
       <div className="max-w-7xl mx-auto flex flex-col items-center gap-12">
         <div className="text-center max-w-3xl space-y-4">
-          <h2 className="text-amber-500 font-bold tracking-[0.2em] text-xs md:text-sm uppercase">Evolution of the Invoice</h2>
+          <h2 className="text-amber-500 font-bold tracking-[0.2em] text-xs md:text-sm uppercase">{copy.kicker}</h2>
           <h3 className="text-3xl md:text-5xl font-serif text-white leading-tight">
-            Stop Sending <span className="text-slate-500 line-through decoration-slate-700 decoration-2 decoration-slice">Dead Documents</span>
+            {copy.titleLead}{' '}
+            <span className="text-slate-500 line-through decoration-slate-700 decoration-2 decoration-slice">{copy.titleStrikethrough}</span>
           </h3>
-          <p className="text-slate-400 text-sm md:text-base leading-relaxed">
-            90% of invoices are opened. Only 1% drive action. See the difference between a receipt and a revenue engine.
-          </p>
+          <p className="text-slate-400 text-sm md:text-base leading-relaxed">{copy.description}</p>
         </div>
 
         <div className="w-full grid gap-8 md:grid-cols-[1fr_auto_1fr] items-center">
           <ComparisonBox
-            title="Standard PDF"
-            subtitle='The "Safe" Choice'
+            title={copy.standard.title}
+            subtitle={copy.standard.subtitle}
             image="/invoice landing page/normal-invoice.jpg"
-            bullets={bulletsLeft}
-            statusLabel="Your Typical PDF"
+            bullets={copy.standard.bullets}
+            statusLabel={copy.standard.statusLabel}
           />
 
-          <ArrowIndicator />
+          <ArrowIndicator label={copy.vsLabel} />
 
           <ComparisonBox
-            title="Smart Invoice"
-            subtitle="The Revenue Choice"
+            title={copy.smart.title}
+            subtitle={copy.smart.subtitle}
             image="/invoice landing page/tem.jpg"
-            bullets={bulletsRight}
-            statusLabel="Upgraded PDF"
+            bullets={copy.smart.bullets}
+            statusLabel={copy.smart.statusLabel}
             highlight
           />
         </div>
@@ -105,16 +92,16 @@ const ComparisonBox = ({
   );
 };
 
-const ArrowIndicator = () => {
+const ArrowIndicator = ({ label }: { label: string }) => {
   return (
     <div className="flex flex-col items-center justify-center gap-3 text-slate-500">
       <div className="hidden md:flex flex-col items-center gap-3">
         <ArrowIcon direction="right" />
-        <span className="text-xs uppercase tracking-[0.3em]">VS</span>
+        <span className="text-xs uppercase tracking-[0.3em]">{label}</span>
       </div>
       <div className="md:hidden flex flex-col items-center gap-3">
         <ArrowIcon direction="down" />
-        <span className="text-xs uppercase tracking-[0.3em]">VS</span>
+        <span className="text-xs uppercase tracking-[0.3em]">{label}</span>
       </div>
     </div>
   );

@@ -1,5 +1,8 @@
 import React from 'react';
+import type { Dictionary } from '@/i18n/get-dictionary';
 import { CardStack } from './CardStack';
+
+type BusinessImpactCopy = Dictionary['invoice']['businessImpact'];
 
 const ImpactPoint = ({ text }: { text: string }) => (
   <div className="flex items-start gap-4 group">
@@ -12,53 +15,39 @@ const ImpactPoint = ({ text }: { text: string }) => (
   </div>
 );
 
-export const BusinessImpactSection: React.FC = () => {
-  // Placeholder images - easily replaceable by uploading new assets to public/
-  // and changing these paths.
-  const stackImages = [
-    { src: '/invoice landing page/Freelance.jpg', alt: 'Freelancer invoice with branded CTA' },
-    { src: '/invoice landing page/tem.jpg', alt: 'Branded invoice marketing template preview' },
-    { src: '/invoice landing page/ZOHO.jpg', alt: 'Invoice dashboard showing click tracking' },
-  ];
-
+export const BusinessImpactSection: React.FC<{ copy: BusinessImpactCopy }> = ({ copy }) => {
   return (
     <section className="relative w-full py-24 md:py-32 px-6 overflow-hidden bg-slate-900/50">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 md:gap-24 items-center">
         {/* Left Column: Animation */}
         <div className="relative order-2 md:order-1">
-          <CardStack images={stackImages} interval={3500} />
+          <CardStack images={copy.stackImages} interval={3500} />
 
           <div className="text-center mt-8 md:mt-12 opacity-60">
-            <p className="text-[0.6rem] uppercase tracking-[0.2em] text-slate-400">Live Preview</p>
+            <p className="text-[0.6rem] uppercase tracking-[0.2em] text-slate-400">{copy.livePreviewLabel}</p>
           </div>
         </div>
 
         {/* Right Column: Content */}
         <div className="relative order-1 md:order-2">
-          <h2 className="text-amber-500 font-bold tracking-[0.2em] text-xs md:text-sm uppercase mb-4">The Business Impact</h2>
+          <h2 className="text-amber-500 font-bold tracking-[0.2em] text-xs md:text-sm uppercase mb-4">{copy.kicker}</h2>
 
           <h3 className="text-3xl md:text-5xl font-serif text-white leading-tight mb-6">
-            Most businesses treat invoices as admin. <br />
-            <span className="text-slate-500">Successful businesses treat them as assets.</span>
+            {copy.titleLead} <br />
+            <span className="text-slate-500">{copy.titleMuted}</span>
           </h3>
 
-          <p className="text-slate-400 text-lg leading-relaxed mb-10">
-            By switching to a conversion-focused invoice, you change the relationship from transactional to relational. Stop leaving money on the table with dead documents.
-          </p>
+          <p className="text-slate-400 text-lg leading-relaxed mb-10">{copy.body}</p>
 
           <div className="space-y-4 mb-10">
-            <ImpactPoint text="Increase recurring revenue" />
-            <ImpactPoint text="Reduce late payments" />
-            <ImpactPoint text="Upsell existing clients effortlessly" />
-            <ImpactPoint text="Professionalize your brand instantly" />
-            <ImpactPoint text="Turn admin time into marketing time" />
+            {copy.points.map((point) => (
+              <ImpactPoint key={point} text={point} />
+            ))}
           </div>
 
           {/* Blockquote */}
           <div className="relative border-l-4 border-purple-500/30 pl-6 py-2">
-           <p className="text-xl md:text-2xl font-serif italic text-white/90 leading-normal">
-              "Every invoice does more than request money - it builds momentum."
-            </p>
+            <p className="text-xl md:text-2xl font-serif italic text-white/90 leading-normal">{copy.quote}</p>
           </div>
         </div>
       </div>

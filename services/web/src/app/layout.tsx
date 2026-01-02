@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist_Mono, Manrope } from 'next/font/google';
 import './globals.css';
-import { Providers } from './providers';
-import GlobalNavWrapper from './global-nav-wrapper';
-import GlobalFooterWrapper from './global-footer-wrapper';
+import { AuthProvider } from '@/context/AuthContext';
 
 const manrope = Manrope({
   variable: '--font-manrope',
@@ -57,13 +55,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${manrope.variable} ${geistMono.variable} bg-[#0B0F14] text-[#F5F7F9] antialiased`}>
-        <Providers>
-          <GlobalNavWrapper />
-          {children}
-          <GlobalFooterWrapper />
-        </Providers>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

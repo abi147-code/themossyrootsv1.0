@@ -1,7 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { Dictionary } from '@/i18n/get-dictionary';
+import type { Locale } from '@/i18n/config';
+import { prefixPathWithLocale } from '@/lib/locale-shared';
 
-export const FooterCTASection: React.FC = () => {
+type FooterCtaCopy = Dictionary['invoice']['footerCta'];
+
+export const FooterCTASection: React.FC<{ copy: FooterCtaCopy; locale: Locale }> = ({ copy, locale }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const router = useRouter();
@@ -49,13 +54,13 @@ export const FooterCTASection: React.FC = () => {
       <div className="relative z-10 max-w-4xl mx-auto text-center">
         {/* Animated Headline */}
         <h2 className="text-5xl md:text-7xl font-serif text-white mb-6 leading-tight tracking-tight drop-shadow-2xl">
-          Every invoice is a <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400 font-italic">marketing opportunity.</span>
+          {copy.headingLine1} <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400 font-italic">{copy.headingHighlight}</span>
         </h2>
 
         <p className="text-xl md:text-2xl text-slate-300 font-light mb-12 max-w-2xl mx-auto opacity-80">
-          Don&apos;t send another dead-end PDF. <br />
-          <span className="text-white font-medium">Start sending invoices that convert today.</span>
+          {copy.bodyLine1} <br />
+          <span className="text-white font-medium">{copy.bodyHighlight}</span>
         </p>
 
         {/* Massive CTA */}
@@ -65,11 +70,11 @@ export const FooterCTASection: React.FC = () => {
 
           <button
             className="relative px-12 py-5 bg-slate-900 rounded-lg leading-none flex items-center gap-4 transition-transform duration-200 transform group-hover:-translate-y-1 group-hover:scale-105 border border-purple-500/50"
-            onClick={() => router.push('/login')}
+            onClick={() => router.push(prefixPathWithLocale(locale, '/login'))}
           >
             <span className="flex flex-col items-start text-left">
-              <span className="text-xs font-bold text-amber-500 uppercase tracking-widest mb-1">Limited Availability</span>
-              <span className="text-2xl font-bold text-white tracking-tight">Early Access to Editor</span>
+              <span className="text-xs font-bold text-amber-500 uppercase tracking-widest mb-1">{copy.ctaBadge}</span>
+              <span className="text-2xl font-bold text-white tracking-tight">{copy.ctaTitle}</span>
             </span>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg group-hover:rotate-45 transition-transform duration-300">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,7 +84,7 @@ export const FooterCTASection: React.FC = () => {
           </button>
         </div>
 
-        <p className="mt-6 text-sm text-slate-500 font-medium tracking-wide">No credit card required</p>
+        <p className="mt-6 text-sm text-slate-500 font-medium tracking-wide">{copy.subnote}</p>
       </div>
     </section>
   );

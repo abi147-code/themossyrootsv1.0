@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import type { Dictionary } from '@/i18n/get-dictionary';
+import type { Locale } from '@/i18n/config';
 import { HeroInvoiceBreak } from './HeroInvoiceBreak';
 import { FeaturesSection } from './FeaturesSection';
 import { BusinessImpactSection } from './BusinessImpactSection';
@@ -11,9 +12,12 @@ import { TrustSection } from './TrustSection';
 import { FooterCTASection } from './FooterCTASection';
 import { InteractiveBackground } from './InteractiveBackground';
 
-const App: React.FC = () => {
-  const router = useRouter();
+type InvoiceLandingAppProps = {
+  copy: Dictionary['invoice'];
+  locale: Locale;
+};
 
+const App: React.FC<InvoiceLandingAppProps> = ({ copy, locale }) => {
   useEffect(() => {
     document.body.classList.add('invoice-landing-page');
     return () => {
@@ -32,55 +36,36 @@ const App: React.FC = () => {
       {/* Interactive 3D Background - Sits between gradients and content */}
       <InteractiveBackground />
 
-      {/* Navigation */}
-      <nav className="relative z-50 w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-        {/* Premium Brand Text Only */}
-        <div className="flex flex-col justify-center cursor-pointer select-none group">
-          <span className="font-serif text-2xl font-bold tracking-tight text-white leading-none drop-shadow-md">TMR</span>
-          <span className="text-[0.6rem] font-bold text-amber-500 uppercase tracking-[0.25em] leading-tight mt-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
-            Smart Invoice Generator
-          </span>
-        </div>
-
-        {/* CTA Button */}
-        <button
-          className="hidden md:block px-6 py-2.5 rounded-sm bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-widest transition-all duration-300 border border-white/10 backdrop-blur-md shadow-lg hover:shadow-purple-500/20 hover:border-white/20"
-          onClick={() => router.push('/login')}
-        >
-          Sign In
-        </button>
-      </nav>
-
       {/* Main Content Area */}
       <main className="flex-grow flex flex-col relative z-10 w-full">
         {/* Hero Section */}
         <div className="min-h-[85vh] flex items-center justify-center py-12">
-          <HeroInvoiceBreak />
+          <HeroInvoiceBreak copy={copy.hero} locale={locale} />
         </div>
 
         {/* Invoice Evolution Section */}
-        <InvoiceEvolutionSection />
+        <InvoiceEvolutionSection copy={copy.evolution} />
 
         {/* Features Scroll Section */}
-        <FeaturesSection />
+        <FeaturesSection copy={copy.features} />
 
         {/* Business Impact Section */}
-        <BusinessImpactSection />
+        <BusinessImpactSection copy={copy.businessImpact} />
 
         {/* Who This Is For Section */}
-        <WhoThisIsForSection />
+        <WhoThisIsForSection copy={copy.audience} />
 
         {/* Trust & Privacy Section */}
-        <TrustSection />
+        <TrustSection copy={copy.trust} />
 
         {/* Final CTA Section */}
-        <FooterCTASection />
+        <FooterCTASection copy={copy.footerCta} locale={locale} />
       </main>
 
       {/* Footer - Minimal */}
       <div className="relative z-10 w-full py-6 border-t border-slate-800/50 bg-slate-900/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-slate-600 text-[0.6rem] uppercase tracking-widest">Ac 2025 TMR Smart Invoice Generator</p>
+          <p className="text-slate-600 text-[0.6rem] uppercase tracking-widest">{copy.footerNote}</p>
         </div>
       </div>
     </div>
