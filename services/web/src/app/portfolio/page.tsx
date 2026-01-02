@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import Script from 'next/script';
 import PortfolioPg2Client from './PortfolioPg2Client';
+import Script from 'next/script';
+import './pg2-tailwind.css';
 
 export const metadata: Metadata = {
   title: 'ABISHEK | Digital Architect',

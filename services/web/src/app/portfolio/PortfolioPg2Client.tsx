@@ -5,6 +5,8 @@ import Script from 'next/script';
 import { createRoot, type Root } from 'react-dom/client';
 import App from '../../../Portfolio PG 2/App';
 
+const USE_TAILWIND_CDN = false;
+
 const inlineStyles = `
         /* Font import fallback to guarantee Italiana + Manrope even if <link> is blocked/slow */
         @import url('https://fonts.googleapis.com/css2?family=Italiana&family=Manrope:wght@200;300;400;500;600&display=swap');
@@ -169,15 +171,6 @@ type Listener = {
   leave: () => void;
 };
 
-const loadTailwindOnce = () => {
-  if (document.getElementById('portfolio-pg2-tailwind')) return;
-  const script = document.createElement('script');
-  script.id = 'portfolio-pg2-tailwind';
-  script.src = 'https://cdn.tailwindcss.com';
-  script.async = false;
-  document.head.appendChild(script);
-};
-
 export default function PortfolioPg2Client() {
   const cursorRafRef = useRef<number | null>(null);
   const listenersRef = useRef<Listener[]>([]);
@@ -211,12 +204,12 @@ export default function PortfolioPg2Client() {
         fontLink.href = 'https://fonts.googleapis.com/css2?family=Italiana&family=Manrope:wght@200;300;400;500;600&display=swap';
         head.appendChild(fontLink);
       }
-      if (!document.getElementById('pg2-css-placeholder')) {
-        const cssLink = document.createElement('link');
-        cssLink.id = 'pg2-css-placeholder';
-        cssLink.rel = 'stylesheet';
-        cssLink.href = '/portfolio-pg2/index.css';
-        head.appendChild(cssLink);
+      if (USE_TAILWIND_CDN && !document.getElementById('portfolio-pg2-tailwind')) {
+        const script = document.createElement('script');
+        script.id = 'portfolio-pg2-tailwind';
+        script.src = 'https://cdn.tailwindcss.com';
+        script.async = false;
+        head.appendChild(script);
       }
     }
   }, []);
@@ -224,9 +217,6 @@ export default function PortfolioPg2Client() {
   useEffect(() => {
     if (initRef.current) return;
     initRef.current = true;
-
-    // Ensure Tailwind CDN is present for utility classes.
-    loadTailwindOnce();
 
     const cursor = document.getElementById('cursor');
     if (!cursor) return undefined;
@@ -281,16 +271,14 @@ export default function PortfolioPg2Client() {
       reactRootRef.current = createRoot(host);
       reactRootRef.current.render(<App />);
     }
-    return () => {
-      reactRootRef.current?.unmount();
-      reactRootRef.current = null;
-    };
   }, []);
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: inlineStyles }} />
-      <Script id="portfolio-pg2-tailwind" src="https://cdn.tailwindcss.com" strategy="beforeInteractive" />
+      {USE_TAILWIND_CDN && (
+        <Script id="portfolio-pg2-tailwind" src="https://cdn.tailwindcss.com" strategy="beforeInteractive" />
+      )}
       <div id="cursor" />
       <div id={PORTFOLIO_ROOT_ID} ref={mountRef} />
     </>
