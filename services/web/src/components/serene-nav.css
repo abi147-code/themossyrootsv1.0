@@ -17,6 +17,7 @@
 
 .nav-shell {
   width: min(94vw, 1200px);
+  margin: 0 auto;
 }
 
 .nav-shell-inner {
@@ -30,6 +31,24 @@
 @media (min-width: 768px) {
   .nav-shell-inner {
     gap: 1.5rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .serene-nav-wrapper {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    padding-top: 1.25rem;
+  }
+  .nav-shell {
+    width: auto;
+    max-width: 92vw;
+    margin: 0 auto;
+  }
+  .nav-shell-inner {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 
