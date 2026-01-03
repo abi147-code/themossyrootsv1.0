@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Suspense, useEffect, useState } from 'react';
 import { Background3D } from '@/app/[locale]/(marketing)/serene/Background3D';
 import { useDictionary } from '@/context/LocaleContext';
+import { useAuth } from '@/context/AuthContext';
 import './about.css';
 
 const fadeIn = {
@@ -27,6 +28,7 @@ type AboutClientProps = {
 
 export default function AboutClient({ fontClassName = '' }: AboutClientProps) {
   const { about } = useDictionary();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -109,7 +111,7 @@ export default function AboutClient({ fontClassName = '' }: AboutClientProps) {
         <div className="about-cta-overlay" aria-hidden />
         <div className="about-cta-content">
           <p className="about-kicker">{about.cta.kicker}</p>
-          <Link href="/dashboard" className="about-cta-link">
+          <Link href={user ? '/dashboard' : '/login'} className="about-cta-link">
             {about.cta.link}
           </Link>
         </div>
