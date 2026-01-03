@@ -7,13 +7,14 @@ import { resolveLocale } from '@/lib/locale';
 import LocaleLangSetter from '@/components/LocaleLangSetter';
 
 type LayoutProps = PropsWithChildren<{
-  params: {
+  params: Promise<{
     locale?: string;
-  };
+  }>;
 }>;
 
 export default async function LocaleLayout({ children, params }: LayoutProps) {
-  const locale = resolveLocale(params.locale);
+  const { locale: localeParam } = await params;
+  const locale = resolveLocale(localeParam);
   const dictionary = await getDictionary(locale);
 
   return (

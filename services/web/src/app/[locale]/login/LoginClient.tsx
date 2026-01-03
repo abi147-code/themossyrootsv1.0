@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import { Background3D } from '@/app/[locale]/(marketing)/serene/Background3D';
 import { useDictionary, useLocale } from '@/context/LocaleContext';
 import { prefixPathWithLocale } from '@/lib/locale-shared';
+import { Background3D } from '@/app/[locale]/(marketing)/serene/Background3D';
+import { AuthExitButton } from '@/components/auth/AuthExitButton';
 import './login.css';
 
 type LoginResponse = {
@@ -108,67 +109,71 @@ export default function LoginClient({ fontClassName = '' }: LoginClientProps) {
   const signupHref = prefixPathWithLocale(locale, '/signup');
 
   return (
-    <div className={`login-serene-root ${fontClassName}`}>
-      {mounted ? (
-        <Suspense fallback={<div className="fixed inset-0 bg-[#050807]" />}>
-          <Background3D scroll={scrollProgress} />
-        </Suspense>
-      ) : (
-        <div className="fixed inset-0 bg-[#050807]" aria-hidden />
-      )}
+    <div className={`login-serene-root auth-page-root ${fontClassName}`}>
+      <AuthExitButton />
+      <div className="auth-bg-layer">
+        {mounted ? (
+          <Suspense fallback={<div className="fixed inset-0 bg-[#050807] pointer-events-none" aria-hidden />}>
+            <Background3D scroll={scrollProgress} />
+          </Suspense>
+        ) : (
+          <div className="fixed inset-0 bg-[#050807] pointer-events-none" aria-hidden />
+        )}
+        <div className="login-noise-overlay" aria-hidden />
+      </div>
 
-      <div className="login-noise-overlay" aria-hidden />
+      <div className="auth-form-layer">
+        <main className="login-main">
+          <motion.div {...fadeIn} className="login-card">
+            <div className="space-y-3 text-center">
+              <p className="login-kicker">{copy.hero.kicker}</p>
+              <h1 className="login-h1">{copy.hero.title}</h1>
+              <p className="login-lede">{copy.hero.subtitle}</p>
+            </div>
+            <form className="login-form" onSubmit={handleSubmit}>
+              <label className="login-field">
+                <span>{copy.form.email}</span>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder={copy.form.emailPlaceholder}
+                />
+              </label>
+              <label className="login-field">
+                <span>{copy.form.password}</span>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  placeholder={copy.form.passwordPlaceholder}
+                />
+              </label>
 
-      <main className="login-main">
-        <motion.div {...fadeIn} className="login-card">
-          <div className="space-y-3 text-center">
-            <p className="login-kicker">{copy.hero.kicker}</p>
-            <h1 className="login-h1">{copy.hero.title}</h1>
-            <p className="login-lede">{copy.hero.subtitle}</p>
-          </div>
-          <form className="login-form" onSubmit={handleSubmit}>
-            <label className="login-field">
-              <span>{copy.form.email}</span>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                placeholder={copy.form.emailPlaceholder}
-              />
-            </label>
-            <label className="login-field">
-              <span>{copy.form.password}</span>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                placeholder={copy.form.passwordPlaceholder}
-              />
-            </label>
+              {error ? (
+                <p className="login-error">{error}</p>
+              ) : null}
 
-            {error ? (
-              <p className="login-error">{error}</p>
-            ) : null}
+              <button
+                type="submit"
+                disabled={loading}
+                className="login-button"
+              >
+                {loading ? copy.form.submitting : copy.form.submit}
+              </button>
+            </form>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="login-button"
-            >
-              {loading ? copy.form.submitting : copy.form.submit}
-            </button>
-          </form>
-
-          <p className="login-footer-text">
-            {copy.footer.cta}{' '}
-            <Link className="login-link" href={signupHref}>
-              {copy.footer.link}
-            </Link>
-          </p>
-        </motion.div>
-      </main>
+            <p className="login-footer-text">
+              {copy.footer.cta}{' '}
+              <Link className="login-link" href={signupHref}>
+                {copy.footer.link}
+              </Link>
+            </p>
+          </motion.div>
+        </main>
+      </div>
     </div>
   );
 }

@@ -2,12 +2,13 @@ import { redirect } from 'next/navigation';
 import { resolveLocale } from '@/lib/locale';
 
 type PageParams = {
-  params: {
+  params: Promise<{
     locale?: string;
-  };
+  }>;
 };
 
-export default function LegacyInvoiceRedirectPage({ params }: PageParams) {
-  const locale = resolveLocale(params.locale);
+export default async function LegacyInvoiceRedirectPage({ params }: PageParams) {
+  const { locale: localeParam } = await params;
+  const locale = resolveLocale(localeParam);
   redirect(`/${locale}/software/invoice-generator`);
 }

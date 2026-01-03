@@ -5,11 +5,45 @@
   font-family: var(--login-font-inter), 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   position: relative;
+  z-index: 2147483646;
+  pointer-events: auto;
+}
+
+.auth-page-root {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.auth-bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.auth-form-layer {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .login-serene-root h1 {
   font-family: var(--login-font-playfair), 'Playfair Display', serif;
   font-weight: 400;
+}
+
+.login-static-bg {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.16), transparent 42%),
+    radial-gradient(circle at 80% 10%, rgba(52, 211, 153, 0.12), transparent 48%),
+    #050807;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .login-noise-overlay {
@@ -29,11 +63,14 @@
   align-items: center;
   justify-content: center;
   padding: 4rem 1.5rem;
+  pointer-events: none;
 }
 
 .login-card {
   width: 100%;
   max-width: 420px;
+  position: relative;
+  z-index: 2;
   padding: 2rem;
   border-radius: 1.5rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -43,6 +80,7 @@
   box-shadow: 0 14px 48px rgba(0, 0, 0, 0.28);
   display: grid;
   gap: 1.5rem;
+  pointer-events: auto;
 }
 
 .login-kicker {
@@ -162,3 +200,35 @@
 .login-serene-root ::-webkit-scrollbar-thumb:hover {
   background: #10b981;
 }
+
+.auth-exit-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 4;
+  pointer-events: auto;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #e6efea;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.auth-exit-button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.auth-exit-icon {
+  width: 18px;
+  height: 18px;
+}
+

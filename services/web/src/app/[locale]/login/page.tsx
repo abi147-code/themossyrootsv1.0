@@ -19,8 +19,9 @@ const playfair = Playfair_Display({
   display: 'swap',
 });
 
-export async function generateMetadata({ params }: { params: { locale?: string } }): Promise<Metadata> {
-  const locale = resolveLocale(params.locale);
+export async function generateMetadata({ params }: { params: Promise<{ locale?: string }> }): Promise<Metadata> {
+  const { locale: localeParam } = await params;
+  const locale = resolveLocale(localeParam);
   const dictionary = await getDictionary(locale);
   const meta = dictionary.login.meta;
   const alternates = buildAlternateLinks('/login', locale);

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -13,6 +14,7 @@ export default function SereneNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const nextLocale = locale === 'en' ? 'fr' : 'en';
   const pathWithSearch = (targetPath: string) => {
@@ -31,29 +33,33 @@ export default function SereneNav() {
     { label: dictionary.nav.software, href: prefixPathWithLocale(locale, '/software') },
   ];
 
+  const closeMobile = () => setMobileOpen(false);
+  const toggleMobile = () => setMobileOpen((prev) => !prev);
+
+  useEffect(() => {
+    closeMobile();
+  }, [pathname]);
+
   return (
     <div className="serene-nav-wrapper">
       <motion.nav
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1.2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="pointer-events-auto will-change-transform"
-        >
-          <div
-            className="serene-nav-glass px-6 md:px-10 py-4 md:py-5 rounded-full
-                     flex items-center space-x-4 md:space-x-8 whitespace-nowrap
-                     max-w-[92vw] md:max-w-none backface-hidden"
-          >
-            <div className="serene-nav-glass-bg" aria-hidden />
+        className="serene-nav pointer-events-auto will-change-transform"
+      >
+        <div className="serene-nav-glass nav-shell px-5 md:px-10 py-3.5 md:py-5 rounded-full flex items-center w-full md:w-auto whitespace-nowrap max-w-[94vw] md:max-w-none">
+          <div className="serene-nav-glass-bg" aria-hidden />
+          <div className="nav-shell-inner w-full">
             <Link href={prefixPathWithLocale(locale, '/')} className="group flex items-center shrink-0">
               <span className="text-[11px] md:text-[13px] font-serif italic text-[#E6EFEA] hover:text-emerald-200 transition-colors tracking-wide drop-shadow-md">
                 {dictionary.nav.brand}
               </span>
             </Link>
 
-            <div className="w-[1px] h-4 bg-white/20" />
+            <div className="hidden h-4 w-px bg-white/20 md:block" />
 
-            <div className="flex items-center space-x-6 md:space-x-8">
+            <div className="hidden items-center space-x-6 md:flex md:space-x-8">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -65,26 +71,85 @@ export default function SereneNav() {
               ))}
             </div>
 
-            <div className="w-[1px] h-4 bg-white/20" />
+            <div className="hidden h-4 w-px bg-white/20 md:block" />
 
             <button
               type="button"
               onClick={handleToggleLocale}
-              className="text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-[#E6EFEA] px-4 py-2 rounded-full bg-white/[0.06] border border-white/15 hover:bg-white/[0.12] transition-all shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] active:scale-95 drop-shadow-sm"
+              className="hidden text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-[#E6EFEA] px-4 py-2 rounded-full bg-white/[0.06] border border-white/15 hover:bg-white/[0.12] transition-all shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] active:scale-95 drop-shadow-sm md:inline-flex"
             >
               {dictionary.nav.languageToggle}: {dictionary.nav.locales[nextLocale]}
             </button>
 
-            <div className="w-[1px] h-4 bg-white/20" />
+            <div className="hidden h-4 w-px bg-white/20 md:block" />
 
             <Link
               href={prefixPathWithLocale(locale, '/login')}
-              className="text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-[#E6EFEA] px-5 py-2 rounded-full bg-white/[0.1] border border-white/20 hover:bg-white/[0.2] transition-all shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] active:scale-95 drop-shadow-sm"
+              className="hidden text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-[#E6EFEA] px-5 py-2 rounded-full bg-white/[0.1] border border-white/20 hover:bg-white/[0.2] transition-all shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] active:scale-95 drop-shadow-sm md:inline-flex"
             >
               {dictionary.nav.login}
             </Link>
+
+            <button
+              type="button"
+              onClick={toggleMobile}
+              aria-expanded={mobileOpen}
+              aria-label="Toggle navigation"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-lg backdrop-blur md:hidden"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d={mobileOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 7h16M4 12h16M4 17h16'}
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
-        </motion.nav>
+        </div>
+
+        <div className={`serene-nav-mobile ${mobileOpen ? 'open' : ''} md:hidden`}>
+          <div className="serene-nav-mobile-card">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={closeMobile}
+                className="serene-nav-mobile-link"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <div className="serene-nav-mobile-divider" aria-hidden />
+            <button
+              type="button"
+              onClick={() => { handleToggleLocale(); closeMobile(); }}
+              className="serene-nav-mobile-link flex items-center justify-between"
+            >
+              <span>{dictionary.nav.languageToggle}</span>
+              <span className="text-xs uppercase tracking-[0.18em] text-emerald-100">
+                {dictionary.nav.locales[nextLocale]}
+              </span>
+            </button>
+            <Link
+              href={prefixPathWithLocale(locale, '/login')}
+              onClick={closeMobile}
+              className="serene-nav-mobile-primary"
+            >
+              {dictionary.nav.login}
+            </Link>
+            <Link
+              href={prefixPathWithLocale(locale, '/software')}
+              onClick={closeMobile}
+              className="serene-nav-mobile-secondary"
+            >
+              {dictionary.nav.software}
+            </Link>
+          </div>
+        </div>
+      </motion.nav>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo, useEffect } from 'react';
+import React, { useRef, useMemo, useEffect, useState, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
@@ -497,10 +497,38 @@ const SubtleDust: React.FC = () => {
 };
 
 export const Background3D: React.FC<Background3DProps> = ({ scroll }) => {
+  const [webglFailed, setWebglFailed] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const handleContextLost = useCallback((event: Event) => {
+    event.preventDefault();
+    setWebglFailed(true);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    return () => {
+      if (canvas) {
+        canvas.removeEventListener('webglcontextlost', handleContextLost);
+      }
+    };
+  }, [handleContextLost]);
+
+  if (webglFailed) {
+    return <div className="w-full h-full fixed inset-0 z-0 bg-[#050807]" aria-hidden="true" />;
+  }
+
+  const eventSource = typeof document !== 'undefined' ? document.documentElement : undefined;
+
   return (
-    <div className="w-full h-full fixed inset-0 z-0 bg-[#050807]">
+    <div className="w-full h-full fixed inset-0 z-0 bg-[#050807] pointer-events-none" aria-hidden="true">
       <Canvas
-        eventSource={typeof document !== 'undefined' ? document.body : undefined}
+        className="pointer-events-none"
+        eventSource={eventSource}
+        onCreated={({ gl }) => {
+          canvasRef.current = gl.domElement;
+          gl.domElement.addEventListener('webglcontextlost', handleContextLost, { once: true });
+        }}
         camera={{ position: [0, 0, 15], fov: 45 }}
         dpr={1}
         gl={{ antialias: false, alpha: false, powerPreference: 'high-performance', stencil: false, depth: false }}

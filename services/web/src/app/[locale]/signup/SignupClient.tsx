@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import { Background3D } from '@/app/[locale]/(marketing)/serene/Background3D';
 import { useDictionary, useLocale } from '@/context/LocaleContext';
 import { prefixPathWithLocale } from '@/lib/locale-shared';
+import { Background3D } from '@/app/[locale]/(marketing)/serene/Background3D';
+import { AuthExitButton } from '@/components/auth/AuthExitButton';
 import './signup.css';
 
 type SignupResponse = {
@@ -110,87 +111,91 @@ export default function SignupClient({ fontClassName = '' }: SignupClientProps) 
   const loginHref = prefixPathWithLocale(locale, '/login');
 
   return (
-    <div className={`signup-serene-root ${fontClassName}`}>
-      {mounted ? (
-        <Suspense fallback={<div className="fixed inset-0 bg-[#050807]" />}>
-          <Background3D scroll={scrollProgress} />
-        </Suspense>
-      ) : (
-        <div className="fixed inset-0 bg-[#050807]" aria-hidden />
-      )}
+    <div className={`signup-serene-root auth-page-root ${fontClassName}`}>
+      <AuthExitButton />
+      <div className="auth-bg-layer">
+        {mounted ? (
+          <Suspense fallback={<div className="fixed inset-0 bg-[#050807] pointer-events-none" aria-hidden />}>
+            <Background3D scroll={scrollProgress} />
+          </Suspense>
+        ) : (
+          <div className="fixed inset-0 bg-[#050807] pointer-events-none" aria-hidden />
+        )}
+        <div className="signup-noise-overlay" aria-hidden />
+      </div>
 
-      <div className="signup-noise-overlay" aria-hidden />
+      <div className="auth-form-layer">
+        <main className="signup-main">
+          <motion.div {...fadeIn} className="signup-card">
+            <div className="space-y-3 text-center">
+              <p className="signup-kicker">{copy.hero.kicker}</p>
+              <h1 className="signup-h1">{copy.hero.title}</h1>
+              <p className="signup-lede">{copy.hero.subtitle}</p>
+            </div>
+            <form className="signup-form" onSubmit={handleSubmit}>
+              <label className="signup-field">
+                <span>{copy.form.name}</span>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  required
+                  placeholder={copy.form.namePlaceholder}
+                />
+              </label>
+              <label className="signup-field">
+                <span>{copy.form.organization}</span>
+                <input
+                  id="organizationName"
+                  name="organizationName"
+                  type="text"
+                  required
+                  placeholder={copy.form.organizationPlaceholder}
+                />
+              </label>
+              <label className="signup-field">
+                <span>{copy.form.email}</span>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder={copy.form.emailPlaceholder}
+                />
+              </label>
+              <label className="signup-field">
+                <span>{copy.form.password}</span>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  placeholder={copy.form.passwordPlaceholder}
+                />
+              </label>
 
-      <main className="signup-main">
-        <motion.div {...fadeIn} className="signup-card">
-          <div className="space-y-3 text-center">
-            <p className="signup-kicker">{copy.hero.kicker}</p>
-            <h1 className="signup-h1">{copy.hero.title}</h1>
-            <p className="signup-lede">{copy.hero.subtitle}</p>
-          </div>
-          <form className="signup-form" onSubmit={handleSubmit}>
-            <label className="signup-field">
-              <span>{copy.form.name}</span>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                placeholder={copy.form.namePlaceholder}
-              />
-            </label>
-            <label className="signup-field">
-              <span>{copy.form.organization}</span>
-              <input
-                id="organizationName"
-                name="organizationName"
-                type="text"
-                required
-                placeholder={copy.form.organizationPlaceholder}
-              />
-            </label>
-            <label className="signup-field">
-              <span>{copy.form.email}</span>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                placeholder={copy.form.emailPlaceholder}
-              />
-            </label>
-            <label className="signup-field">
-              <span>{copy.form.password}</span>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                placeholder={copy.form.passwordPlaceholder}
-              />
-            </label>
+              {error ? (
+                <p className="signup-error">{error}</p>
+              ) : null}
 
-            {error ? (
-              <p className="signup-error">{error}</p>
-            ) : null}
+              <button
+                type="submit"
+                disabled={loading}
+                className="signup-button"
+              >
+                {loading ? copy.form.submitting : copy.form.submit}
+              </button>
+            </form>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="signup-button"
-            >
-              {loading ? copy.form.submitting : copy.form.submit}
-            </button>
-          </form>
-
-          <p className="signup-footer-text">
-            {copy.footer.prompt}{' '}
-            <Link className="signup-link" href={loginHref}>
-              {copy.footer.link}
-            </Link>
-          </p>
-        </motion.div>
-      </main>
+            <p className="signup-footer-text">
+              {copy.footer.prompt}{' '}
+              <Link className="signup-link" href={loginHref}>
+                {copy.footer.link}
+              </Link>
+            </p>
+          </motion.div>
+        </main>
+      </div>
     </div>
   );
 }

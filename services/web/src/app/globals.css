@@ -62,6 +62,23 @@ body {
   scroll-behavior: smooth;
 }
 
+/* Prevent Next.js dev overlays from intercepting input focus in dev */
+[data-nextjs-dev-overlay],
+next-route-announcer {
+  pointer-events: none !important;
+}
+
+#__next > div[style*="position: fixed"],
+#__next > div[style*="position: absolute"] {
+  pointer-events: none;
+}
+@media print {
+  #__next > div[style*="position: fixed"],
+  #__next > div[style*="position: absolute"] {
+    pointer-events: auto;
+  }
+}
+
 .dashboard-light {
   color: #0f172a;
   background: #f7f9fc;

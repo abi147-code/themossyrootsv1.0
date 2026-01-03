@@ -285,7 +285,7 @@ export const HeroInvoiceBreak: React.FC<{ copy: HeroCopy; locale: Locale }> = ({
   const router = useRouter();
 
   // 3D Tilt Logic
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handlePointerMove = (e: React.PointerEvent) => {
     if (isBroken || !containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -302,7 +302,7 @@ export const HeroInvoiceBreak: React.FC<{ copy: HeroCopy; locale: Locale }> = ({
     setTilt({ x: rotateX, y: rotateY });
   };
 
-  const handleMouseLeave = () => {
+  const handlePointerLeave = () => {
     setTilt({ x: 0, y: 0 });
   };
 
@@ -338,17 +338,8 @@ export const HeroInvoiceBreak: React.FC<{ copy: HeroCopy; locale: Locale }> = ({
     }, 1000);
   };
 
-  const handleInteraction = (e: React.MouseEvent | React.TouchEvent) => {
+  const registerHit = (clientX: number, clientY: number) => {
     if (isBroken) return;
-
-    let clientX, clientY;
-    if ('touches' in e) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = (e as React.MouseEvent).clientX;
-      clientY = (e as React.MouseEvent).clientY;
-    }
 
     const nextClickCount = clicks + 1;
     setClicks(nextClickCount);
@@ -368,16 +359,18 @@ export const HeroInvoiceBreak: React.FC<{ copy: HeroCopy; locale: Locale }> = ({
     }
   };
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isBroken) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    registerHit(e.clientX, e.clientY);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       // Mock center coords for keyboard interaction
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        handleInteraction({
-          ...e,
-          clientX: rect.left + rect.width / 2,
-          clientY: rect.top + rect.height / 2,
-        } as any);
+        registerHit(rect.left + rect.width / 2, rect.top + rect.height / 2);
       }
     }
   };
@@ -394,6 +387,7 @@ export const HeroInvoiceBreak: React.FC<{ copy: HeroCopy; locale: Locale }> = ({
       {/* Left Column: Text Copy */}
       <div className="flex-1 text-center md:text-left z-20">
         <div className={`transition-all duration-700 ${isBroken ? 'opacity-100 transform translate-y-0' : 'opacity-80'}`}>
+          <div className="invoice-brand-kicker">The Mossy Roots</div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-6">
             {isBroken ? (
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 animate-pulse">
@@ -442,14 +436,14 @@ export const HeroInvoiceBreak: React.FC<{ copy: HeroCopy; locale: Locale }> = ({
           role="button"
           tabIndex={0}
           aria-label={copy.interactionAria}
-          onMouseDown={handleInteraction}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleInteraction}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerLeave={handlePointerLeave}
           onKeyDown={handleKeyDown}
           style={{
             transform: isBroken ? `scale(1.05)` : `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(${isShaking ? 0.98 : 1})`,
             transition: isShaking ? 'transform 0.05s' : 'transform 0.2s ease-out',
+            touchAction: 'manipulation',
           }}
           className={`relative w-full aspect-[3/4] rounded-lg shadow-2xl cursor-pointer select-none outline-none ring-offset-4 ring-offset-slate-900 focus:ring-2 focus:ring-purple-600 ${isShaking ? 'animate-shake' : ''}`}
         >

@@ -4,10 +4,11 @@ import InvoiceLandingClient from './InvoiceLandingClient';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { buildAlternateLinks, resolveLocale } from '@/lib/locale';
 
-type PageParams = { params: { locale?: string } };
+type PageParams = { params: Promise<{ locale?: string }> };
 
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
-  const locale = resolveLocale(params.locale);
+  const { locale: localeParam } = await params;
+  const locale = resolveLocale(localeParam);
   const dictionary = await getDictionary(locale);
   const meta = dictionary.invoice.meta;
   const alternates = buildAlternateLinks('/software/invoice-generator', locale);
@@ -45,7 +46,8 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 }
 
 export default async function InvoiceGeneratorLandingPage({ params }: PageParams) {
-  const locale = resolveLocale(params.locale);
+  const { locale: localeParam } = await params;
+  const locale = resolveLocale(localeParam);
   const dictionary = await getDictionary(locale);
   const schema = dictionary.invoice.schema;
 
