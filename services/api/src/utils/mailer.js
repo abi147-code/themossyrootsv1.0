@@ -35,24 +35,6 @@ const firstStringEnv = (...keys) => {
   return undefined;
 };
 
-const resolveHost = () =>
-  firstStringEnv('MAILPIT_HOST', 'SMTP_HOST', 'SMTP_SERVER') || '127.0.0.1';
-
-const resolvePort = () => {
-  const candidates = [
-    process.env.MAILPIT_PORT,
-    process.env.SMTP_PORT,
-    process.env.SMTP_SERVER_PORT,
-  ];
-  for (const candidate of candidates) {
-    const parsed = parseNumber(candidate, NaN);
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
-  }
-  return 1025;
-};
-
 const resolveAuth = () => {
   const user =
     process.env.MAILPIT_USER ||
@@ -72,22 +54,27 @@ const resolveAuth = () => {
   return undefined;
 };
 
-const resolveEmailService = () => {
-  const service =
-    process.env.EMAIL_TRANSPORT ||
-    process.env.EMAIL_SERVICE ||
-    process.env.SMTP_SERVICE ||
-    'mailpit';
-  return typeof service === 'string' ? service.trim().toLowerCase() : 'mailpit';
-};
-
-const resolveCustomSmtpHost = () =>
-  firstStringEnv('SMTP_HOST', 'SMTP_SERVER', 'SMTP_URL', 'EMAIL_SMTP_HOST');
+const resolveEmailService = () => 'sendgrid';
 
 const SENDGRID_API_HOST = 'api.sendgrid.com';
 
 const resolveSendgridApiKey = () =>
   firstStringEnv('SENDGRID_API_KEY', 'EMAIL_SENDGRID_API_KEY', 'SENDGRID_KEY');
+
+const assertSendgridConfig = () => {
+  const transport = (process.env.EMAIL_TRANSPORT || process.env.EMAIL_SERVICE || '').trim().toLowerCase();
+  if (transport && transport !== 'sendgrid') {
+    throw new Error('EMAIL_TRANSPORT must be set to "sendgrid". Mailpit/SMTP are not allowed.');
+  }
+
+  if (!resolveSendgridApiKey()) {
+    throw new Error('SENDGRID_API_KEY is required for SendGrid transport.');
+  }
+
+  if (!firstStringEnv('SYSTEM_EMAIL', 'SMTP_FROM', 'SMTP_USER')) {
+    throw new Error('SYSTEM_EMAIL (verified sender) is required for SendGrid transport.');
+  }
+};
 
 const normalizeAddressObject = (entry) => {
   if (!entry) {
@@ -290,193 +277,50 @@ const buildSendgridTransport = () => {
   };
 };
 
-const buildMailpitConfig = () => ({
-  host: resolveHost(),
-  port: resolvePort(),
-  secure: false,
-  auth: resolveAuth(),
-});
-
-const buildCustomConfig = () => {
-  const host = resolveCustomSmtpHost();
-  if (!host) {
-    return null;
-  }
-
-  const portCandidates = [
-    process.env.SMTP_PORT,
-    process.env.SMTP_SERVER_PORT,
-    process.env.EMAIL_SMTP_PORT,
-  ];
-  let port = 587;
-  for (const candidate of portCandidates) {
-    const parsed = parseNumber(candidate, NaN);
-    if (!Number.isNaN(parsed)) {
-      port = parsed;
-      break;
-    }
-  }
-
-  const secure = parseBoolean(
-    process.env.SMTP_SECURE ??
-      process.env.EMAIL_SECURE ??
-      process.env.SMTP_USE_TLS ??
-      process.env.SMTP_TLS ??
-      process.env.EMAIL_SMTP_SECURE,
-    port === 465
-  );
-
-  const auth = resolveAuth();
-  const config = {
-    host,
-    port,
-    secure,
-  };
-
-  if (auth) {
-    config.auth = auth;
-  }
-
-  if (port === 587 && !secure) {
-    config.requireTLS = true;
-  }
-
-  return config;
-};
-
-const buildGmailConfig = () => {
-  const host = (process.env.SMTP_HOST && process.env.SMTP_HOST.trim()) || 'smtp.gmail.com';
-  const port = parseNumber(process.env.SMTP_PORT, 465);
-  const secure = parseBoolean(process.env.SMTP_SECURE || process.env.EMAIL_SECURE, port === 465);
-  const user =
-    process.env.EMAIL_USER ||
-    process.env.SMTP_USER ||
-    process.env.SMTP_USERNAME ||
-    process.env.SMTP_LOGIN ||
-    null;
-  const pass =
-    process.env.EMAIL_PASS || process.env.SMTP_PASS || process.env.SMTP_PASSWORD || null;
-
-  if (!user || !pass) {
-    console.warn(
-      '[Mailer] Gmail selected but EMAIL_USER/EMAIL_PASS are not fully configured. Emails may fail to send.'
-    );
-  }
-
-  const config = {
-    host,
-    port,
-    secure,
-    auth: user && pass ? { user, pass } : undefined,
-  };
-
-  if (port === 587 && !secure) {
-    config.requireTLS = true;
-  }
-
-  return config;
-};
-
 const FALLBACK_SENDER = 'no-reply@localhost.localdomain';
 let activeTransportMeta = {
-  host: '127.0.0.1',
-  port: 1025,
-  secure: false,
-  mode: 'MAILPIT',
+  host: SENDGRID_API_HOST,
+  port: 443,
+  secure: true,
+  mode: 'SENDGRID_WEBAPI',
 };
 
 const resolveDefaultSender = () =>
-  firstStringEnv('SMTP_FROM', 'SYSTEM_EMAIL', 'SMTP_USER') || FALLBACK_SENDER;
+  firstStringEnv('SYSTEM_EMAIL', 'SMTP_FROM', 'SMTP_USER') || FALLBACK_SENDER;
 
 const resolveEnvelopeFrom = () =>
-  firstStringEnv('SYSTEM_EMAIL', 'SMTP_USER', 'MAILPIT_USER') || resolveDefaultSender();
+  firstStringEnv('SYSTEM_EMAIL', 'SMTP_FROM', 'SMTP_USER') || resolveDefaultSender();
 
 const getActiveTransportMeta = () => ({ ...activeTransportMeta });
 
 const createTransporter = () => {
-  const service = resolveEmailService();
-  if (service === 'sendgrid') {
-    const sendgridTransport = buildSendgridTransport();
-    if (sendgridTransport) {
-      activeTransportMeta = {
-        host: SENDGRID_API_HOST,
-        port: 443,
-        secure: true,
-        mode: 'SENDGRID_WEBAPI',
-      };
-      console.info('[Mailer] Using SendGrid Web API (HTTPS)');
-      sendgridTransport
-        .verify()
-        .then(() => {
-          console.info('[Mailer] SendGrid Web API transport ready');
-        })
-        .catch((error) => {
-          console.warn('[Mailer] SendGrid transport verification skipped:', error?.message || error);
-        });
-      return sendgridTransport;
-    }
+  assertSendgridConfig();
 
-    const error = new Error(
-      '[Mailer] EMAIL_TRANSPORT=sendgrid configured but SENDGRID_API_KEY is missing.'
-    );
+  const sendgridTransport = buildSendgridTransport();
+  if (!sendgridTransport) {
+    const error = new Error('[Mailer] SENDGRID_API_KEY is missing or invalid.');
     console.error(error.message);
     throw error;
   }
 
-  const customConfig = buildCustomConfig();
-
-  if (process.env.NODE_ENV === 'production' && service === 'mailpit' && !customConfig) {
-    const error = new Error(
-      '[Mailer] Mailpit is not allowed in production. Configure SMTP/SendGrid and set EMAIL_TRANSPORT accordingly.'
-    );
-    console.error(error.message);
-    throw error;
-  }
-
-  let transportConfig;
-  let modeLabel = 'MAILPIT';
-
-  if (customConfig) {
-    transportConfig = customConfig;
-    modeLabel = `CUSTOM (${transportConfig.host})`;
-  } else if (service === 'gmail') {
-    transportConfig = buildGmailConfig();
-    modeLabel = 'GMAIL';
-  } else {
-    transportConfig = buildMailpitConfig();
-  }
-
-  const transport = nodemailer.createTransport(transportConfig);
   activeTransportMeta = {
-    host: transportConfig.host,
-    port: transportConfig.port,
-    secure: Boolean(transportConfig.secure),
-    mode: modeLabel,
+    host: SENDGRID_API_HOST,
+    port: 443,
+    secure: true,
+    mode: 'SENDGRID_WEBAPI',
   };
 
-  console.info(
-    `[Mailer] Using SMTP host ${transportConfig.host}:${transportConfig.port} (secure=${
-      transportConfig.secure ? 'yes' : 'no'
-    })`
-  );
-
-  transport
+  console.info('[Mailer] Using SendGrid Web API (HTTPS)');
+  sendgridTransport
     .verify()
     .then(() => {
-      console.info(
-        `[Mailer] ${modeLabel} SMTP ready at ${transportConfig.host}:${transportConfig.port}${
-          transportConfig.auth ? ' (auth enabled)' : ''
-        }`
-      );
+      console.info('[Mailer] SendGrid Web API transport ready');
     })
     .catch((error) => {
-      console.warn(
-        `[Mailer] ${modeLabel} SMTP verify failed for ${transportConfig.host}:${transportConfig.port}:`,
-        error?.message || error
-      );
+      console.warn('[Mailer] SendGrid transport verification skipped:', error?.message || error);
     });
 
-  return transport;
+  return sendgridTransport;
 };
 
 const sharedTransporter = createTransporter();
@@ -484,11 +328,8 @@ const sharedTransporter = createTransporter();
 module.exports = {
   sharedTransporter,
   createTransporter,
-  resolveHost,
-  resolvePort,
   resolveEmailService,
   resolveDefaultSender,
   resolveEnvelopeFrom,
   getActiveTransportMeta,
-  resolveCustomSmtpHost,
 };
