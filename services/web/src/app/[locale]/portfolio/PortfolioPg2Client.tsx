@@ -160,6 +160,15 @@ const inlineStyles = `
             width: 48px;
             height: 48px;
         }
+
+        @media (max-width: 640px) {
+            #cursor {
+                display: none;
+            }
+            body.custom-cursor-active {
+                cursor: auto;
+            }
+        }
     `;
 
 const PORTFOLIO_ROOT_ID = 'portfolio-pg2-root';

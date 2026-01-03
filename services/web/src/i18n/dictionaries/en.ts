@@ -363,7 +363,7 @@ const en = {
       ctaTitle: 'Early Access to Editor',
       subnote: 'No credit card required',
     },
-    footerNote: 'Ac 2025 TMR Smart Invoice Generator',
+    footerNote: '© 2025 TMR Smart Invoice Generator',
   },
   login: {
     meta: {

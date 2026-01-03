@@ -9,7 +9,7 @@ const Projects: React.FC = () => {
   } = useDictionary();
 
   return (
-    <section id="projects" className="py-24 md:py-36 px-6 relative z-20">
+    <section id="projects" className="py-20 md:py-36 px-4 sm:px-6 relative z-20">
       <div ref={ref} className="max-w-[1200px] mx-auto">
         <div
           className={`text-center mb-16 md:mb-24 transition-all duration-800 ${
@@ -30,12 +30,11 @@ const Projects: React.FC = () => {
             {projects.narrative.map((para, index) => (
               <p
                 key={para}
-                className="text-base md:text-lg text-gray-200/90 font-sans-body leading-relaxed max-w-4xl mx-auto transition-all duration-700"
+                className="text-base md:text-lg text-gray-200/90 font-sans-body leading-relaxed max-w-4xl mx-auto transition-all duration-700 text-left md:text-justify"
                 style={{
                   transform: isVisible ? 'translateY(0)' : 'translateY(12px)',
                   opacity: isVisible ? 1 : 0,
                   filter: isVisible ? 'blur(0px)' : 'blur(6px)',
-                  textAlign: 'justify',
                   transitionDelay: `${index * 90}ms`,
                 }}
               >

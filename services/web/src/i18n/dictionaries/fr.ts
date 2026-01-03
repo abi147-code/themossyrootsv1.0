@@ -362,7 +362,7 @@ const fr = {
       ctaTitle: 'Accès anticipé à l’éditeur',
       subnote: 'Aucune carte requise',
     },
-    footerNote: 'Ac 2025 Générateur de factures intelligentes TMR',
+    footerNote: '© 2025 Générateur de factures intelligentes TMR',
   },
   login: {
     meta: {
