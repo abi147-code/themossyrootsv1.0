@@ -38,6 +38,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:4000
       - NEXT_PUBLIC_INVOICE_GENERATOR_URL=http://localhost/invoice-generator/
       - NEXT_PUBLIC_PROMO_AI_MARKETING_URL=/software/invoice-generator
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     ports:
       - "3000:3000"
     depends_on:
