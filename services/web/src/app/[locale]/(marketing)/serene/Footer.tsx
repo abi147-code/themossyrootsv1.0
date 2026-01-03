@@ -7,6 +7,15 @@ export const Footer: React.FC = () => {
   const dictionary = useDictionary();
   const socials = dictionary.footer.socials;
   const note = dictionary.footer.note.replace('{year}', `${new Date().getFullYear()}`);
+  const socialLinks: Record<string, string> = {
+    Instagram: 'https://www.instagram.com/the.mossyroots/',
+    LinkedIn: 'https://www.linkedin.com/in/abishek147ae/',
+    Unsplash: 'https://unsplash.com/@abi147ae',
+    Github: 'https://github.com/abi147-code',
+    Contact: 'mailto:abishek147ae@gmail.com',
+    X: 'https://x.com/TheMossyRoots',
+    Twitter: 'https://x.com/TheMossyRoots',
+  };
 
   return (
     <footer className="relative py-24 px-6 overflow-hidden">
@@ -18,11 +27,20 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap justify-center gap-8 md:gap-16 text-xs uppercase tracking-[0.3em] text-[#A7C4B5]/60">
-          {socials.map((label) => (
-            <a key={label} href="#" className="hover:text-[#E6EFEA] transition-colors border-b border-transparent hover:border-emerald-500/30 pb-1">
-              {label}
-            </a>
-          ))}
+          {socials.map((label) => {
+            const href = socialLinks[label] ?? '#';
+            return (
+              <a
+                key={label}
+                href={href}
+                target={socialLinks[label] ? '_blank' : undefined}
+                rel={socialLinks[label] ? 'noreferrer' : undefined}
+                className="hover:text-[#E6EFEA] transition-colors border-b border-transparent hover:border-emerald-500/30 pb-1"
+              >
+                {label}
+              </a>
+            );
+          })}
         </div>
 
         <div className="w-12 h-[1px] bg-white/10" />

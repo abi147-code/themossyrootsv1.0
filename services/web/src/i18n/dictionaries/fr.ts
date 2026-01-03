@@ -15,7 +15,7 @@ const fr = {
   },
   footer: {
     brand: 'The Mossy Roots',
-    socials: ['Twitter', 'LinkedIn', 'Instagram', 'Unsplash', 'Github', 'Contact'],
+    socials: ['X', 'LinkedIn', 'Instagram', 'Unsplash', 'Github', 'Contact'],
     note: '&copy; {year} TMR Studio. Développé avec intention.',
     subnote: 'Construire des systèmes marketing qui s’inspirent de la nature.',
   },
@@ -524,7 +524,7 @@ const fr = {
       title: 'Créons quelque chose d’inévitable.',
       subtitle: 'Stratégie, physique et code — accordés pour l’élan.',
       emailCta: 'Email',
-      socials: ['Twitter', 'LinkedIn', 'Instagram', 'Github'],
+      socials: ['X', 'LinkedIn', 'Instagram', 'Unsplash', 'Github', 'Contact'],
     },
   },
 };

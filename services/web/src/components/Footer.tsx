@@ -8,6 +8,15 @@ export default function Footer() {
   const year = new Date().getFullYear();
   const socials = dictionary.footer.socials;
   const note = dictionary.footer.note.replace('{year}', `${year}`);
+  const socialLinks: Record<string, string> = {
+    Instagram: 'https://www.instagram.com/the.mossyroots/',
+    LinkedIn: 'https://www.linkedin.com/in/abishek147ae/',
+    Unsplash: 'https://unsplash.com/@abi147ae',
+    Github: 'https://github.com/abi147-code',
+    Contact: 'mailto:abishek147ae@gmail.com',
+    X: 'https://x.com/TheMossyRoots',
+    Twitter: 'https://x.com/TheMossyRoots',
+  };
 
   return (
     <footer className="mt-24 border-t border-slate-200 bg-white/90">
@@ -16,7 +25,12 @@ export default function Footer() {
         <div className="flex items-center gap-4 text-sm text-slate-700">
           {socials.map((label, index) => (
             <span key={label} className="flex items-center gap-4">
-              <Link href="#" className="transition hover:text-[#1f7a4d]">
+              <Link
+                href={socialLinks[label] ?? '#'}
+                target={socialLinks[label] ? '_blank' : undefined}
+                rel={socialLinks[label] ? 'noreferrer' : undefined}
+                className="transition hover:text-[#1f7a4d]"
+              >
                 {label}
               </Link>
               {index < socials.length - 1 ? <span className="text-slate-300">|</span> : null}

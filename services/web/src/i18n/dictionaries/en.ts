@@ -17,7 +17,7 @@ const en = {
   },
   footer: {
     brand: 'The Mossy Roots',
-    socials: ['Twitter', 'LinkedIn', 'Instagram', 'Unsplash', 'Github', 'Contact'],
+    socials: ['X', 'LinkedIn', 'Instagram', 'Unsplash', 'Github', 'Contact'],
     note: '&copy; {year} TMR Studio. Developed with intent.',
     subnote: 'Building marketing systems that feel like nature.',
   },
@@ -464,7 +464,8 @@ const en = {
       title: 'Signature Work',
       subtitle: 'SaaS, creative tooling, and immersive brand experiences.',
       narrative: [
-        'Hello — I started as a mechanical engineer obsessed with how systems move, connect, and evolve.',
+        'Hello,',
+        'I started as a mechanical engineer obsessed with how systems move, connect, and evolve.',
         'That curiosity shifted into marketing once I saw brands as living systems that can be designed, nurtured, and grown.',
         'At Drop, I co-led a crowdfunding campaign that hit 261% on KissKissBankBank — proof that when a story resonates, momentum follows.',
         'Today I build marketing ecosystems powered by AI, automation, and design thinking so small teams can scale without losing their human touch.',
@@ -525,7 +526,7 @@ const en = {
       title: 'Let’s build something inevitable.',
       subtitle: 'Strategy, physics, and code — tuned for momentum.',
       emailCta: 'Email',
-      socials: ['Twitter', 'LinkedIn', 'Instagram', 'Github'],
+      socials: ['X', 'LinkedIn', 'Instagram', 'Unsplash', 'Github', 'Contact'],
     },
   },
 };
