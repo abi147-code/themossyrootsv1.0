@@ -6,12 +6,32 @@ const fr = {
     about: 'À propos',
     portfolio: 'Portfolio',
     software: 'Logiciels',
+    demo: 'Démo',
     login: 'Connexion',
     languageToggle: 'Langue',
     locales: {
       en: 'English',
       fr: 'Français',
     },
+  },
+  demoPage: {
+    label: 'Démo privée',
+    title: 'Accès démo privé',
+    subtitle:
+      'Ces démos sont sur invitation. Vous avez besoin du lien unique et du mot de passe que nous vous avons envoyés pour accéder à chaque expérience.',
+    instructionsTitle: 'Comment ça marche',
+    instructions: [
+      '1. Ouvrez le lien que nous vous avons envoyé pour votre commerce.',
+      '2. Saisissez le mot de passe fourni sur cette page.',
+      '3. Explorez la maquette complète—aucun listing, aucune redirection.',
+    ],
+    contact: 'Vous n’avez rien reçu ? Répondez au message de prospection ou envoyez-nous un message rapide.',
+    metaTitle: 'Accès Démo Privé · The Mossy Roots',
+    metaDescription:
+      'Un portail de démo privé. L’accès se fait via un lien et un mot de passe spécifiques à chaque client.',
+    formLabel: 'Mot de passe démo',
+    placeholder: 'Entrez le mot de passe reçu',
+    submitLabel: 'Accéder à ma démo',
   },
   footer: {
     brand: 'The Mossy Roots',

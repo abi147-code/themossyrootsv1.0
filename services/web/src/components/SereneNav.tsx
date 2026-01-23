@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useDictionary, useLocale } from '@/context/LocaleContext';
-import { prefixPathWithLocale, swapLocaleInPath } from '@/lib/locale-shared';
+import { prefixPathWithLocale, swapLocaleInPath, stripLocaleFromPathname } from '@/lib/locale-shared';
 import './serene-nav.css';
 
 export default function SereneNav() {
@@ -15,12 +15,22 @@ export default function SereneNav() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [demoMenuOpen, setDemoMenuOpen] = useState(false);
 
   const nextLocale = locale === 'en' ? 'fr' : 'en';
   const pathWithSearch = (targetPath: string) => {
     const query = searchParams.toString();
     return query ? `${targetPath}?${query}` : targetPath;
   };
+
+  const { pathname: strippedPath } = stripLocaleFromPathname(pathname);
+  const isDemoLanding = strippedPath === '/demo';
+
+  useEffect(() => {
+    if (!isDemoLanding) {
+      setDemoMenuOpen(false);
+    }
+  }, [isDemoLanding]);
 
   const handleToggleLocale = () => {
     const target = swapLocaleInPath(pathname, nextLocale);
@@ -31,6 +41,7 @@ export default function SereneNav() {
     { label: dictionary.nav.about, href: prefixPathWithLocale(locale, '/about') },
     { label: dictionary.nav.portfolio, href: prefixPathWithLocale(locale, '/portfolio') },
     { label: dictionary.nav.software, href: prefixPathWithLocale(locale, '/software') },
+    { label: dictionary.nav.demo, href: prefixPathWithLocale(locale, '/demo') },
   ];
 
   const closeMobile = () => setMobileOpen(false);
@@ -39,6 +50,61 @@ export default function SereneNav() {
   useEffect(() => {
     closeMobile();
   }, [pathname]);
+
+  const navHiddenDesktop = isDemoLanding;
+
+  if (isDemoLanding) {
+    return (
+      <div className="serene-nav-wrapper">
+        <div className="demo-nav-floating">
+          <button
+            type="button"
+            className="demo-nav-toggle"
+            aria-expanded={demoMenuOpen}
+            onClick={() => setDemoMenuOpen((prev) => !prev)}
+          >
+            Menu
+            <span className={`demo-nav-chevron ${demoMenuOpen ? 'open' : ''}`} aria-hidden />
+          </button>
+          {demoMenuOpen && (
+            <div className="demo-nav-dropdown">
+              <div className="demo-nav-links">
+                {navLinks.map((link) => (
+                  <Link key={link.href} href={link.href} onClick={() => setDemoMenuOpen(false)}>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+              <div className="demo-nav-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleToggleLocale();
+                    setDemoMenuOpen(false);
+                  }}
+                >
+                  {dictionary.nav.languageToggle}: {dictionary.nav.locales[nextLocale]}
+                </button>
+                <Link
+                  href={prefixPathWithLocale(locale, '/login')}
+                  onClick={() => setDemoMenuOpen(false)}
+                >
+                  {dictionary.nav.login}
+                </Link>
+              </div>
+              <button
+                type="button"
+                className="demo-nav-close"
+                onClick={() => setDemoMenuOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="serene-nav-wrapper">
@@ -73,13 +139,15 @@ export default function SereneNav() {
 
             <div className="hidden h-4 w-px bg-white/20 md:block" />
 
-            <button
-              type="button"
-              onClick={handleToggleLocale}
-              className="hidden text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-[#E6EFEA] px-4 py-2 rounded-full bg-white/[0.06] border border-white/15 hover:bg-white/[0.12] transition-all shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] active:scale-95 drop-shadow-sm md:inline-flex"
-            >
-              {dictionary.nav.languageToggle}: {dictionary.nav.locales[nextLocale]}
-            </button>
+            <div className="hidden md:inline-flex">
+              <button
+                type="button"
+                onClick={handleToggleLocale}
+                className="text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-[#E6EFEA] px-4 py-2 rounded-full bg-white/[0.06] border border-white/15 hover:bg-white/[0.12] transition-all shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] active:scale-95 drop-shadow-sm"
+              >
+                {dictionary.nav.languageToggle}: {dictionary.nav.locales[nextLocale]}
+              </button>
+            </div>
 
             <div className="hidden h-4 w-px bg-white/20 md:block" />
 
@@ -125,7 +193,10 @@ export default function SereneNav() {
             <div className="serene-nav-mobile-divider" aria-hidden />
             <button
               type="button"
-              onClick={() => { handleToggleLocale(); closeMobile(); }}
+              onClick={() => {
+                handleToggleLocale();
+                closeMobile();
+              }}
               className="serene-nav-mobile-link flex items-center justify-between"
             >
               <span>{dictionary.nav.languageToggle}</span>

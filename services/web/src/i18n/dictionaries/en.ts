@@ -8,12 +8,32 @@ const en = {
     about: 'About',
     portfolio: 'Portfolio',
     software: 'Software',
+    demo: 'Demo',
     login: 'Log in',
     languageToggle: 'Language',
     locales: {
       en: 'English',
       fr: 'Français',
     },
+  },
+  demoPage: {
+    label: 'Private demo',
+    title: 'Private demo access',
+    subtitle:
+      'These demos are invitation-only. You need the unique link and password we shared with you to unlock each experience.',
+    instructionsTitle: 'How it works',
+    instructions: [
+      '1. Open the link we sent you for your shop.',
+      '2. Enter the provided password on that URL.',
+      '3. Explore the full mock-up—no listings, no redirects.',
+    ],
+    contact: 'If you did not receive a password, reply to the outreach message or send us a quick note.',
+    metaTitle: 'Private Demo Access · The Mossy Roots',
+    metaDescription:
+      'A private demo portal. Access is granted via a client-specific link and password only.',
+    formLabel: 'Demo password',
+    placeholder: 'Enter the password shared via outreach',
+    submitLabel: 'Go to my demo',
   },
   footer: {
     brand: 'The Mossy Roots',

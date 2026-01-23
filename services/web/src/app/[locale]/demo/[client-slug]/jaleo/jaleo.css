@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap');
+
+:root {
+  font-family: 'Manrope', 'Playfair Display', sans-serif;
+  scroll-behavior: smooth;
+}
+
+html {
+  font-family: 'Manrope', 'Playfair Display', serif;
+  background-color: #F5F2EB;
+  color: #121212;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #F5F2EB;
+  color: #121212;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F2EB;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #BFA15F;
+}
+
+::selection {
+  background: #121212;
+  color: #BFA15F;
+}

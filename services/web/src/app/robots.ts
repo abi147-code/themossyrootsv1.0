@@ -6,7 +6,16 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/dashboard', '/dashboard/*'],
+        disallow: [
+          '/dashboard',
+          '/dashboard/*',
+          '/demo',
+          '/demo/*',
+          '/en/demo',
+          '/en/demo/*',
+          '/fr/demo',
+          '/fr/demo/*',
+        ],
       },
     ],
     sitemap: 'https://www.themossyroots.com/sitemap.xml',

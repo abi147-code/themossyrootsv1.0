@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import SereneNav from '@/components/SereneNav';
 import { stripLocaleFromPathname } from '@/lib/locale-shared';
 
-const HIDE_NAV_PREFIXES = ['/dashboard', '/software/invoice-generator'];
+const HIDE_NAV_PREFIXES = ['/dashboard', '/software/invoice-generator', '/demo'];
 const AUTH_PREFIXES = ['/login', '/signup'];
 
 export default function GlobalNavWrapper() {

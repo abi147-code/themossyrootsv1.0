@@ -81,7 +81,24 @@ const config: Config = {
     'z-[-1]',
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        jaleo: {
+          stone: '#F5F2EB',
+          black: '#121212',
+          gold: '#BFA15F',
+          olive: '#2A3328',
+        },
+      },
+      fontFamily: {
+        serif: ['"Cormorant Garamond"', 'serif'],
+        sans: ['"Montserrat"', 'sans-serif'],
+      },
+      transitionDuration: {
+        '2000': '2000ms',
+        '3000': '3000ms',
+      },
+    },
   },
   plugins: [],
 };
