@@ -6,8 +6,8 @@ import { Reveal } from './ui/Reveal';
 import { Star } from 'lucide-react';
 
 const ReviewCard: React.FC<{ review: Review; index: number }> = ({ review, index }) => (
-  <Reveal delay={index * 0.2} type="fade" className="flex-1 min-w-[300px]">
-    <div className="p-8 md:p-12 h-full flex flex-col items-center text-center border border-transparent hover:border-jaleo-black/5 transition-colors duration-1000">
+  <Reveal delay={index * 0.2} type="fade" className="w-full">
+    <div className="p-8 md:p-12 h-full flex flex-col items-center text-center border border-transparent hover:border-jaleo-black/5 transition-colors duration-1000 bg-white/60 md:bg-transparent rounded-2xl md:rounded-none shadow md:shadow-none">
       <div className="flex gap-1 mb-6 text-jaleo-gold">
         {[...Array(5)].map((_, i) => (
           <Star key={i} size={12} fill="currentColor" strokeWidth={0} />
@@ -44,9 +44,9 @@ const Reviews: React.FC = () => {
   ];
 
   return (
-    <section className="py-32 bg-jaleo-stone px-6 overflow-hidden">
+    <section className="py-32 bg-jaleo-stone px-4 md:px-6 overflow-hidden">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row gap-12 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-jaleo-black/5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-0 md:divide-x divide-jaleo-black/5">
           {reviews.map((r, i) => (
             <ReviewCard key={i} review={r} index={i} />
           ))}

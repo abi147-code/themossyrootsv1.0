@@ -59,6 +59,17 @@ const Footer: React.FC = () => {
                     <div className="absolute inset-0 bg-jaleo-gold transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
                 </button>
              </Reveal>
+             <Reveal delay={0.6}>
+               <div className="mt-10 w-full max-w-xl">
+                 <p className="text-center text-base md:text-lg font-sans text-white leading-relaxed bg-white/10 backdrop-blur-sm px-6 py-5 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.2)] border border-white/20">
+                   Si ce que vous voyez vous intéresse et que vous souhaitez le concrétiser dans la réalité, n’hésitez pas à me contacter à l’adresse
+                   <span className="text-jaleo-gold"> abishek.e.work@gmail.com</span> ou sur WhatsApp au
+                   <span className="text-jaleo-gold"> +33 7757166 63</span>.
+                   <br />
+                   Ce site peut devenir entièrement le vôtre : gratuitement, si vous le souhaitez.
+                 </p>
+               </div>
+             </Reveal>
           </div>
         </div>
 

@@ -56,7 +56,7 @@ export default function SereneLandingClient({ fontClassName = '' }: SereneLandin
         <div className="fixed inset-0 bg-[#050807]" aria-hidden />
       )}
 
-      <main className="relative z-10">
+      <main className="relative z-10 max-w-6xl mx-auto px-4 md:px-8">
         <Hero />
         <Philosophy />
         <Founder />

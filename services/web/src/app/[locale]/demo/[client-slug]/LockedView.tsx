@@ -60,8 +60,19 @@ export default function LockedView({ clientSlug, brandName }: LockedViewProps) {
   };
 
   return (
-    <section className="flex min-h-[70vh] flex-col justify-center gap-10 px-6 py-20 text-white">
-      <div className="mx-auto max-w-3xl space-y-6 text-center">
+    <section className="relative flex min-h-[70vh] flex-col justify-center gap-10 px-6 py-20 text-white overflow-hidden">
+      <div className="absolute inset-0">
+        <div
+          className="absolute inset-0 bg-cover bg-center scale-105 blur-[2px]"
+          style={{
+            backgroundImage:
+              'linear-gradient(135deg, rgba(0,0,0,0.82), rgba(0,0,0,0.7)), url("/demo-assets/jaleo/gallery-wallpaper.png")',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-black/80" />
+      </div>
+
+      <div className="relative mx-auto max-w-3xl space-y-6 text-center">
         <p className="text-xs uppercase tracking-[0.5em] text-white/60">Private demo</p>
         <h1 className="text-3xl font-semibold leading-[1.2] md:text-5xl">
           Private preview for {brandName}
@@ -73,7 +84,7 @@ export default function LockedView({ clientSlug, brandName }: LockedViewProps) {
       </div>
 
       <form
-        className="mx-auto w-full max-w-xl space-y-4 rounded-3xl border border-white/5 bg-white/5 p-8 backdrop-blur"
+        className="relative mx-auto w-full max-w-xl space-y-4 rounded-3xl border border-white/5 bg-white/5 p-8 backdrop-blur"
         onSubmit={handleSubmit}
       >
         <label className="block text-sm font-medium text-white/70">
