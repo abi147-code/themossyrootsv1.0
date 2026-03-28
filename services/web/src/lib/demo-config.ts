@@ -204,6 +204,37 @@ const demoClients: Record<string, DemoClientConfig> = {
       ],
     },
   },
+  'moloss': {
+    slug: 'moloss',
+    password: 'Moloss 2026',
+    displayName: 'Moloss Restaurant',
+    payload: {
+      heroTitle: 'Moloss Demo',
+      heroSubtitle: 'Password-protected demo placeholder.',
+      heroSupport: 'This space will host the Moloss website experience.',
+      accentColor: '#111111',
+      heroTagline: 'Placeholder content',
+      highlightStats: [
+        { label: 'Status', value: 'Placeholder' },
+        { label: 'Site', value: 'Moloss' },
+        { label: 'Access', value: 'Private' },
+      ],
+      sections: [
+        {
+          title: 'Preview Shell',
+          body: 'A simple placeholder is shown after access is granted.',
+          bullets: ['Replace with embedded site', 'Swap in final assets', 'Publish when ready'],
+        },
+      ],
+      contactIntent: [
+        {
+          label: 'Contact',
+          channel: 'contact',
+          link: '#contact',
+        },
+      ],
+    },
+  },
 };
 
 export function getDemoConfig(slug: string): DemoClientConfig | undefined {

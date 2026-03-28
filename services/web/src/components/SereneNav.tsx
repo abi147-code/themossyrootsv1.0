@@ -37,10 +37,15 @@ export default function SereneNav() {
     router.push(pathWithSearch(target));
   };
 
+  const isDemoHost =
+    typeof window !== 'undefined' && window.location.hostname === 'demo.themossyroots.com';
+  const mainSiteBase = 'https://themossyroots.com';
+  const toMainSite = (path: string) => (isDemoHost ? `${mainSiteBase}${path}` : path);
+
   const navLinks = [
-    { label: dictionary.nav.about, href: prefixPathWithLocale(locale, '/about') },
-    { label: dictionary.nav.portfolio, href: prefixPathWithLocale(locale, '/portfolio') },
-    { label: dictionary.nav.software, href: prefixPathWithLocale(locale, '/software') },
+    { label: dictionary.nav.about, href: toMainSite(prefixPathWithLocale(locale, '/about')) },
+    { label: dictionary.nav.portfolio, href: toMainSite(prefixPathWithLocale(locale, '/portfolio')) },
+    { label: dictionary.nav.software, href: toMainSite(prefixPathWithLocale(locale, '/software')) },
     { label: dictionary.nav.demo, href: prefixPathWithLocale(locale, '/demo') },
   ];
 
@@ -86,7 +91,7 @@ export default function SereneNav() {
                   {dictionary.nav.languageToggle}: {dictionary.nav.locales[nextLocale]}
                 </button>
                 <Link
-                  href={prefixPathWithLocale(locale, '/login')}
+                  href={toMainSite(prefixPathWithLocale(locale, '/login'))}
                   onClick={() => setDemoMenuOpen(false)}
                 >
                   {dictionary.nav.login}
@@ -117,7 +122,10 @@ export default function SereneNav() {
         <div className="serene-nav-glass nav-shell px-5 md:px-10 py-3.5 md:py-5 rounded-full flex items-center w-full md:w-auto whitespace-nowrap max-w-[94vw] md:max-w-none">
           <div className="serene-nav-glass-bg" aria-hidden />
           <div className="nav-shell-inner w-full">
-            <Link href={prefixPathWithLocale(locale, '/')} className="group flex items-center shrink-0">
+            <Link
+              href={toMainSite(prefixPathWithLocale(locale, '/'))}
+              className="group flex items-center shrink-0"
+            >
               <span className="text-[11px] md:text-[13px] font-serif italic text-[#E6EFEA] hover:text-emerald-200 transition-colors tracking-wide drop-shadow-md">
                 {dictionary.nav.brand}
               </span>
@@ -152,7 +160,7 @@ export default function SereneNav() {
             <div className="hidden h-4 w-px bg-white/20 md:block" />
 
             <Link
-              href={prefixPathWithLocale(locale, '/login')}
+              href={toMainSite(prefixPathWithLocale(locale, '/login'))}
               className="hidden text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-[#E6EFEA] px-5 py-2 rounded-full bg-white/[0.1] border border-white/20 hover:bg-white/[0.2] transition-all shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] active:scale-95 drop-shadow-sm md:inline-flex"
             >
               {dictionary.nav.login}
@@ -205,14 +213,14 @@ export default function SereneNav() {
               </span>
             </button>
             <Link
-              href={prefixPathWithLocale(locale, '/login')}
+              href={toMainSite(prefixPathWithLocale(locale, '/login'))}
               onClick={closeMobile}
               className="serene-nav-mobile-primary"
             >
               {dictionary.nav.login}
             </Link>
             <Link
-              href={prefixPathWithLocale(locale, '/software')}
+              href={toMainSite(prefixPathWithLocale(locale, '/software'))}
               onClick={closeMobile}
               className="serene-nav-mobile-secondary"
             >

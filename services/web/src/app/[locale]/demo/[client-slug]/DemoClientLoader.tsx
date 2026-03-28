@@ -14,6 +14,7 @@ type DemoClientLoaderProps = {
 
 const DemoExperience = dynamicImport(() => import('./DemoExperience'), { ssr: false });
 const JaleoExperience = dynamicImport(() => import('./jaleo/DemoExperience'), { ssr: false });
+const MolossExperience = dynamicImport(() => import('./moloss/DemoExperience'), { ssr: false });
 
 export default function DemoClientLoader({ slug, brandName, payload, locale }: DemoClientLoaderProps) {
   const exitHref = prefixPathWithLocale(locale, '/demo');
@@ -28,6 +29,19 @@ export default function DemoClientLoader({ slug, brandName, payload, locale }: D
           Exit demo
         </Link>
         <JaleoExperience clientSlug={slug} />
+      </div>
+    );
+  }
+  if (slug === 'moloss') {
+    return (
+      <div className="relative">
+        <Link
+          href={exitHref}
+          className="fixed top-4 right-4 z-[2147483647] rounded-full bg-black/90 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur hover:bg-black"
+        >
+          Exit demo
+        </Link>
+        <MolossExperience />
       </div>
     );
   }

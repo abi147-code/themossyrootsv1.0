@@ -1,0 +1,27 @@
+# fly.toml app configuration file generated for tmr-web on 2025-12-12
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "tmr-web-demo"
+primary_region = "cdg"
+
+[build]
+  [build.args]
+    NEXT_PUBLIC_API_URL = "https://tmr-proxy.fly.dev"
+    NEXT_PUBLIC_INVOICE_API_URL = "https://tmr-proxy.fly.dev/invoice"
+    NEXT_PUBLIC_INVOICE_GENERATOR_URL = "https://tmr-invoice-generator.fly.dev/invoice-generator/"
+    NEXT_PUBLIC_PROMO_AI_MARKETING_URL = "https://tmr-proxy.fly.dev/invoice-generator"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1

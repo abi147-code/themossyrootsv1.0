@@ -30,15 +30,19 @@ function DemoNavFloating() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const nextLocale = locale === 'en' ? 'fr' : 'en';
+  const isDemoHost =
+    typeof window !== 'undefined' && window.location.hostname === 'demo.themossyroots.com';
+  const mainSiteBase = 'https://themossyroots.com';
+  const toMainSite = (path: string) => (isDemoHost ? `${mainSiteBase}${path}` : path);
 
   const navLinks = useMemo(
     () => [
-      { label: dictionary.nav.about, href: prefixPathWithLocale(locale, '/about') },
-      { label: dictionary.nav.portfolio, href: prefixPathWithLocale(locale, '/portfolio') },
-      { label: dictionary.nav.software, href: prefixPathWithLocale(locale, '/software') },
+      { label: dictionary.nav.about, href: toMainSite(prefixPathWithLocale(locale, '/about')) },
+      { label: dictionary.nav.portfolio, href: toMainSite(prefixPathWithLocale(locale, '/portfolio')) },
+      { label: dictionary.nav.software, href: toMainSite(prefixPathWithLocale(locale, '/software')) },
       { label: dictionary.nav.demo, href: prefixPathWithLocale(locale, '/demo') },
     ],
-    [dictionary.nav, locale]
+    [dictionary.nav, locale, toMainSite]
   );
 
   const pathWithSearch = (targetPath: string) => {
@@ -82,7 +86,10 @@ function DemoNavFloating() {
               >
                 {dictionary.nav.languageToggle}: {dictionary.nav.locales[nextLocale]}
               </button>
-              <Link href={prefixPathWithLocale(locale, '/login')} onClick={() => setOpen(false)}>
+              <Link
+                href={toMainSite(prefixPathWithLocale(locale, '/login'))}
+                onClick={() => setOpen(false)}
+              >
                 {dictionary.nav.login}
               </Link>
             </div>
