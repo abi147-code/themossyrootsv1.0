@@ -28,6 +28,15 @@
   --color-sand: #f4f0e8;
   --animate-gradient-x: gradient-x 3s ease infinite;
   --animate-shimmer: shimmer 2s linear infinite;
+
+  --font-moloss-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-moloss-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --color-moloss-dark-green: #386043;
+  --color-moloss-mid-green: #668E7E;
+  --color-moloss-light-green: #8FB7B3;
+  --color-moloss-ice: #B7DFE5;
+  --color-moloss-black: #000000;
+  --color-moloss-white: #FFFFFF;
 }
 
 @keyframes gradient-x {

@@ -37,11 +37,11 @@ export default function DemoClientLoader({ slug, brandName, payload, locale }: D
       <div className="relative">
         <Link
           href={exitHref}
-          className="fixed top-4 right-4 z-[2147483647] rounded-full bg-black/90 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur hover:bg-black"
+          className="fixed bottom-6 right-6 z-[2147483647] rounded-full bg-black/90 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur hover:bg-black md:bottom-8 md:right-8"
         >
           Exit demo
         </Link>
-        <MolossExperience />
+        <MolossExperience locale={locale} clientSlug={slug} />
       </div>
     );
   }

@@ -1,0 +1,751 @@
+import { useRef, useState } from 'react';
+import { motion, useScroll, useTransform } from 'motion/react';
+import { ArrowRight, MapPin, Star, ChevronRight, Clock, Phone, Search } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { useLanguage } from '../lib/i18n';
+
+export default function Home() {
+  return (
+    <div className="bg-moloss-white">
+      <HeroSection />
+      <IdentitySection />
+      <SignatureMenuSection />
+      <WhyMolossSection />
+      <InteractiveMenuSection />
+      <StorySection />
+      <GallerySection />
+      <ReviewsSection />
+      <LocationSection />
+      <CommunitySection />
+      <FinalCTASection />
+    </div>
+  );
+}
+
+function HeroSection() {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"]
+  });
+  const { t } = useLanguage();
+
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const yFloating1 = useTransform(scrollYProgress, [0, 1], ["0%", "-100%"]);
+  const yFloating2 = useTransform(scrollYProgress, [0, 1], ["0%", "-150%"]);
+
+  return (
+    <section ref={ref} className="relative h-screen flex items-center justify-center overflow-hidden bg-moloss-black">
+      <motion.div style={{ y, opacity }} className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-t from-moloss-black via-moloss-dark-green/40 to-transparent z-10" />
+        <img
+          src="https://images.unsplash.com/photo-1619881589316-56c7f9e6b587?q=80&w=2000&auto=format&fit=crop"
+          alt="Moloss Ciabatta Sandwich"
+          className="w-full h-full object-cover object-center opacity-70"
+          referrerPolicy="no-referrer"
+        />
+      </motion.div>
+
+      {/* Floating 3D-like elements */}
+      <motion.div style={{ y: yFloating1 }} className="absolute top-1/4 left-10 md:left-20 z-10 opacity-40 blur-[2px]">
+        <img src="https://images.unsplash.com/photo-1596683720379-b11030608876?q=80&w=200&auto=format&fit=crop" alt="Ingredient" className="w-24 h-24 object-cover rounded-full shadow-2xl" referrerPolicy="no-referrer" />
+      </motion.div>
+      <motion.div style={{ y: yFloating2 }} className="absolute bottom-1/4 right-10 md:right-32 z-10 opacity-30 blur-[4px]">
+        <img src="https://images.unsplash.com/photo-1606850780554-b55ea4dd0b70?q=80&w=200&auto=format&fit=crop" alt="Ingredient" className="w-32 h-32 object-cover rounded-full shadow-2xl" referrerPolicy="no-referrer" />
+      </motion.div>
+
+      <div className="container relative z-20 mx-auto px-6 md:px-12 flex flex-col items-center text-center mt-20">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="max-w-4xl px-4 sm:px-0"
+        >
+          <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-9xl text-moloss-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl">
+            {t('hero.big')} <span className="text-moloss-ice">{t('hero.fillings')}</span><br />
+            {t('hero.no')} <span className="text-moloss-light-green">{t('hero.compromises')}</span>
+          </h1>
+          <p className="text-base sm:text-lg md:text-2xl text-moloss-white/90 font-medium max-w-2xl mx-auto mb-10 drop-shadow-md">
+            {t('hero.subtitle')}
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
+            <a
+              href="#menu"
+              className="w-full sm:w-auto px-8 py-4 bg-moloss-dark-green text-moloss-white font-bold uppercase tracking-wider rounded-full hover:bg-moloss-mid-green transition-all hover:scale-105 active:scale-95 shadow-xl text-center"
+            >
+              {t('hero.explore')}
+            </a>
+            <a
+              href="#locations"
+              className="w-full sm:w-auto px-8 py-4 bg-moloss-white text-moloss-dark-green font-bold uppercase tracking-wider rounded-full hover:bg-moloss-ice transition-all hover:scale-105 active:scale-95 shadow-xl text-center"
+            >
+              {t('hero.find')}
+            </a>
+          </div>
+        </motion.div>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 1 }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center text-moloss-white/70"
+      >
+        <span className="text-xs uppercase tracking-widest font-bold mb-2">{t('hero.scroll')}</span>
+        <div className="w-[1px] h-12 bg-moloss-white/30 overflow-hidden">
+          <motion.div
+            animate={{ y: ["-100%", "100%"] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+            className="w-full h-full bg-moloss-white"
+          />
+        </div>
+      </motion.div>
+    </section>
+  );
+}
+
+function IdentitySection() {
+  const { t } = useLanguage();
+  return (
+    <section className="py-20 md:py-32 bg-moloss-dark-green text-moloss-white overflow-hidden">
+      <div className="container mx-auto px-6 md:px-12">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
+          className="max-w-5xl mx-auto text-center"
+        >
+          <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl lg:text-8xl uppercase tracking-tighter leading-[0.9] text-moloss-ice mb-6 md:mb-8">
+            {t('id.title')}
+          </h2>
+          <p className="text-lg sm:text-xl md:text-3xl font-medium text-moloss-white/90 leading-relaxed">
+            {t('id.desc')}
+          </p>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function SignatureMenuSection() {
+  const { t } = useLanguage();
+  const items = [
+    {
+      id: 1,
+      name: t('sig.item1.name'),
+      desc: t('sig.item1.desc'),
+      price: "€12.50",
+      img: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=800&auto=format&fit=crop",
+      tag: t('sig.tag.signature')
+    },
+    {
+      id: 2,
+      name: t('sig.item2.name'),
+      desc: t('sig.item2.desc'),
+      price: "€11.50",
+      img: "https://images.unsplash.com/photo-1604467715878-83e57e8bc129?q=80&w=800&auto=format&fit=crop",
+      tag: t('sig.tag.popular')
+    },
+    {
+      id: 3,
+      name: t('sig.item3.name'),
+      desc: t('sig.item3.desc'),
+      price: "€10.50",
+      img: "https://images.unsplash.com/photo-1550508139-b967012fd162?q=80&w=800&auto=format&fit=crop",
+      tag: t('sig.tag.veggie')
+    }
+  ];
+
+  return (
+    <section id="menu" className="py-20 md:py-32 bg-moloss-white">
+      <div className="container mx-auto px-6 md:px-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-16 gap-6">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-black">
+              {t('sig.title1')} <span className="text-moloss-dark-green">{t('sig.title2')}</span>
+            </h2>
+            <p className="text-moloss-black/60 font-medium mt-4 text-base md:text-lg">{t('sig.subtitle')}</p>
+          </motion.div>
+          <motion.a
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            href="#full-menu"
+            className="flex items-center gap-2 font-bold uppercase tracking-wider text-moloss-dark-green hover:text-moloss-mid-green transition-colors group"
+          >
+            {t('sig.viewAll')}
+            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+          </motion.a>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {items.map((item, index) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="group cursor-pointer"
+            >
+              <div className="relative overflow-hidden rounded-2xl aspect-[4/5] mb-6 bg-moloss-ice">
+                <div className="absolute top-4 left-4 z-10 bg-moloss-white text-moloss-dark-green text-xs font-bold uppercase tracking-wider py-1.5 px-3 rounded-full shadow-sm">
+                  {item.tag}
+                </div>
+                <motion.img
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  src={item.img}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-moloss-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
+              <div className="flex justify-between items-start gap-4">
+                <div>
+                  <h3 className="font-display font-bold text-2xl uppercase tracking-tight text-moloss-black mb-2 group-hover:text-moloss-dark-green transition-colors">
+                    {item.name}
+                  </h3>
+                  <p className="text-moloss-black/60 text-sm font-medium leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+                <span className="font-display font-bold text-xl text-moloss-dark-green shrink-0">
+                  {item.price}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WhyMolossSection() {
+  const { t } = useLanguage();
+  const reasons = [
+    { title: t('why.1.title'), desc: t('why.1.desc') },
+    { title: t('why.2.title'), desc: t('why.2.desc') },
+    { title: t('why.3.title'), desc: t('why.3.desc') },
+    { title: t('why.4.title'), desc: t('why.4.desc') }
+  ];
+
+  return (
+    <section className="py-20 md:py-24 bg-moloss-ice overflow-hidden">
+      <div className="container mx-auto px-6 md:px-12">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-12 md:mb-16 text-center"
+        >
+          <h2 className="font-display font-black text-4xl md:text-6xl uppercase tracking-tighter text-moloss-dark-green">
+            {t('why.title')}
+          </h2>
+        </motion.div>
+
+        <div className="flex flex-wrap md:flex-nowrap gap-6 overflow-x-auto hide-scrollbar pb-8 snap-x snap-mandatory -mx-6 px-6 md:mx-0 md:px-0">
+          {reasons.map((reason, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="min-w-[85vw] sm:min-w-[280px] md:min-w-0 flex-1 bg-moloss-white p-6 md:p-8 rounded-3xl shadow-sm snap-center hover:shadow-md transition-shadow hover:-translate-y-1 duration-300"
+            >
+              <div className="w-12 h-12 rounded-full bg-moloss-light-green/20 flex items-center justify-center text-moloss-dark-green font-display font-bold text-xl mb-6">
+                0{index + 1}
+              </div>
+              <h3 className="font-display font-bold text-2xl uppercase tracking-tight text-moloss-black mb-4">
+                {reason.title}
+              </h3>
+              <p className="text-moloss-black/70 font-medium leading-relaxed">
+                {reason.desc}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function InteractiveMenuSection() {
+  const { t } = useLanguage();
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const categories = [
+    { id: 'all', label: t('menu.cat.all') },
+    { id: 'chicken', label: t('menu.cat.chicken') },
+    { id: 'beef', label: t('menu.cat.beef') },
+    { id: 'veggie', label: t('menu.cat.veggie') },
+    { id: 'sides', label: t('menu.cat.sides') },
+    { id: 'drinks', label: t('menu.cat.drinks') }
+  ];
+
+  const menuItems = [
+    {
+      id: 1,
+      categoryId: 'beef',
+      name: t('sig.item1.name'),
+      desc: t('sig.item1.desc'),
+      price: '€12.50',
+      img: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=200&auto=format&fit=crop'
+    },
+    {
+      id: 2,
+      categoryId: 'chicken',
+      name: t('sig.item2.name'),
+      desc: t('sig.item2.desc'),
+      price: '€11.50',
+      img: 'https://images.unsplash.com/photo-1604467715878-83e57e8bc129?q=80&w=200&auto=format&fit=crop'
+    },
+    {
+      id: 3,
+      categoryId: 'veggie',
+      name: t('sig.item3.name'),
+      desc: t('sig.item3.desc'),
+      price: '€10.50',
+      img: 'https://images.unsplash.com/photo-1550508139-b967012fd162?q=80&w=200&auto=format&fit=crop'
+    },
+    {
+      id: 4,
+      categoryId: 'sides',
+      name: 'Truffle Fries',
+      desc: 'Crispy fries tossed in truffle oil and parmesan.',
+      price: '€4.50',
+      img: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?q=80&w=200&auto=format&fit=crop'
+    },
+    {
+      id: 5,
+      categoryId: 'drinks',
+      name: 'Craft Lemonade',
+      desc: 'House-made lemonade with fresh mint and ginger.',
+      price: '€3.50',
+      img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=200&auto=format&fit=crop'
+    },
+    {
+      id: 6,
+      categoryId: 'chicken',
+      name: 'Spicy Chicken',
+      desc: 'Fried chicken with our signature hot sauce and jalapeños.',
+      price: '€12.00',
+      img: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=200&auto=format&fit=crop'
+    },
+    {
+      id: 7,
+      categoryId: 'beef',
+      name: 'BBQ Brisket',
+      desc: 'Smoked brisket, tangy BBQ sauce, crispy onions.',
+      price: '€13.50',
+      img: 'https://images.unsplash.com/photo-1508737804141-4c3b688e2546?q=80&w=200&auto=format&fit=crop'
+    },
+    {
+      id: 8,
+      categoryId: 'sides',
+      name: 'Sweet Potato Fries',
+      desc: 'Served with our house-made garlic aioli.',
+      price: '€4.00',
+      img: 'https://images.unsplash.com/photo-1585109649139-366815a0d713?q=80&w=200&auto=format&fit=crop'
+    }
+  ];
+
+  const filteredItems = menuItems.filter(item => {
+    const matchesCategory = activeCategory === 'all' || item.categoryId === activeCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          item.desc.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+  
+  return (
+    <section id="full-menu" className="py-20 md:py-32 bg-moloss-white">
+      <div className="container mx-auto px-6 md:px-12">
+        <div className="text-center mb-12 md:mb-16">
+          <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-black mb-6">
+            {t('menu.title1')} <span className="text-moloss-light-green">{t('menu.title2')}</span>
+          </h2>
+          
+          <div className="max-w-md mx-auto relative mb-10">
+            <input 
+              type="text" 
+              placeholder={t('menu.search')} 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-moloss-ice/30 border border-moloss-ice rounded-full py-4 pl-6 pr-12 text-moloss-black placeholder:text-moloss-black/40 focus:outline-none focus:border-moloss-mid-green focus:ring-1 focus:ring-moloss-mid-green transition-all font-medium"
+            />
+            <Search className="absolute right-5 top-1/2 -translate-y-1/2 text-moloss-black/40" size={20} />
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-3">
+            {categories.map((cat) => (
+              <button 
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={cn(
+                  "px-6 py-2.5 rounded-full font-bold text-sm uppercase tracking-wider transition-all",
+                  activeCategory === cat.id 
+                    ? "bg-moloss-dark-green text-moloss-white shadow-md" 
+                    : "bg-moloss-white border border-moloss-black/10 text-moloss-black/60 hover:border-moloss-dark-green hover:text-moloss-dark-green"
+                )}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 max-w-5xl mx-auto">
+          {filteredItems.length > 0 ? (
+            filteredItems.map((item) => (
+              <motion.div 
+                key={item.id} 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="flex gap-6 group p-4 rounded-2xl hover:bg-moloss-ice/20 transition-colors cursor-pointer border border-transparent hover:border-moloss-ice/50"
+              >
+                <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-moloss-ice">
+                  <img 
+                    src={item.img} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1509722747041-616f39b57569?q=80&w=200&auto=format&fit=crop"
+                    }}
+                  />
+                </div>
+                <div className="flex-1 flex flex-col justify-center">
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className="font-display font-bold text-xl uppercase tracking-tight text-moloss-black group-hover:text-moloss-dark-green transition-colors">
+                      {item.name}
+                    </h4>
+                    <span className="font-bold text-moloss-dark-green">{item.price}</span>
+                  </div>
+                  <p className="text-moloss-black/60 text-sm font-medium line-clamp-2">
+                    {item.desc}
+                  </p>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12 text-moloss-black/50 font-medium">
+              No items found matching your criteria.
+            </div>
+          )}
+        </div>
+        
+        <div className="mt-16 text-center">
+          <button className="px-8 py-4 bg-moloss-black text-moloss-white font-bold uppercase tracking-wider rounded-full hover:bg-moloss-dark-green transition-colors shadow-lg">
+            {t('menu.order')}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StorySection() {
+  const { t } = useLanguage();
+  return (
+    <section id="story" className="py-20 md:py-32 bg-moloss-dark-green text-moloss-white overflow-hidden">
+      <div className="container mx-auto px-6 md:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-ice mb-6 md:mb-8">
+              {t('story.title1')} <br />{t('story.title2')}
+            </h2>
+            <div className="space-y-4 md:space-y-6 text-base md:text-xl font-medium text-moloss-white/80 leading-relaxed">
+              <p>{t('story.p1')}</p>
+              <p>{t('story.p2')}</p>
+              <p>{t('story.p3')}</p>
+            </div>
+            <div className="mt-10">
+              <img src="/dog-mascot-placeholder.svg" alt="Moloss Mascot" className="w-24 h-24 opacity-50" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
+            </div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="relative"
+          >
+            <div className="aspect-[4/5] rounded-3xl overflow-hidden">
+              <img 
+                src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1000&auto=format&fit=crop" 
+                alt="Moloss Kitchen" 
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="absolute -bottom-8 -left-8 w-48 h-48 rounded-full bg-moloss-light-green/20 blur-3xl -z-10" />
+            <div className="absolute -top-8 -right-8 w-64 h-64 rounded-full bg-moloss-ice/10 blur-3xl -z-10" />
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function GallerySection() {
+  const { t } = useLanguage();
+  const images = [
+    "https://images.unsplash.com/photo-1509722747041-616f39b57569?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1481070555726-e2fe8357725c?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1604467715878-83e57e8bc129?q=80&w=800&auto=format&fit=crop"
+  ];
+
+  return (
+    <section className="py-20 md:py-32 bg-moloss-white">
+      <div className="container mx-auto px-6 md:px-12">
+        <div className="text-center mb-12 md:mb-16">
+          <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-black">
+            {t('gal.title1')} <span className="text-moloss-mid-green">{t('gal.title2')}</span>
+          </h2>
+        </div>
+        
+        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+          {images.map((img, i) => (
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="break-inside-avoid rounded-2xl overflow-hidden group cursor-pointer"
+            >
+              <img 
+                src={img} 
+                alt="Moloss Atmosphere" 
+                className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                referrerPolicy="no-referrer"
+              />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ReviewsSection() {
+  const { t } = useLanguage();
+  const reviews = [
+    { name: "Julien M.", text: t('rev.1.text'), rating: 5 },
+    { name: "Sophie L.", text: t('rev.2.text'), rating: 5 },
+    { name: "Thomas B.", text: t('rev.3.text'), rating: 5 }
+  ];
+
+  return (
+    <section className="py-20 md:py-24 bg-moloss-ice">
+      <div className="container mx-auto px-6 md:px-12">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center">
+          <div className="md:w-1/3 text-center md:text-left">
+            <h2 className="font-display font-black text-4xl md:text-6xl uppercase tracking-tighter text-moloss-dark-green mb-4">
+              {t('rev.title')}
+            </h2>
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+              <span className="font-display font-black text-5xl text-moloss-black">4.9</span>
+              <div className="flex text-moloss-dark-green">
+                {[...Array(5)].map((_, i) => <Star key={i} size={24} fill="currentColor" />)}
+              </div>
+            </div>
+            <p className="text-moloss-black/60 font-medium">{t('rev.based')}</p>
+          </div>
+          
+          <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {reviews.map((review, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="bg-moloss-white p-6 rounded-2xl shadow-sm"
+              >
+                <div className="flex text-moloss-mid-green mb-4">
+                  {[...Array(review.rating)].map((_, j) => <Star key={j} size={16} fill="currentColor" />)}
+                </div>
+                <p className="text-moloss-black/80 font-medium mb-4 italic">"{review.text}"</p>
+                <p className="font-display font-bold uppercase text-sm text-moloss-dark-green">{review.name}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LocationSection() {
+  const { t } = useLanguage();
+  return (
+    <section id="locations" className="py-20 md:py-32 bg-moloss-white">
+      <div className="container mx-auto px-6 md:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-black mb-8">
+              {t('loc.title1')} <span className="text-moloss-mid-green">{t('loc.title2')}</span>
+            </h2>
+            
+            <div className="bg-moloss-ice/30 p-8 rounded-3xl mb-8">
+              <h3 className="font-display font-bold text-2xl uppercase tracking-tight text-moloss-dark-green mb-6">Moloss Paris 1er</h3>
+              
+              <ul className="space-y-6">
+                <li className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-moloss-white flex items-center justify-center shrink-0 text-moloss-dark-green shadow-sm">
+                    <MapPin size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-moloss-black uppercase tracking-wide mb-1">{t('loc.address')}</p>
+                    <p className="text-moloss-black/70 font-medium">123 Rue de Rivoli<br />75001 Paris, France</p>
+                  </div>
+                </li>
+                
+                <li className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-moloss-white flex items-center justify-center shrink-0 text-moloss-dark-green shadow-sm">
+                    <Clock size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-moloss-black uppercase tracking-wide mb-1">{t('loc.hours')}</p>
+                    <p className="text-moloss-black/70 font-medium whitespace-pre-line">{t('loc.hours.val')}</p>
+                  </div>
+                </li>
+                
+                <li className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-moloss-white flex items-center justify-center shrink-0 text-moloss-dark-green shadow-sm">
+                    <Phone size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-moloss-black uppercase tracking-wide mb-1">{t('loc.contact')}</p>
+                    <p className="text-moloss-black/70 font-medium">+33 1 23 45 67 89</p>
+                  </div>
+                </li>
+              </ul>
+              
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <button className="flex-1 py-3 bg-moloss-dark-green text-moloss-white font-bold uppercase tracking-wider rounded-xl hover:bg-moloss-mid-green transition-colors shadow-md">
+                  {t('loc.dir')}
+                </button>
+                <button className="flex-1 py-3 bg-moloss-white text-moloss-dark-green border border-moloss-dark-green/20 font-bold uppercase tracking-wider rounded-xl hover:bg-moloss-ice transition-colors">
+                  {t('loc.call')}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="h-[500px] lg:h-auto rounded-3xl overflow-hidden bg-moloss-ice relative"
+          >
+            {/* Map Placeholder */}
+            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-50 mix-blend-multiply" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 bg-moloss-dark-green text-moloss-white rounded-full flex items-center justify-center shadow-2xl animate-bounce">
+                <MapPin size={32} />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CommunitySection() {
+  const { t } = useLanguage();
+  return (
+    <section className="py-24 bg-moloss-black text-moloss-white">
+      <div className="container mx-auto px-6 md:px-12 text-center">
+        <h2 className="font-display font-black text-4xl md:text-6xl uppercase tracking-tighter text-moloss-ice mb-6">
+          {t('com.title')}
+        </h2>
+        <p className="text-lg text-moloss-white/70 font-medium max-w-2xl mx-auto mb-12">
+          {t('com.desc')}
+        </p>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="aspect-square rounded-xl overflow-hidden bg-moloss-dark-green/30 group relative cursor-pointer">
+              <img 
+                src={`https://images.unsplash.com/photo-${1550000000000 + i}?q=80&w=400&auto=format&fit=crop`} 
+                alt="Instagram post" 
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1509722747041-616f39b57569?q=80&w=400&auto=format&fit=crop"
+                }}
+              />
+              <div className="absolute inset-0 bg-moloss-dark-green/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-moloss-white font-bold uppercase tracking-widest text-sm">{t('com.view')}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <a href="#" className="inline-flex items-center gap-2 font-bold uppercase tracking-wider text-moloss-light-green hover:text-moloss-white transition-colors">
+          @moloss.fr
+          <ChevronRight size={20} />
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function FinalCTASection() {
+  const { t } = useLanguage();
+  return (
+    <section className="py-20 md:py-32 bg-moloss-dark-green text-moloss-white text-center relative overflow-hidden">
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1509722747041-616f39b57569?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-10 mix-blend-overlay" />
+      
+      <div className="container relative z-10 mx-auto px-6 md:px-12">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <h2 className="font-display font-black text-4xl sm:text-6xl md:text-8xl lg:text-9xl uppercase tracking-tighter leading-[0.85] mb-8">
+            {t('cta.come')} <span className="text-moloss-ice">{t('cta.hungry')}</span><br />
+            {t('cta.leave')} <span className="text-moloss-light-green">{t('cta.satisfied')}</span>
+          </h2>
+          <a
+            href="#locations"
+            className="inline-block px-8 py-4 md:px-10 md:py-5 bg-moloss-white text-moloss-dark-green font-black text-base md:text-lg uppercase tracking-widest rounded-full hover:bg-moloss-ice transition-all hover:scale-105 active:scale-95 shadow-2xl"
+          >
+            {t('cta.btn')}
+          </a>
+        </motion.div>
+      </div>
+    </section>
+  );
+}

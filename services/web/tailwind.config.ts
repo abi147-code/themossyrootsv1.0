@@ -89,10 +89,19 @@ const config: Config = {
           gold: '#BFA15F',
           olive: '#2A3328',
         },
+        moloss: {
+          'dark-green': '#386043',
+          'mid-green': '#668E7E',
+          'light-green': '#8FB7B3',
+          ice: '#B7DFE5',
+          black: '#000000',
+          white: '#FFFFFF',
+        },
       },
       fontFamily: {
         serif: ['"Cormorant Garamond"', 'serif'],
         sans: ['"Montserrat"', 'sans-serif'],
+        display: ['"Outfit"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       transitionDuration: {
         '2000': '2000ms',
