@@ -245,8 +245,14 @@ export function listDemoSlugs() {
   return Object.keys(demoClients);
 }
 
+export function normalizeDemoPassword(password: string): string {
+  return password.toLowerCase().replace(/\s+/g, '');
+}
+
 export function findDemoByPassword(password: string): DemoClientConfig | undefined {
   if (!password) return undefined;
-  const normalized = password.trim();
-  return Object.values(demoClients).find((client) => client.password === normalized);
+  const normalized = normalizeDemoPassword(password.trim());
+  return Object.values(demoClients).find(
+    (client) => normalizeDemoPassword(client.password) === normalized
+  );
 }

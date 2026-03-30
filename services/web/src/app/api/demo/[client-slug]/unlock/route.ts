@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDemoConfig } from '@/lib/demo-config';
+import { getDemoConfig, normalizeDemoPassword } from '@/lib/demo-config';
 import { setDemoAccessCookie } from '@/lib/demo-access';
 
 type Params = {
@@ -25,8 +25,10 @@ export async function POST(_: Request, { params }: Params) {
   }
 
   const password = typeof body?.password === 'string' ? body.password.trim() : '';
+  const normalizedPassword = normalizeDemoPassword(password);
+  const normalizedExpected = normalizeDemoPassword(demoConfig.password);
 
-  if (!password || password !== demoConfig.password) {
+  if (!normalizedPassword || normalizedPassword !== normalizedExpected) {
     return NextResponse.json({ error: 'Incorrect password' }, { status: 401 });
   }
 
