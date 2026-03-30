@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { prefixPathWithLocale } from '@/lib/locale-shared';
 
 type DemoGatewayProps = {
@@ -16,6 +16,11 @@ export default function DemoGateway({ locale, formLabel, placeholder, submitLabe
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+  if (pathname && /\/demo\/[^/]+/.test(pathname)) {
+    return null;
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
