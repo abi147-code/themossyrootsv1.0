@@ -49,14 +49,12 @@ export default function Navbar({ basePath, blogPath }: NavbarProps) {
       )}
     >
       <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
-        <Link
-          href={basePath}
-          className={cn(
-            "font-display font-black text-3xl tracking-tighter uppercase transition-colors",
-            isScrolled ? "text-moloss-dark-green" : "text-moloss-white drop-shadow-md"
-          )}
-        >
-          Moloss
+        <Link href={basePath} className="flex items-center">
+          <img
+            src="/demo-assets/moloss/logo/moloss-logo.png"
+            alt="Moloss logo"
+            className="h-16 md:h-20 w-auto object-contain"
+          />
         </Link>
 
         {/* Desktop Nav */}
@@ -119,8 +117,12 @@ export default function Navbar({ basePath, blogPath }: NavbarProps) {
             className="fixed inset-0 z-50 bg-moloss-dark-green flex flex-col"
           >
             <div className="p-6 flex justify-between items-center">
-              <Link href={basePath} className="font-display font-black text-3xl tracking-tighter uppercase text-moloss-white">
-                Moloss
+              <Link href={basePath} className="flex items-center">
+                <img
+                  src="/demo-assets/moloss/logo/moloss-logo.png"
+                  alt="Moloss logo"
+                  className="h-16 w-auto object-contain"
+                />
               </Link>
               <button
                 className="p-2 text-moloss-white rounded-full bg-moloss-white/10"

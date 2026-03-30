@@ -51,8 +51,8 @@ const translations: Record<Language, Record<string, string>> = {
     'sig.item1.desc': 'Slow-cooked beef, caramelized onions, melted provolone, secret sauce.',
     'sig.item2.name': 'Crispy Chicken',
     'sig.item2.desc': 'Buttermilk fried chicken, spicy slaw, pickles, garlic mayo.',
-    'sig.item3.name': 'Roasted Veggie',
-    'sig.item3.desc': 'Grilled eggplant, zucchini, roasted peppers, pesto, fresh mozzarella.',
+    'sig.item3.name': 'Ciabatta Garlic Bread',
+    'sig.item3.desc': 'Toasted ciabatta, garlic butter, coriander, parmesan.',
     // Home - Why
     'why.title': 'The Moloss Way',
     'why.1.title': 'Generous Fillings',
@@ -167,8 +167,8 @@ const translations: Record<Language, Record<string, string>> = {
     'sig.item1.desc': 'Bœuf mijoté, oignons caramélisés, provolone fondu, sauce secrète.',
     'sig.item2.name': 'Poulet Croustillant',
     'sig.item2.desc': 'Poulet frit au babeurre, salade de chou épicée, cornichons, mayo à l\'ail.',
-    'sig.item3.name': 'Légumes Rôtis',
-    'sig.item3.desc': 'Aubergines grillées, courgettes, poivrons rôtis, pesto, mozzarella fraîche.',
+    'sig.item3.name': "Pain a l'ail Ciabatta",
+    'sig.item3.desc': "Ciabatta grillee, beurre a l'ail, coriandre, parmesan.",
     // Home - Why
     'why.title': "L'Esprit Moloss",
     'why.1.title': 'Garnitures Généreuses',
@@ -272,3 +272,7 @@ export function useLanguage() {
   }
   return context;
 }
+
+
+
+

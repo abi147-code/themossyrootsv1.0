@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { ArrowRight, MapPin, Star, ChevronRight, Clock, Phone, Search } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -39,12 +39,18 @@ function HeroSection() {
     <section ref={ref} className="relative h-screen flex items-center justify-center overflow-hidden bg-moloss-black">
       <motion.div style={{ y, opacity }} className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-t from-moloss-black via-moloss-dark-green/40 to-transparent z-10" />
-        <img
-          src="https://images.unsplash.com/photo-1619881589316-56c7f9e6b587?q=80&w=2000&auto=format&fit=crop"
-          alt="Moloss Ciabatta Sandwich"
-          className="w-full h-full object-cover object-center opacity-70"
-          referrerPolicy="no-referrer"
-        />
+        <div className="absolute inset-0 overflow-hidden">
+          <video
+            className="h-full w-full object-cover object-center opacity-70"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+          >
+            <source src="/demo-assets/moloss/video/hero.mp4" type="video/mp4" />
+          </video>
+        </div>
       </motion.div>
 
       {/* Floating 3D-like elements */}
@@ -62,11 +68,18 @@ function HeroSection() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="max-w-4xl px-4 sm:px-0"
         >
-          <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-9xl text-moloss-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl">
+          <div className="flex flex-col items-center gap-4 mb-6">
+            <img
+              src="/demo-assets/moloss/logo/moloss-logo.png"
+              alt="Moloss logo"
+              className="h-40 md:h-56 w-auto object-contain"
+            />
+          </div>
+          <h1 className="font-display font-semibold text-5xl sm:text-7xl md:text-8xl lg:text-9xl text-moloss-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl">
             {t('hero.big')} <span className="text-moloss-ice">{t('hero.fillings')}</span><br />
-            {t('hero.no')} <span className="text-moloss-light-green">{t('hero.compromises')}</span>
+            {t('hero.no')} <span className="text-moloss-light-green moloss-hero-bloom">{t('hero.compromises')}</span>
           </h1>
-          <p className="text-base sm:text-lg md:text-2xl text-moloss-white/90 font-medium max-w-2xl mx-auto mb-10 drop-shadow-md">
+          <p className="text-base sm:text-lg md:text-2xl text-moloss-white/90 font-medium max-w-2xl mx-auto mb-10 drop-shadow-md moloss-story-body">
             {t('hero.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
@@ -108,8 +121,16 @@ function HeroSection() {
 function IdentitySection() {
   const { t } = useLanguage();
   return (
-    <section className="py-20 md:py-32 bg-moloss-dark-green text-moloss-white overflow-hidden">
-      <div className="container mx-auto px-6 md:px-12">
+    <section className="relative py-20 md:py-32 bg-moloss-dark-green text-moloss-white overflow-hidden">
+      <div className="absolute inset-0">
+        <img
+          src="/demo-assets/moloss/images/big ciabatta.png"
+          alt=""
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-moloss-dark-green/70" />
+      </div>
+      <div className="container relative z-10 mx-auto px-6 md:px-12">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -120,7 +141,7 @@ function IdentitySection() {
           <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl lg:text-8xl uppercase tracking-tighter leading-[0.9] text-moloss-ice mb-6 md:mb-8">
             {t('id.title')}
           </h2>
-          <p className="text-lg sm:text-xl md:text-3xl font-medium text-moloss-white/90 leading-relaxed">
+          <p className="text-lg sm:text-xl md:text-3xl font-medium text-moloss-white/90 leading-relaxed moloss-story-body">
             {t('id.desc')}
           </p>
         </motion.div>
@@ -131,13 +152,14 @@ function IdentitySection() {
 
 function SignatureMenuSection() {
   const { t } = useLanguage();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const items = [
     {
       id: 1,
       name: t('sig.item1.name'),
       desc: t('sig.item1.desc'),
       price: "€12.50",
-      img: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=800&auto=format&fit=crop",
+        img: "/demo-assets/moloss/images/Steak Ciabatta with Caramelised Onions and Roasted Garlic and Chive Aioli.jpeg",
       tag: t('sig.tag.signature')
     },
     {
@@ -145,88 +167,157 @@ function SignatureMenuSection() {
       name: t('sig.item2.name'),
       desc: t('sig.item2.desc'),
       price: "€11.50",
-      img: "https://images.unsplash.com/photo-1604467715878-83e57e8bc129?q=80&w=800&auto=format&fit=crop",
+        img: "/demo-assets/moloss/images/Ciabatta Sandwich Recipe.jpeg",
       tag: t('sig.tag.popular')
     },
     {
       id: 3,
-      name: t('sig.item3.name'),
-      desc: t('sig.item3.desc'),
+        name: t('sig.item3.name'),
+        desc: t('sig.item3.desc'),
       price: "€10.50",
-      img: "https://images.unsplash.com/photo-1550508139-b967012fd162?q=80&w=800&auto=format&fit=crop",
-      tag: t('sig.tag.veggie')
+        img: "/demo-assets/moloss/images/The Best Garlic Bread with Coriander & Parmesan recipe.jpeg",
+        tag: t('sig.tag.signature')
     }
   ];
 
-  return (
-    <section id="menu" className="py-20 md:py-32 bg-moloss-white">
-      <div className="container mx-auto px-6 md:px-12">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-16 gap-6">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-black">
-              {t('sig.title1')} <span className="text-moloss-dark-green">{t('sig.title2')}</span>
-            </h2>
-            <p className="text-moloss-black/60 font-medium mt-4 text-base md:text-lg">{t('sig.subtitle')}</p>
-          </motion.div>
-          <motion.a
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            href="#full-menu"
-            className="flex items-center gap-2 font-bold uppercase tracking-wider text-moloss-dark-green hover:text-moloss-mid-green transition-colors group"
-          >
-            {t('sig.viewAll')}
-            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-          </motion.a>
-        </div>
+  const [activeIndex, setActiveIndex] = useState(0);
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {items.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group cursor-pointer"
-            >
-              <div className="relative overflow-hidden rounded-2xl aspect-[4/5] mb-6 bg-moloss-ice">
-                <div className="absolute top-4 left-4 z-10 bg-moloss-white text-moloss-dark-green text-xs font-bold uppercase tracking-wider py-1.5 px-3 rounded-full shadow-sm">
-                  {item.tag}
-                </div>
-                <motion.img
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                  src={item.img}
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-moloss-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = 0.5;
+    }
+  }, []);
+
+  return (
+    <section id="menu" className="relative pt-24 pb-40 md:pt-32 md:pb-52 bg-moloss-white overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover object-center opacity-35 grayscale-[20%] saturate-75"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+        >
+          <source src="/demo-assets/moloss/video/making of ciabatta tik tok.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-t from-moloss-white/90 via-moloss-white/70 to-moloss-white/40" />
+      </div>
+      <div className="container relative z-10 mx-auto px-6 md:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-16 items-start">
+          <div className="lg:col-span-2">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10">
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
+                <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-black">
+                  {t('sig.title1')} <span className="text-moloss-dark-green moloss-hero-bloom">{t('sig.title2')}</span>
+                </h2>
+                <p className="text-moloss-black/60 font-medium mt-4 text-base md:text-lg">{t('sig.subtitle')}</p>
+              </motion.div>
+              <motion.a
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                href="#full-menu"
+                className="flex items-center gap-2 font-bold uppercase tracking-wider text-moloss-dark-green hover:text-moloss-mid-green transition-colors group"
+              >
+                {t('sig.viewAll')}
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </motion.a>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-14 items-start">
+              <div className="space-y-8">
+                {items.map((item, index) => {
+                  const isActive = index === activeIndex;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveIndex(index)}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      className={cn(
+                        "w-full text-left transition-colors",
+                        isActive ? "text-moloss-black" : "text-moloss-black/50"
+                      )}
+                    >
+                      <div className="flex items-baseline justify-between gap-4">
+                        <span className="font-display font-black text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight">
+                          {item.name}
+                        </span>
+                        <span className="text-sm sm:text-base font-bold text-moloss-dark-green">
+                          {item.price}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-6">
+                        <span className="text-xs uppercase tracking-[0.25em] text-moloss-dark-green/70">
+                          {item.tag}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-xs uppercase tracking-widest transition-opacity",
+                            isActive ? "text-moloss-black/40 opacity-100" : "opacity-0"
+                          )}
+                        >
+                          {t('sig.viewAll')}
+                        </span>
+                      </div>
+                      <div
+                        className={cn(
+                          "mt-4 text-sm sm:text-base font-medium text-moloss-black/60 transition-all",
+                          isActive ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+                        )}
+                      >
+                        {item.desc}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <h3 className="font-display font-bold text-2xl uppercase tracking-tight text-moloss-black mb-2 group-hover:text-moloss-dark-green transition-colors">
-                    {item.name}
-                  </h3>
-                  <p className="text-moloss-black/60 text-sm font-medium leading-relaxed">
-                    {item.desc}
-                  </p>
+
+              <div className="relative rounded-[28px] overflow-hidden aspect-[4/5] bg-moloss-ice/80 border border-moloss-black/10">
+                <div className="absolute inset-0">
+                  {items.map((item, index) => (
+                    <motion.img
+                      key={item.id}
+                      src={item.img}
+                      alt={item.name}
+                      className={cn(
+                        "absolute inset-0 w-full h-full object-cover transition-opacity duration-500",
+                        index === activeIndex ? "opacity-100" : "opacity-0"
+                      )}
+                      initial={false}
+                      animate={{ scale: index === activeIndex ? 1 : 1.02 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      referrerPolicy="no-referrer"
+                    />
+                  ))}
                 </div>
-                <span className="font-display font-bold text-xl text-moloss-dark-green shrink-0">
-                  {item.price}
-                </span>
+                <div className="absolute inset-0 bg-gradient-to-t from-moloss-black/50 via-transparent to-transparent" />
+                <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between text-moloss-white">
+                  <span className="text-xs uppercase tracking-[0.3em] text-moloss-white/80">
+                    {items[activeIndex].tag}
+                  </span>
+                  <span className="font-display font-bold text-base">
+                    {items[activeIndex].name}
+                  </span>
+                </div>
               </div>
-            </motion.div>
-          ))}
+            </div>
+          </div>
         </div>
       </div>
+      <img
+        src="/demo-assets/moloss/logo/dog_laying_with_style/upscale dog_laying_with_style_upscayl_16x_digital-art-4x.png"
+        alt="Moloss dog illustration"
+        className="pointer-events-none absolute -bottom-[240px] left-6 sm:left-10 md:left-12 w-[280px] sm:w-[360px] md:w-[520px] lg:w-[650px] object-contain opacity-90 z-10"
+      />
     </section>
   );
 }
@@ -302,7 +393,7 @@ function InteractiveMenuSection() {
       name: t('sig.item1.name'),
       desc: t('sig.item1.desc'),
       price: '€12.50',
-      img: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=200&auto=format&fit=crop'
+        img: '/demo-assets/moloss/images/Steak Ciabatta with Caramelised Onions and Roasted Garlic and Chive Aioli.jpeg'
     },
     {
       id: 2,
@@ -310,15 +401,15 @@ function InteractiveMenuSection() {
       name: t('sig.item2.name'),
       desc: t('sig.item2.desc'),
       price: '€11.50',
-      img: 'https://images.unsplash.com/photo-1604467715878-83e57e8bc129?q=80&w=200&auto=format&fit=crop'
+        img: '/demo-assets/moloss/images/Ciabatta Sandwich Recipe.jpeg'
     },
     {
       id: 3,
-      categoryId: 'veggie',
+      categoryId: 'sides',
       name: t('sig.item3.name'),
       desc: t('sig.item3.desc'),
       price: '€10.50',
-      img: 'https://images.unsplash.com/photo-1550508139-b967012fd162?q=80&w=200&auto=format&fit=crop'
+      img: '/demo-assets/moloss/images/The Best Garlic Bread with Coriander & Parmesan recipe.jpeg'
     },
     {
       id: 4,
@@ -374,7 +465,8 @@ function InteractiveMenuSection() {
       <div className="container mx-auto px-6 md:px-12">
         <div className="text-center mb-12 md:mb-16">
           <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-black mb-6">
-            {t('menu.title1')} <span className="text-moloss-light-green">{t('menu.title2')}</span>
+            <span className="text-3xl sm:text-4xl md:text-6xl">{t('menu.title1')}</span>{' '}
+            <span className="text-moloss-light-green moloss-hero-bloom text-5xl sm:text-6xl md:text-8xl">{t('menu.title2')}</span>
           </h2>
           
           <div className="max-w-md mx-auto relative mb-10">
@@ -469,16 +561,13 @@ function StorySection() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-ice mb-6 md:mb-8">
-              {t('story.title1')} <br />{t('story.title2')}
+            <h2 className="font-display font-black text-4xl sm:text-6xl md:text-8xl uppercase tracking-tighter text-moloss-ice mb-6 md:mb-8">
+              {t('story.title1')} <br /><span className="moloss-hero-bloom">{t('story.title2')}</span>
             </h2>
-            <div className="space-y-4 md:space-y-6 text-base md:text-xl font-medium text-moloss-white/80 leading-relaxed">
+            <div className="space-y-4 md:space-y-6 text-base md:text-xl font-medium text-moloss-white/80 leading-relaxed moloss-story-body">
               <p>{t('story.p1')}</p>
               <p>{t('story.p2')}</p>
               <p>{t('story.p3')}</p>
-            </div>
-            <div className="mt-10">
-              <img src="/dog-mascot-placeholder.svg" alt="Moloss Mascot" className="w-24 h-24 opacity-50" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
             </div>
           </motion.div>
           
@@ -490,12 +579,16 @@ function StorySection() {
             className="relative"
           >
             <div className="aspect-[4/5] rounded-3xl overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1000&auto=format&fit=crop" 
-                alt="Moloss Kitchen" 
+              <video
                 className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+              >
+                <source src="/demo-assets/moloss/video/making of ciabatta tik tok.mp4" type="video/mp4" />
+              </video>
             </div>
             <div className="absolute -bottom-8 -left-8 w-48 h-48 rounded-full bg-moloss-light-green/20 blur-3xl -z-10" />
             <div className="absolute -top-8 -right-8 w-64 h-64 rounded-full bg-moloss-ice/10 blur-3xl -z-10" />
@@ -506,15 +599,52 @@ function StorySection() {
   );
 }
 
-function GallerySection() {
-  const { t } = useLanguage();
-  const images = [
-    "https://images.unsplash.com/photo-1509722747041-616f39b57569?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1481070555726-e2fe8357725c?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1604467715878-83e57e8bc129?q=80&w=800&auto=format&fit=crop"
-  ];
+  function GallerySection() {
+    const { t } = useLanguage();
+    const images = [
+      {
+        src: "/demo-assets/moloss/interior.png",
+        wrapperClass: "md:col-span-7 md:row-span-2 md:rotate-[-1deg]",
+        aspect: "aspect-[16/9]",
+        fit: "object-contain",
+        offset: "md:-translate-y-3"
+      },
+      {
+        src: "/demo-assets/moloss/exterior.png",
+        wrapperClass: "md:col-span-5 md:rotate-[1deg]",
+        aspect: "aspect-[4/3]",
+        fit: "object-contain",
+        offset: "md:translate-y-2"
+      },
+      {
+        src: "/demo-assets/moloss/images/Steak Ciabatta with Caramelised Onions and Roasted Garlic and Chive Aioli.jpeg",
+        wrapperClass: "md:col-span-5 md:rotate-[-2deg]",
+        aspect: "aspect-[4/3]",
+        fit: "object-contain",
+        offset: "md:-translate-y-4"
+      },
+      {
+        src: "/demo-assets/moloss/images/Ciabatta Sandwich Recipe.jpeg",
+        wrapperClass: "md:col-span-6 md:rotate-[1.5deg]",
+        aspect: "aspect-[4/3]",
+        fit: "object-contain",
+        offset: "md:translate-y-4"
+      },
+      {
+        src: "/demo-assets/moloss/images/The Best Garlic Bread with Coriander & Parmesan recipe.jpeg",
+        wrapperClass: "md:col-span-6 md:rotate-[-1.5deg]",
+        aspect: "aspect-[4/3]",
+        fit: "object-contain",
+        offset: "md:-translate-y-2"
+      },
+      {
+        src: "/demo-assets/moloss/images/fries.jpeg",
+        wrapperClass: "md:col-span-6 md:rotate-[1deg]",
+        aspect: "aspect-[4/3]",
+        fit: "object-contain",
+        offset: "md:translate-y-2"
+      }
+    ];
 
   return (
     <section className="py-20 md:py-32 bg-moloss-white">
@@ -525,25 +655,36 @@ function GallerySection() {
           </h2>
         </div>
         
-        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-          {images.map((img, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="break-inside-avoid rounded-2xl overflow-hidden group cursor-pointer"
-            >
-              <img 
-                src={img} 
-                alt="Moloss Atmosphere" 
-                className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                referrerPolicy="no-referrer"
-              />
-            </motion.div>
-          ))}
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 auto-rows-fr">
+            {images.map((img, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className={cn(
+                  "rounded-[32px] overflow-hidden group cursor-pointer bg-moloss-ice/30",
+                  img.wrapperClass,
+                  img.offset
+                )}
+              >
+                <div className={cn("w-full h-full p-4 md:p-5", img.aspect)}>
+                  <img 
+                    src={img.src} 
+                    alt="Moloss Atmosphere" 
+                    className={cn(
+                      "w-full h-full rounded-[26px] group-hover:scale-[1.02] transition-transform duration-700 ease-out sepia-[0.12] saturate-[0.85] brightness-[0.98] contrast-[0.95]",
+                      img.fit
+                    )}
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[radial-gradient(circle_at_30%_20%,rgba(255,244,217,0.35),transparent_55%)] mix-blend-soft-light" />
+                </div>
+                <div className="pointer-events-none absolute inset-0 rounded-[32px] opacity-[0.08] mix-blend-multiply [background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.18)_0,rgba(0,0,0,0.18)_1px,transparent_1px,transparent_4px)]" />
+              </motion.div>
+            ))}
+          </div>
       </div>
     </section>
   );
@@ -624,7 +765,7 @@ function LocationSection() {
                   </div>
                   <div>
                     <p className="font-bold text-moloss-black uppercase tracking-wide mb-1">{t('loc.address')}</p>
-                    <p className="text-moloss-black/70 font-medium">123 Rue de Rivoli<br />75001 Paris, France</p>
+                    <p className="text-moloss-black/70 font-medium">Rue Bon Secours<br />44000 Nantes, France</p>
                   </div>
                 </li>
                 
@@ -683,39 +824,54 @@ function LocationSection() {
 
 function CommunitySection() {
   const { t } = useLanguage();
+  const videos = [
+    "/demo-assets/moloss/video/kiss eating.mp4",
+    "/demo-assets/moloss/video/making of ciabatta 2.mp4",
+    "/demo-assets/moloss/video/group eating.mp4",
+    "/demo-assets/moloss/video/making dough.mp4"
+  ];
+  const [activeVideo, setActiveVideo] = useState(0);
   return (
-    <section className="py-24 bg-moloss-black text-moloss-white">
-      <div className="container mx-auto px-6 md:px-12 text-center">
-        <h2 className="font-display font-black text-4xl md:text-6xl uppercase tracking-tighter text-moloss-ice mb-6">
-          {t('com.title')}
-        </h2>
-        <p className="text-lg text-moloss-white/70 font-medium max-w-2xl mx-auto mb-12">
-          {t('com.desc')}
-        </p>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="aspect-square rounded-xl overflow-hidden bg-moloss-dark-green/30 group relative cursor-pointer">
-              <img 
-                src={`https://images.unsplash.com/photo-${1550000000000 + i}?q=80&w=400&auto=format&fit=crop`} 
-                alt="Instagram post" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1509722747041-616f39b57569?q=80&w=400&auto=format&fit=crop"
-                }}
-              />
-              <div className="absolute inset-0 bg-moloss-dark-green/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-moloss-white font-bold uppercase tracking-widest text-sm">{t('com.view')}</span>
-              </div>
-            </div>
-          ))}
+    <section className="py-14 md:py-16 bg-moloss-ice text-moloss-black relative overflow-hidden">
+      <div className="absolute inset-0">
+        <video
+          key={activeVideo}
+          className="w-full h-full object-cover"
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          onEnded={() => setActiveVideo((prev) => (prev + 1) % videos.length)}
+        >
+          <source src={videos[activeVideo]} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-moloss-dark-green/35" />
+      </div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,96,67,0.20),transparent_55%),radial-gradient(circle_at_80%_20%,rgba(103,142,126,0.25),transparent_60%),radial-gradient(circle_at_50%_80%,rgba(183,223,229,0.6),transparent_55%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.0)_0%,rgba(255,255,255,0.25)_40%,rgba(255,255,255,0.55)_100%)]" />
+      <div className="container relative z-10 mx-auto px-6 md:px-12">
+        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 mb-8 md:mb-10">
+          <div className="max-w-2xl">
+            <h2 className="font-display font-black text-4xl md:text-6xl uppercase tracking-tighter text-moloss-dark-green mb-4">
+              {t('com.title')}
+            </h2>
+            <p className="text-base md:text-xl text-moloss-dark-green/80 font-medium">
+              {t('com.desc')}
+            </p>
+          </div>
+          <a
+            href="#"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-moloss-dark-green text-moloss-white font-bold uppercase tracking-wider shadow-lg hover:bg-moloss-mid-green transition-colors"
+          >
+            Follow @moloss.fr
+          </a>
         </div>
         
-        <a href="#" className="inline-flex items-center gap-2 font-bold uppercase tracking-wider text-moloss-light-green hover:text-moloss-white transition-colors">
-          @moloss.fr
-          <ChevronRight size={20} />
-        </a>
+        <div className="flex flex-wrap items-center gap-3 text-sm uppercase tracking-widest text-moloss-dark-green/80">
+          <span>{t('com.view')}</span>
+          <span className="text-moloss-dark-green/50">•</span>
+          <span>4 clips cycling</span>
+        </div>
       </div>
     </section>
   );

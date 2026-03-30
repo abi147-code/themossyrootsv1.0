@@ -1,5 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;700;800;900&display=swap');
 
+@font-face {
+  font-family: 'Cherry Bomb One';
+  src: url('/fonts/moloss/cherry-bomb-one.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Magic Bloom';
+  src: url('/fonts/moloss/magic-bloom.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Courier Prime';
+  src: url('/fonts/moloss/Courier_Prime/CourierPrime-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 :root {
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   scroll-behavior: smooth;
@@ -39,6 +62,21 @@ body.moloss-body {
 .moloss-root h6 {
   font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
   letter-spacing: normal;
+}
+
+.moloss-hero-display {
+  font-family: 'Cherry Bomb One', 'Outfit', ui-sans-serif, system-ui, sans-serif !important;
+  letter-spacing: 0.01em;
+}
+
+.moloss-hero-bloom {
+  font-family: 'Magic Bloom', 'Outfit', ui-sans-serif, system-ui, sans-serif !important;
+  letter-spacing: 0.01em;
+}
+
+.moloss-story-body {
+  font-family: 'Courier Prime', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-weight: 700;
 }
 
 /* Hide scrollbar for horizontal scroll areas */
