@@ -1,56 +1,85 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;700;800;900&display=swap');
-
 @font-face {
-  font-family: 'Cherry Bomb One';
-  src: url('/fonts/moloss/cherry-bomb-one.ttf') format('truetype');
+  font-family: 'Clash Display';
+  src: url('/fonts/moloss/clash-display-font/ClashDisplay-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Magic Bloom';
-  src: url('/fonts/moloss/magic-bloom.otf') format('opentype');
-  font-weight: 400;
+  font-family: 'Clash Display';
+  src: url('/fonts/moloss/clash-display-font/ClashDisplay-Medium.otf') format('opentype');
+  font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Courier Prime';
-  src: url('/fonts/moloss/Courier_Prime/CourierPrime-Bold.ttf') format('truetype');
+  font-family: 'Clash Display';
+  src: url('/fonts/moloss/clash-display-font/ClashDisplay-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Clash Display';
+  src: url('/fonts/moloss/clash-display-font/ClashDisplay-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
-:root {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  scroll-behavior: smooth;
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/moloss/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
 }
 
-html {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  background-color: #FFFFFF;
-  color: #000000;
-  scroll-behavior: smooth;
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/moloss/Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
 }
 
-body {
-  background-color: #FFFFFF;
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('/fonts/moloss/Instrument_Serif/InstrumentSerif-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('/fonts/moloss/Instrument_Serif/InstrumentSerif-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+body.moloss-body {
+  --moloss-font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --moloss-font-display: 'Clash Display', ui-sans-serif, system-ui, sans-serif;
+  --moloss-font-accent: 'Instrument Serif', ui-serif, Georgia, serif;
+  background: #FFFFFF;
   color: #000000;
+  font-family: var(--moloss-font-body);
   overflow-x: hidden;
   scroll-behavior: smooth;
 }
 
-body.moloss-body {
-  background: #FFFFFF;
-  color: #000000;
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+.moloss-root {
+  font-family: var(--moloss-font-body);
 }
 
 .moloss-root,
 .moloss-root .font-sans {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--moloss-font-body);
 }
 
 .moloss-root .font-display,
@@ -60,23 +89,29 @@ body.moloss-body {
 .moloss-root h4,
 .moloss-root h5,
 .moloss-root h6 {
-  font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: normal;
+  font-family: var(--moloss-font-display);
+  letter-spacing: -0.01em;
 }
 
 .moloss-hero-display {
-  font-family: 'Cherry Bomb One', 'Outfit', ui-sans-serif, system-ui, sans-serif !important;
-  letter-spacing: 0.01em;
+  font-family: var(--moloss-font-display) !important;
+  letter-spacing: -0.01em;
 }
 
 .moloss-hero-bloom {
-  font-family: 'Magic Bloom', 'Outfit', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--moloss-font-accent) !important;
+  font-style: italic;
   letter-spacing: 0.01em;
 }
 
 .moloss-story-body {
-  font-family: 'Courier Prime', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-weight: 700;
+  font-family: var(--moloss-font-body);
+  font-weight: 500;
+}
+
+.moloss-accent {
+  font-family: var(--moloss-font-accent);
+  font-style: italic;
 }
 
 /* Hide scrollbar for horizontal scroll areas */

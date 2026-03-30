@@ -38,10 +38,9 @@ function HeroSection() {
   return (
     <section ref={ref} className="relative h-screen flex items-center justify-center overflow-hidden bg-moloss-black">
       <motion.div style={{ y, opacity }} className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-t from-moloss-black via-moloss-dark-green/40 to-transparent z-10" />
         <div className="absolute inset-0 overflow-hidden">
           <video
-            className="h-full w-full object-cover object-center opacity-70"
+            className="h-full w-full object-cover object-center opacity-70 scale-105 brightness-[0.85] contrast-[1.1]"
             autoPlay
             muted
             loop
@@ -51,14 +50,8 @@ function HeroSection() {
             <source src="/demo-assets/moloss/video/hero.mp4" type="video/mp4" />
           </video>
         </div>
-      </motion.div>
-
-      {/* Floating 3D-like elements */}
-      <motion.div style={{ y: yFloating1 }} className="absolute top-1/4 left-10 md:left-20 z-10 opacity-40 blur-[2px]">
-        <img src="https://images.unsplash.com/photo-1596683720379-b11030608876?q=80&w=200&auto=format&fit=crop" alt="Ingredient" className="w-24 h-24 object-cover rounded-full shadow-2xl" referrerPolicy="no-referrer" />
-      </motion.div>
-      <motion.div style={{ y: yFloating2 }} className="absolute bottom-1/4 right-10 md:right-32 z-10 opacity-30 blur-[4px]">
-        <img src="https://images.unsplash.com/photo-1606850780554-b55ea4dd0b70?q=80&w=200&auto=format&fit=crop" alt="Ingredient" className="w-32 h-32 object-cover rounded-full shadow-2xl" referrerPolicy="no-referrer" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/80 z-10" />
+        <div className="absolute inset-0 opacity-[0.06] pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/noise.png')] z-10" />
       </motion.div>
 
       <div className="container relative z-20 mx-auto px-6 md:px-12 flex flex-col items-center text-center mt-20">
@@ -66,8 +59,9 @@ function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-4xl px-4 sm:px-0"
+          className="relative max-w-4xl px-4 sm:px-0"
         >
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent blur-2xl -z-10" />
           <div className="flex flex-col items-center gap-4 mb-6">
             <img
               src="/demo-assets/moloss/logo/moloss-logo.png"
@@ -122,6 +116,7 @@ function IdentitySection() {
   const { t } = useLanguage();
   return (
     <section className="relative py-20 md:py-32 bg-moloss-dark-green text-moloss-white overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-moloss-black/70 to-transparent" />
       <div className="absolute inset-0">
         <img
           src="/demo-assets/moloss/images/big ciabatta.png"
@@ -129,6 +124,10 @@ function IdentitySection() {
           className="h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-moloss-dark-green/70" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.12),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(0,0,0,0.35),transparent_60%)]" />
+        <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/noise.png')]" />
+        <div className="absolute inset-0 opacity-[0.08] mix-blend-soft-light bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_2px,transparent_2px,transparent_6px)]" />
       </div>
       <div className="container relative z-10 mx-auto px-6 md:px-12">
         <motion.div
@@ -190,6 +189,8 @@ function SignatureMenuSection() {
 
   return (
     <section id="menu" className="relative pt-24 pb-40 md:pt-32 md:pb-52 bg-moloss-white overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-moloss-dark-green/25 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-moloss-ice/80 to-transparent" />
       <div className="absolute inset-0 z-0">
         <video
           ref={videoRef}
@@ -330,9 +331,18 @@ function WhyMolossSection() {
     { title: t('why.3.title'), desc: t('why.3.desc') },
     { title: t('why.4.title'), desc: t('why.4.desc') }
   ];
+  const reasonImages = [
+    "/demo-assets/moloss/images/Steak Ciabatta with Caramelised Onions and Roasted Garlic and Chive Aioli.jpeg",
+    "/demo-assets/moloss/images/Ciabatta Sandwich Recipe.jpeg",
+    "/demo-assets/moloss/images/The Best Garlic Bread with Coriander & Parmesan recipe.jpeg",
+    "/demo-assets/moloss/images/fries.jpeg"
+  ];
 
   return (
-    <section className="py-20 md:py-24 bg-moloss-ice overflow-hidden">
+    <section className="relative py-20 md:py-24 bg-moloss-ice overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-moloss-white/80 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.65),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(56,96,67,0.12),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.06] bg-[url('/demo-assets/moloss/logo/dog_laying_with_style/upscale dog_laying_with_style_upscayl_16x_digital-art-4x.png')] bg-no-repeat bg-[length:520px] bg-[position:85%_20%]" />
       <div className="container mx-auto px-6 md:px-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -341,11 +351,14 @@ function WhyMolossSection() {
           className="mb-12 md:mb-16 text-center"
         >
           <h2 className="font-display font-black text-4xl md:text-6xl uppercase tracking-tighter text-moloss-dark-green">
-            {t('why.title')}
+            The Moloss Way
           </h2>
+          <p className="mt-4 text-base md:text-lg text-moloss-dark-green/70 font-medium max-w-2xl mx-auto">
+            Big flavors, fast energy, and no compromises—four promises we deliver every day.
+          </p>
         </motion.div>
 
-        <div className="flex flex-wrap md:flex-nowrap gap-6 overflow-x-auto hide-scrollbar pb-8 snap-x snap-mandatory -mx-6 px-6 md:mx-0 md:px-0">
+        <div className="flex flex-wrap md:flex-nowrap gap-6 overflow-x-auto hide-scrollbar pb-10 snap-x snap-mandatory -mx-6 px-6 md:mx-0 md:px-0">
           {reasons.map((reason, index) => (
             <motion.div
               key={index}
@@ -353,17 +366,32 @@ function WhyMolossSection() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="min-w-[85vw] sm:min-w-[280px] md:min-w-0 flex-1 bg-moloss-white p-6 md:p-8 rounded-3xl shadow-sm snap-center hover:shadow-md transition-shadow hover:-translate-y-1 duration-300"
+              className={cn(
+                "group relative min-w-[85vw] sm:min-w-[280px] md:min-w-0 flex-1 bg-moloss-white p-7 md:p-9 rounded-[28px] border border-moloss-dark-green/10 shadow-[0_10px_30px_rgba(24,42,32,0.10)] snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_22px_50px_rgba(24,42,32,0.18)]",
+                index % 2 === 0 ? "md:-translate-y-2" : "md:translate-y-2"
+              )}
             >
-              <div className="w-12 h-12 rounded-full bg-moloss-light-green/20 flex items-center justify-center text-moloss-dark-green font-display font-bold text-xl mb-6">
-                0{index + 1}
+              <div className="absolute inset-0 overflow-hidden rounded-[28px]">
+                <img
+                  src={reasonImages[index % reasonImages.length]}
+                  alt=""
+                  className="h-full w-full object-cover scale-105 transition-transform duration-700 group-hover:scale-110"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-moloss-white via-moloss-white/90 to-moloss-white/60" />
+                <div className="absolute inset-0 bg-moloss-dark-green/10 mix-blend-multiply" />
               </div>
-              <h3 className="font-display font-bold text-2xl uppercase tracking-tight text-moloss-black mb-4">
+              <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="h-[1px] w-12 bg-moloss-dark-green/20" />
+              </div>
+              <h3 className="font-display font-bold text-2xl md:text-[28px] uppercase tracking-tight text-moloss-black mb-4 transition-colors duration-300 group-hover:text-moloss-dark-green">
                 {reason.title}
               </h3>
               <p className="text-moloss-black/70 font-medium leading-relaxed">
                 {reason.desc}
               </p>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -461,7 +489,8 @@ function InteractiveMenuSection() {
   });
   
   return (
-    <section id="full-menu" className="py-20 md:py-32 bg-moloss-white">
+    <section id="full-menu" className="relative py-20 md:py-32 bg-moloss-white">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-moloss-ice/70 to-transparent" />
       <div className="container mx-auto px-6 md:px-12">
         <div className="text-center mb-12 md:mb-16">
           <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-black mb-6">
@@ -552,7 +581,9 @@ function InteractiveMenuSection() {
 function StorySection() {
   const { t } = useLanguage();
   return (
-    <section id="story" className="py-20 md:py-32 bg-moloss-dark-green text-moloss-white overflow-hidden">
+    <section id="story" className="relative py-20 md:py-32 bg-moloss-dark-green text-moloss-white overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-moloss-white/30 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-moloss-white/15 to-transparent" />
       <div className="container mx-auto px-6 md:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <motion.div
@@ -647,7 +678,8 @@ function StorySection() {
     ];
 
   return (
-    <section className="py-20 md:py-32 bg-moloss-white">
+    <section className="relative py-20 md:py-32 bg-moloss-white">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-moloss-dark-green/15 to-transparent" />
       <div className="container mx-auto px-6 md:px-12">
         <div className="text-center mb-12 md:mb-16">
           <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl uppercase tracking-tighter text-moloss-black">
@@ -756,7 +788,7 @@ function LocationSection() {
             </h2>
             
             <div className="bg-moloss-ice/30 p-8 rounded-3xl mb-8">
-              <h3 className="font-display font-bold text-2xl uppercase tracking-tight text-moloss-dark-green mb-6">Moloss Paris 1er</h3>
+              <h3 className="font-display font-bold text-2xl uppercase tracking-tight text-moloss-dark-green mb-6">Moloss</h3>
               
               <ul className="space-y-6">
                 <li className="flex items-start gap-4">
@@ -830,9 +862,40 @@ function CommunitySection() {
     "/demo-assets/moloss/video/group eating.mp4",
     "/demo-assets/moloss/video/making dough.mp4"
   ];
+  const socialPosts = [
+    {
+      id: 1,
+      image: "/demo-assets/moloss/images/Steak Ciabatta with Caramelised Onions and Roasted Garlic and Chive Aioli.jpeg",
+      caption: "Best sandwich I've had in Nantes 🔥",
+      likes: "1,284",
+      comments: "43"
+    },
+    {
+      id: 2,
+      image: "/demo-assets/moloss/images/Ciabatta Sandwich Recipe.jpeg",
+      caption: "Worth the wait.",
+      likes: "892",
+      comments: "17"
+    },
+    {
+      id: 3,
+      image: "/demo-assets/moloss/images/The Best Garlic Bread with Coriander & Parmesan recipe.jpeg",
+      caption: "Need this again tomorrow.",
+      likes: "1,046",
+      comments: "29"
+    },
+    {
+      id: 4,
+      image: "/demo-assets/moloss/images/fries.jpeg",
+      caption: "Moloss never misses.",
+      likes: "1,512",
+      comments: "38"
+    }
+  ];
   const [activeVideo, setActiveVideo] = useState(0);
   return (
     <section className="py-14 md:py-16 bg-moloss-ice text-moloss-black relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-moloss-dark-green/35 to-transparent" />
       <div className="absolute inset-0">
         <video
           key={activeVideo}
@@ -845,7 +908,7 @@ function CommunitySection() {
         >
           <source src={videos[activeVideo]} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-moloss-dark-green/35" />
+        <div className="absolute inset-0 bg-moloss-dark-green/50" />
       </div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,96,67,0.20),transparent_55%),radial-gradient(circle_at_80%_20%,rgba(103,142,126,0.25),transparent_60%),radial-gradient(circle_at_50%_80%,rgba(183,223,229,0.6),transparent_55%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.0)_0%,rgba(255,255,255,0.25)_40%,rgba(255,255,255,0.55)_100%)]" />
@@ -859,18 +922,47 @@ function CommunitySection() {
               {t('com.desc')}
             </p>
           </div>
-          <a
-            href="#"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-moloss-dark-green text-moloss-white font-bold uppercase tracking-wider shadow-lg hover:bg-moloss-mid-green transition-colors"
-          >
-            Follow @moloss.fr
-          </a>
+          <div className="flex flex-col items-start lg:items-end gap-2">
+            <a
+              href="#"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-moloss-dark-green text-moloss-white font-bold uppercase tracking-wider shadow-lg hover:bg-moloss-mid-green transition-colors"
+            >
+              Follow @moloss.fr
+            </a>
+            <span className="text-xs uppercase tracking-widest text-moloss-dark-green/70">
+              Tag us to get featured
+            </span>
+          </div>
         </div>
         
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-6 md:mb-8">
+          {socialPosts.map((post) => (
+            <div
+              key={post.id}
+              className="group relative overflow-hidden rounded-2xl border border-moloss-dark-green/10 bg-moloss-dark-green/5 shadow-sm"
+            >
+              <img
+                src={post.image}
+                alt={post.caption}
+                className="h-56 w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-moloss-dark-green/85 via-moloss-dark-green/30 to-transparent opacity-90 transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="absolute inset-0 p-4 flex flex-col justify-end">
+                <p className="text-sm md:text-base font-medium text-moloss-white/95 drop-shadow-sm line-clamp-2">
+                  {post.caption}
+                </p>
+                <div className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-moloss-ice/90">
+                  <span>{post.likes} likes</span>
+                  <span>{post.comments} comments</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div className="flex flex-wrap items-center gap-3 text-sm uppercase tracking-widest text-moloss-dark-green/80">
           <span>{t('com.view')}</span>
-          <span className="text-moloss-dark-green/50">•</span>
-          <span>4 clips cycling</span>
         </div>
       </div>
     </section>
@@ -881,6 +973,7 @@ function FinalCTASection() {
   const { t } = useLanguage();
   return (
     <section className="py-20 md:py-32 bg-moloss-dark-green text-moloss-white text-center relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-moloss-ice/30 to-transparent" />
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1509722747041-616f39b57569?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-10 mix-blend-overlay" />
       
       <div className="container relative z-10 mx-auto px-6 md:px-12">

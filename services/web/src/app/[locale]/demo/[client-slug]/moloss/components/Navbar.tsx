@@ -49,11 +49,11 @@ export default function Navbar({ basePath, blogPath }: NavbarProps) {
       )}
     >
       <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
-        <Link href={basePath} className="flex items-center">
+        <Link href={basePath} className="flex items-center -ml-12 md:-ml-16">
           <img
             src="/demo-assets/moloss/logo/moloss-logo.png"
             alt="Moloss logo"
-            className="h-16 md:h-20 w-auto object-contain"
+            className="h-20 md:h-24 w-auto object-contain"
           />
         </Link>
 
@@ -121,7 +121,7 @@ export default function Navbar({ basePath, blogPath }: NavbarProps) {
                 <img
                   src="/demo-assets/moloss/logo/moloss-logo.png"
                   alt="Moloss logo"
-                  className="h-16 w-auto object-contain"
+                  className="h-20 w-auto object-contain"
                 />
               </Link>
               <button
